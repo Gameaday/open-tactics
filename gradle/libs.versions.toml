@@ -1,29 +1,29 @@
 [versions]
 # SDK and Tools
-compileSdk = "34"
+compileSdk = "35"
 minSdk = "24"
-targetSdk = "34"
+targetSdk = "35"
 
 # Gradle Plugins
-android-gradle = "8.1.4"
-kotlin = "1.9.10"
-ktlint-gradle = "11.6.1"
+android-gradle = "8.7.3"
+kotlin = "2.1.0"
+ktlint-gradle = "12.1.2"
 
 # AndroidX
-androidx-core = "1.12.0"
-androidx-appcompat = "1.6.1"
-androidx-constraintlayout = "2.1.4"
-androidx-lifecycle = "2.7.0"
-androidx-fragment = "1.6.2"
+androidx-core = "1.15.0"
+androidx-appcompat = "1.7.0"
+androidx-constraintlayout = "2.2.0"
+androidx-lifecycle = "2.8.7"
+androidx-fragment = "1.8.5"
 androidx-preference = "1.2.1"
-androidx-navigation = "2.7.5"
+androidx-navigation = "2.8.5"
 androidx-security = "1.1.0-alpha06"
 
 # Material Design
-material = "1.10.0"
+material = "1.12.0"
 
 # Serialization
-kotlinx-serialization = "1.6.0"
+kotlinx-serialization = "1.7.3"
 
 # Testing
 junit = "4.13.2"
