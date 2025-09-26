@@ -262,14 +262,14 @@ tasks.register<JacocoReport>("jacocoTestReport") {
             "**/generated/**/*.*",
         )
 
-    val debugTree = fileTree("$buildDir/intermediates/classes/debug")
+    val debugTree = fileTree("${layout.buildDirectory.asFile.get()}/intermediates/classes/debug")
     debugTree.exclude(fileFilter)
-    val kotlinDebugTree = fileTree("$buildDir/tmp/kotlin-classes/debug")
+    val kotlinDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/debug")
     kotlinDebugTree.exclude(fileFilter)
 
     classDirectories.setFrom(debugTree, kotlinDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    executionData.setFrom(fileTree(buildDir).include("**/jacoco/*.exec"))
+    executionData.setFrom(fileTree(layout.buildDirectory.asFile.get()).include("**/jacoco/*.exec"))
 }
 
 tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
@@ -311,12 +311,12 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             "**/generated/**/*.*",
         )
 
-    val debugTree = fileTree("$buildDir/intermediates/classes/debug")
+    val debugTree = fileTree("${layout.buildDirectory.asFile.get()}/intermediates/classes/debug")
     debugTree.exclude(fileFilter)
-    val kotlinDebugTree = fileTree("$buildDir/tmp/kotlin-classes/debug")
+    val kotlinDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/debug")
     kotlinDebugTree.exclude(fileFilter)
 
     classDirectories.setFrom(debugTree, kotlinDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    executionData.setFrom(fileTree(buildDir).include("**/jacoco/*.exec"))
+    executionData.setFrom(fileTree(layout.buildDirectory.asFile.get()).include("**/jacoco/*.exec"))
 }
