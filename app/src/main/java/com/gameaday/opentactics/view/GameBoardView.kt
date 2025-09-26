@@ -1,11 +1,16 @@
 package com.gameaday.opentactics.view
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
+import android.graphics.drawable.VectorDrawable
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import androidx.core.content.ContextCompat
 import com.gameaday.opentactics.R
 import com.gameaday.opentactics.game.GameState
@@ -25,35 +30,55 @@ class GameBoardView @JvmOverloads constructor(
     private var highlightedMoves: List<Position> = emptyList()
     private var highlightedAttacks: List<Position> = emptyList()
     
+    // Animation properties
+    private var shakeOffsetX: Float = 0f
+    private var shakeOffsetY: Float = 0f
+    private var effectAlpha: Float = 0f
+    private var animatingCharacter: Character? = null
+    
     // Paints
     private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.GRAY
+        color = Color.BLACK
         strokeWidth = 2f
         style = Paint.Style.STROKE
     }
-    private val characterPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        textSize = 24f
+        textSize = 16f
         color = Color.WHITE
+        typeface = Typeface.DEFAULT_BOLD
     }
     
-    // Colors
-    private val plainColor = ContextCompat.getColor(context, R.color.neutral_gray)
-    private val forestColor = Color.GREEN
-    private val mountainColor = Color.GRAY
-    private val fortColor = Color.YELLOW
-    private val villageColor = Color.CYAN
-    private val waterColor = Color.BLUE
+    // Terrain Colors (more vibrant and distinct)
+    private val plainColor = Color.parseColor("#4CAF50")        // Green
+    private val forestColor = Color.parseColor("#2E7D32")       // Dark Green  
+    private val mountainColor = Color.parseColor("#616161")     // Gray
+    private val fortColor = Color.parseColor("#FFA000")         // Amber
+    private val villageColor = Color.parseColor("#1976D2")      // Blue
+    private val waterColor = Color.parseColor("#0288D1")        // Light Blue
     
-    private val playerColor = ContextCompat.getColor(context, R.color.player_blue)
-    private val enemyColor = ContextCompat.getColor(context, R.color.enemy_red)
-    private val neutralColor = ContextCompat.getColor(context, R.color.neutral_gray)
+    // Team Colors (distinct and visible)
+    private val playerColorPrimary = Color.parseColor("#1565C0")   // Blue
+    private val playerColorSecondary = Color.parseColor("#E3F2FD") // Light Blue
+    private val enemyColorPrimary = Color.parseColor("#C62828")    // Red
+    private val enemyColorSecondary = Color.parseColor("#FFEBEE")  // Light Red
+    private val neutralColor = Color.parseColor("#424242")        // Dark Gray
     
-    private val moveHighlightColor = ContextCompat.getColor(context, R.color.movement_highlight)
-    private val attackHighlightColor = ContextCompat.getColor(context, R.color.attack_highlight)
-    private val selectedHighlightColor = ContextCompat.getColor(context, R.color.selected_highlight)
+    // Highlight Colors
+    private val moveHighlightColor = Color.parseColor("#80FFD700") // Gold with transparency
+    private val attackHighlightColor = Color.parseColor("#80FF5722") // Orange-red with transparency
+    private val selectedHighlightColor = Color.parseColor("#FF00BCD4") // Cyan
+    
+    // Icon resources
+    private val iconMap = mapOf(
+        CharacterClass.KNIGHT to R.drawable.ic_knight,
+        CharacterClass.ARCHER to R.drawable.ic_archer,
+        CharacterClass.MAGE to R.drawable.ic_mage,
+        CharacterClass.HEALER to R.drawable.ic_healer,
+        CharacterClass.THIEF to R.drawable.ic_thief
+    )
     
     // Gesture handling
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -88,6 +113,52 @@ class GameBoardView @JvmOverloads constructor(
         invalidate()
     }
     
+    fun animateAttack(attacker: Character, target: Character, onComplete: () -> Unit = {}) {
+        animatingCharacter = attacker
+        
+        // Create shake animation for attacker
+        val shakeX = ObjectAnimator.ofFloat(0f, -8f, 8f, -4f, 4f, 0f).apply {
+            duration = 300
+            addUpdateListener { animation ->
+                shakeOffsetX = animation.animatedValue as Float
+                invalidate()
+            }
+        }
+        
+        val shakeY = ObjectAnimator.ofFloat(0f, -4f, 4f, -2f, 2f, 0f).apply {
+            duration = 300
+            addUpdateListener { animation ->
+                shakeOffsetY = animation.animatedValue as Float
+                invalidate()
+            }
+        }
+        
+        // Create effect animation at target position
+        val effectAnim = ValueAnimator.ofFloat(0f, 1f, 0f).apply {
+            duration = 500
+            addUpdateListener { animation ->
+                effectAlpha = animation.animatedValue as Float
+                invalidate()
+            }
+        }
+        
+        AnimatorSet().apply {
+            playTogether(shakeX, shakeY, effectAnim)
+            interpolator = DecelerateInterpolator()
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    animatingCharacter = null
+                    shakeOffsetX = 0f
+                    shakeOffsetY = 0f
+                    effectAlpha = 0f
+                    invalidate()
+                    onComplete()
+                }
+            })
+            start()
+        }
+    }
+    
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         calculateDimensions()
@@ -114,7 +185,7 @@ class GameBoardView @JvmOverloads constructor(
         val gameState = this.gameState ?: return
         val board = gameState.board
         
-        // Draw tiles and terrain
+        // Draw tiles with terrain colors
         for (y in 0 until board.height) {
             for (x in 0 until board.width) {
                 val position = Position(x, y)
@@ -130,7 +201,7 @@ class GameBoardView @JvmOverloads constructor(
         // Draw movement highlights
         drawHighlights(canvas, highlightedMoves, moveHighlightColor)
         
-        // Draw attack highlights
+        // Draw attack highlights  
         drawHighlights(canvas, highlightedAttacks, attackHighlightColor)
         
         // Draw selected character highlight
@@ -138,11 +209,16 @@ class GameBoardView @JvmOverloads constructor(
             drawHighlight(canvas, character.position, selectedHighlightColor)
         }
         
-        // Draw characters
+        // Draw characters with proper icons
         for (character in gameState.getAllCharacters()) {
             if (character.isAlive) {
                 drawCharacter(canvas, character)
             }
+        }
+        
+        // Draw battle effects
+        if (effectAlpha > 0f) {
+            drawBattleEffect(canvas)
         }
     }
     
@@ -162,6 +238,25 @@ class GameBoardView @JvmOverloads constructor(
         }
         
         canvas.drawRect(left, top, right, bottom, tilePaint)
+        
+        // Add terrain indicators
+        if (tile.terrain != TerrainType.PLAIN) {
+            textPaint.textSize = tileSize * 0.2f
+            val terrainSymbol = when (tile.terrain) {
+                TerrainType.FOREST -> "♠"
+                TerrainType.MOUNTAIN -> "▲"
+                TerrainType.FORT -> "⌂"
+                TerrainType.VILLAGE -> "⌂"
+                TerrainType.WATER -> "~"
+                else -> ""
+            }
+            canvas.drawText(
+                terrainSymbol,
+                left + tileSize * 0.85f,
+                top + tileSize * 0.25f,
+                textPaint
+            )
+        }
     }
     
     private fun drawGrid(canvas: Canvas, board: GameBoard) {
@@ -203,40 +298,96 @@ class GameBoardView @JvmOverloads constructor(
     }
     
     private fun drawCharacter(canvas: Canvas, character: Character) {
-        val centerX = boardOffsetX + character.position.x * tileSize + tileSize / 2f
-        val centerY = boardOffsetY + character.position.y * tileSize + tileSize / 2f
-        val radius = tileSize * 0.3f
+        var centerX = boardOffsetX + character.position.x * tileSize + tileSize / 2f
+        var centerY = boardOffsetY + character.position.y * tileSize + tileSize / 2f
         
-        characterPaint.color = when (character.team) {
-            Team.PLAYER -> playerColor
-            Team.ENEMY -> enemyColor
-            Team.NEUTRAL -> neutralColor
+        // Apply shake animation if this character is animating
+        if (character == animatingCharacter) {
+            centerX += shakeOffsetX
+            centerY += shakeOffsetY
         }
         
-        canvas.drawCircle(centerX, centerY, radius, characterPaint)
+        val tileRadius = tileSize * 0.4f
         
-        // Draw character class initial
-        val initial = character.characterClass.displayName.first().toString()
-        canvas.drawText(initial, centerX, centerY + textPaint.textSize / 4f, textPaint)
+        // Draw character background circle
+        val (primaryColor, secondaryColor) = when (character.team) {
+            Team.PLAYER -> Pair(playerColorPrimary, playerColorSecondary)
+            Team.ENEMY -> Pair(enemyColorPrimary, enemyColorSecondary)
+            Team.NEUTRAL -> Pair(neutralColor, Color.WHITE)
+        }
+        
+        // Draw outer circle (primary color)
+        tilePaint.color = primaryColor
+        canvas.drawCircle(centerX, centerY, tileRadius, tilePaint)
+        
+        // Draw inner circle (secondary color)
+        tilePaint.color = secondaryColor
+        canvas.drawCircle(centerX, centerY, tileRadius * 0.8f, tilePaint)
+        
+        // Draw character class icon
+        val iconResId = iconMap[character.characterClass]
+        if (iconResId != null) {
+            val drawable = ContextCompat.getDrawable(context, iconResId) as? VectorDrawable
+            drawable?.let { icon ->
+                icon.setTint(primaryColor)
+                val iconSize = (tileRadius * 1.2f).toInt()
+                val iconLeft = (centerX - iconSize / 2f).toInt()
+                val iconTop = (centerY - iconSize / 2f).toInt()
+                icon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
+                icon.draw(canvas)
+            }
+        }
         
         // Draw HP bar if damaged
         if (character.currentHp < character.maxHp) {
-            drawHealthBar(canvas, character, centerX, centerY - radius - 10f)
+            drawHealthBar(canvas, character, centerX, centerY - tileRadius - 15f)
         }
+        
+        // Draw level indicator
+        textPaint.textSize = tileSize * 0.2f
+        textPaint.color = Color.WHITE
+        canvas.drawText(
+            "L${character.level}",
+            centerX,
+            centerY + tileRadius + 20f,
+            textPaint
+        )
     }
     
     private fun drawHealthBar(canvas: Canvas, character: Character, x: Float, y: Float) {
-        val barWidth = tileSize * 0.6f
-        val barHeight = 6f
+        val barWidth = tileSize * 0.8f
+        val barHeight = 8f
         val healthRatio = character.currentHp.toFloat() / character.maxHp
         
-        // Background
+        // Background (damaged portion)
         tilePaint.color = Color.RED
         canvas.drawRect(x - barWidth/2, y, x + barWidth/2, y + barHeight, tilePaint)
         
-        // Health
+        // Health (current portion)
         tilePaint.color = Color.GREEN
-        canvas.drawRect(x - barWidth/2, y, x - barWidth/2 + barWidth * healthRatio, y + barHeight, tilePaint)
+        canvas.drawRect(
+            x - barWidth/2, y, 
+            x - barWidth/2 + barWidth * healthRatio, 
+            y + barHeight, 
+            tilePaint
+        )
+        
+        // Border
+        gridPaint.color = Color.BLACK
+        canvas.drawRect(x - barWidth/2, y, x + barWidth/2, y + barHeight, gridPaint)
+    }
+    
+    private fun drawBattleEffect(canvas: Canvas) {
+        // Simple explosion-like effect
+        tilePaint.color = Color.argb((255 * effectAlpha).toInt(), 255, 255, 0) // Yellow flash
+        val radius = tileSize * 0.6f * effectAlpha
+        
+        // Draw effect at all attack targets
+        for (pos in highlightedAttacks) {
+            val centerX = boardOffsetX + pos.x * tileSize + tileSize / 2f
+            val centerY = boardOffsetY + pos.y * tileSize + tileSize / 2f
+            canvas.drawCircle(centerX, centerY, radius, tilePaint)
+        }
     }
     
     override fun onTouchEvent(event: MotionEvent): Boolean {

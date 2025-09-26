@@ -1,11 +1,18 @@
 package com.gameaday.opentactics.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class Team {
     PLAYER,
     ENEMY,
     NEUTRAL
 }
 
+@Parcelize
+@Serializable
 data class Character(
     val id: String,
     val name: String,
@@ -18,7 +25,7 @@ data class Character(
     var currentMp: Int = characterClass.baseStats.mp,
     var hasActedThisTurn: Boolean = false,
     var hasMovedThisTurn: Boolean = false
-) {
+) : Parcelable {
     val currentStats: Stats
         get() {
             val levelBonus = Stats(

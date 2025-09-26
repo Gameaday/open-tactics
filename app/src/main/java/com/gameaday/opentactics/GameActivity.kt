@@ -4,31 +4,74 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.gameaday.opentactics.data.*
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.game.GameState
 import com.gameaday.opentactics.model.*
 import com.gameaday.opentactics.view.GameBoardView
+import kotlinx.coroutines.launch
 
 class GameActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGameBinding
     private lateinit var gameState: GameState
     private lateinit var gameBoardView: GameBoardView
+    private lateinit var saveGameManager: SaveGameManager
+    
+    private var playerProfile: PlayerProfile? = null
+    private var currentGameSave: GameSave? = null
+    private var turnsSinceLastSave = 0
+    
+    companion object {
+        const val EXTRA_LOAD_SAVE_ID = "load_save_id"
+        const val EXTRA_PLAYER_NAME = "player_name"
+        const val EXTRA_IS_NEW_GAME = "is_new_game"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initializeGame()
+        saveGameManager = SaveGameManager(this)
+        loadPlayerProfile()
+        
+        val loadSaveId = intent.getStringExtra(EXTRA_LOAD_SAVE_ID)
+        val playerName = intent.getStringExtra(EXTRA_PLAYER_NAME) ?: "Player"
+        val isNewGame = intent.getBooleanExtra(EXTRA_IS_NEW_GAME, true)
+        
+        if (isNewGame || loadSaveId == null) {
+            initializeNewGame(playerName)
+        } else {
+            loadGame(loadSaveId)
+        }
+        
         setupGameBoard()
         setupControls()
     }
+    
+    override fun onPause() {
+        super.onPause()
+        // Auto-save when the activity is paused
+        performAutoSave()
+    }
 
-    private fun initializeGame() {
+    private fun loadPlayerProfile() {
+        playerProfile = saveGameManager.loadProfile() ?: PlayerProfile(
+            playerName = "Player",
+            totalPlayTime = 0
+        )
+    }
+    
+    private fun savePlayerProfile() {
+        playerProfile?.let { saveGameManager.saveProfile(it) }
+    }
+
+    private fun initializeNewGame(playerName: String) {
         val board = GameBoard.createTestMap()
         gameState = GameState(board)
         
-        // Create player characters
+        // Create player characters with the enhanced stats
         val knight = Character(
             id = "player_knight",
             name = "Sir Garrett",
@@ -94,6 +137,47 @@ class GameActivity : AppCompatActivity() {
         board.placeCharacter(enemyKnight, enemyKnight.position)
         board.placeCharacter(enemyArcher, enemyArcher.position)
         board.placeCharacter(enemyThief, enemyThief.position)
+        
+        // Create initial save data
+        currentGameSave = createGameSave(playerName, 1)
+    }
+
+    private fun loadGame(saveId: String) {
+        lifecycleScope.launch {
+            saveGameManager.loadGame(saveId).fold(
+                onSuccess = { gameSave ->
+                    currentGameSave = gameSave
+                    restoreGameFromSave(gameSave)
+                    Toast.makeText(this@GameActivity, "Game loaded successfully!", Toast.LENGTH_SHORT).show()
+                },
+                onFailure = { error ->
+                    Toast.makeText(this@GameActivity, "Failed to load game: ${error.message}", Toast.LENGTH_LONG).show()
+                    // Fall back to new game
+                    initializeNewGame(playerProfile?.playerName ?: "Player")
+                }
+            )
+        }
+    }
+    
+    private fun restoreGameFromSave(gameSave: GameSave) {
+        val savedState = gameSave.gameState
+        val board = GameBoard(savedState.boardWidth, savedState.boardHeight)
+        gameState = GameState(board)
+        
+        // Restore characters
+        savedState.playerCharacters.forEach { character ->
+            gameState.addPlayerCharacter(character)
+            board.placeCharacter(character, character.position)
+        }
+        
+        savedState.enemyCharacters.forEach { character ->
+            gameState.addEnemyCharacter(character)
+            board.placeCharacter(character, character.position)
+        }
+        
+        // Restore game state
+        gameState.currentTurn = savedState.currentTurn
+        gameState.turnCount = savedState.turnCount
     }
 
     private fun setupGameBoard() {
@@ -110,7 +194,138 @@ class GameActivity : AppCompatActivity() {
         binding.btnWait.setOnClickListener { handleWaitAction() }
         binding.btnEndTurn.setOnClickListener { handleEndTurnAction() }
         
+        // Add save/load buttons to the overflow menu
+        binding.root.setOnLongClickListener {
+            showGameMenu()
+            true
+        }
+        
         updateUI()
+    }
+    
+    private fun showGameMenu() {
+        val options = arrayOf("Save Game", "Load Game", "Settings", "Quit to Menu")
+        
+        AlertDialog.Builder(this)
+            .setTitle("Game Menu")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> performManualSave()
+                    1 -> showLoadGameDialog()
+                    2 -> showSettingsDialog()
+                    3 -> confirmQuitToMenu()
+                }
+            }
+            .show()
+    }
+    
+    private fun performManualSave() {
+        currentGameSave?.let { save ->
+            val updatedSave = createGameSave(save.playerName, save.campaignLevel)
+            lifecycleScope.launch {
+                saveGameManager.saveGame(updatedSave, isAutoSave = false).fold(
+                    onSuccess = {
+                        Toast.makeText(this@GameActivity, "Game saved successfully!", Toast.LENGTH_SHORT).show()
+                        currentGameSave = updatedSave
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(this@GameActivity, "Failed to save game: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        }
+    }
+    
+    private fun performAutoSave() {
+        val preferences = playerProfile?.preferences
+        if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
+            currentGameSave?.let { save ->
+                val autoSave = createGameSave(save.playerName, save.campaignLevel)
+                lifecycleScope.launch {
+                    saveGameManager.saveGame(autoSave, isAutoSave = true)
+                    turnsSinceLastSave = 0
+                }
+            }
+        }
+    }
+    
+    private fun createGameSave(playerName: String, campaignLevel: Int): GameSave {
+        val savedGameState = SavedGameState(
+            boardWidth = gameState.board.width,
+            boardHeight = gameState.board.height,
+            playerCharacters = gameState.getPlayerCharacters(),
+            enemyCharacters = gameState.getEnemyCharacters(),
+            currentTurn = gameState.currentTurn,
+            turnCount = gameState.turnCount,
+            campaignProgress = CampaignProgress(
+                currentChapter = campaignLevel,
+                totalBattlesWon = playerProfile?.totalBattlesWon ?: 0
+            )
+        )
+        
+        return GameSave(
+            playerName = playerName,
+            campaignLevel = campaignLevel,
+            totalPlayTime = playerProfile?.totalPlayTime ?: 0,
+            gameState = savedGameState
+        )
+    }
+    
+    private fun showLoadGameDialog() {
+        lifecycleScope.launch {
+            val saveFiles = saveGameManager.listSaveFiles()
+            if (saveFiles.isEmpty()) {
+                Toast.makeText(this@GameActivity, "No save files found", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            
+            val fileNames = saveFiles.map { "${it.playerName} - Level ${it.campaignLevel} ${if (it.isAutoSave) "(Auto)" else ""}" }
+                .toTypedArray()
+            
+            AlertDialog.Builder(this@GameActivity)
+                .setTitle("Load Game")
+                .setItems(fileNames) { _, which ->
+                    val selectedSave = saveFiles[which]
+                    loadGame(selectedSave.saveId)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+    
+    private fun showSettingsDialog() {
+        val preferences = playerProfile?.preferences ?: GamePreferences()
+        
+        val items = arrayOf(
+            "Music: ${if (preferences.musicEnabled) "On" else "Off"}",
+            "Sound Effects: ${if (preferences.soundEffectsEnabled) "On" else "Off"}",
+            "Auto-save: ${if (preferences.autoSaveEnabled) "On" else "Off"}",
+            "Animation Speed: ${preferences.animationSpeed}x"
+        )
+        
+        AlertDialog.Builder(this)
+            .setTitle("Settings")
+            .setItems(items) { _, which ->
+                // Settings implementation would go here
+                Toast.makeText(this, "Settings feature coming soon!", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+    
+    private fun confirmQuitToMenu() {
+        AlertDialog.Builder(this)
+            .setTitle("Quit to Menu")
+            .setMessage("Any unsaved progress will be lost. Auto-save before quitting?")
+            .setPositiveButton("Save & Quit") { _, _ ->
+                performAutoSave()
+                finish()
+            }
+            .setNeutralButton("Quit Without Saving") { _, _ ->
+                finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun handleTileClick(position: Position) {
@@ -146,13 +361,16 @@ class GameActivity : AppCompatActivity() {
                     val targets = gameState.calculateAttackTargets(selectedCharacter)
                     val targetCharacter = gameState.board.getCharacterAt(position)
                     if (targetCharacter != null && targetCharacter in targets) {
-                        val result = gameState.performAttack(selectedCharacter, targetCharacter)
-                        showBattleResult(result)
-                        selectedCharacter.hasActedThisTurn = true
-                        gameState.selectCharacter(null)
-                        gameBoardView.clearHighlights()
-                        checkGameEnd()
-                        updateUI()
+                        // Animate the attack
+                        gameBoardView.animateAttack(selectedCharacter, targetCharacter) {
+                            val result = gameState.performAttack(selectedCharacter, targetCharacter)
+                            showBattleResult(result)
+                            selectedCharacter.hasActedThisTurn = true
+                            gameState.selectCharacter(null)
+                            gameBoardView.clearHighlights()
+                            checkGameEnd()
+                            updateUI()
+                        }
                     }
                 }
             }
@@ -194,10 +412,17 @@ class GameActivity : AppCompatActivity() {
     private fun handleEndTurnAction() {
         gameState.endTurn()
         gameBoardView.clearHighlights()
+        turnsSinceLastSave++
         updateUI()
         
         if (gameState.currentTurn == Team.PLAYER) {
             Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+        }
+        
+        // Check for auto-save
+        val preferences = playerProfile?.preferences
+        if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
+            performAutoSave()
         }
     }
 
@@ -223,17 +448,30 @@ class GameActivity : AppCompatActivity() {
     private fun checkGameEnd() {
         when {
             gameState.isGameWon() -> {
+                // Update profile statistics
+                playerProfile = playerProfile?.copy(
+                    totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
+                    campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1
+                )
+                savePlayerProfile()
+                
                 AlertDialog.Builder(this)
                     .setTitle("Victory!")
-                    .setMessage("All enemies have been defeated!")
-                    .setPositiveButton("OK") { _, _ -> finish() }
+                    .setMessage("All enemies have been defeated! Your progress has been saved.")
+                    .setPositiveButton("Continue") { _, _ -> 
+                        performManualSave()
+                        finish() 
+                    }
                     .show()
             }
             gameState.isGameLost() -> {
                 AlertDialog.Builder(this)
                     .setTitle("Defeat")
-                    .setMessage("All your units have fallen...")
-                    .setPositiveButton("OK") { _, _ -> finish() }
+                    .setMessage("All your units have fallen... Your progress has been saved.")
+                    .setPositiveButton("Retry") { _, _ -> 
+                        // Could reload from save here
+                        finish()
+                    }
                     .show()
             }
         }

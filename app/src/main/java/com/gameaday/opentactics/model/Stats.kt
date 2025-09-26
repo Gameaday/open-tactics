@@ -1,5 +1,11 @@
 package com.gameaday.opentactics.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+
+@Parcelize
+@Serializable
 data class Stats(
     val hp: Int,
     val mp: Int,
@@ -8,7 +14,7 @@ data class Stats(
     val speed: Int,
     val skill: Int,
     val luck: Int
-) {
+) : Parcelable {
     operator fun plus(other: Stats): Stats {
         return Stats(
             hp + other.hp,

@@ -1,17 +1,7 @@
-// Top-level build file for a standalone Kotlin project to demonstrate game mechanics
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    kotlin("jvm") version "2.1.0"
-    application
-}
-
-dependencies {
-    testImplementation(kotlin("test"))
-}
-
-application {
-    mainClass.set("com.gameaday.opentactics.MainKt")
-}
-
-tasks.test {
-    useJUnitPlatform()
+    id("com.android.application") version "8.1.4" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.10" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10" apply false
+    kotlin("jvm") version "2.1.0" apply false
 }

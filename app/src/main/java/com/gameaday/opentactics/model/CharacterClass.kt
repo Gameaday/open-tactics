@@ -1,5 +1,10 @@
 package com.gameaday.opentactics.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class CharacterClass(
     val displayName: String,
     val baseStats: Stats,

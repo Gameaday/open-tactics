@@ -1,5 +1,10 @@
 package com.gameaday.opentactics.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class TerrainType(
     val displayName: String,
     val movementCost: Int,
@@ -14,11 +19,13 @@ enum class TerrainType(
     VILLAGE("Village", 1, 1, 10)
 }
 
+@Parcelize
+@Serializable
 data class Tile(
     val position: Position,
     val terrain: TerrainType,
     var occupant: Character? = null
-) {
+) : Parcelable {
     val isOccupied: Boolean
         get() = occupant != null
     
