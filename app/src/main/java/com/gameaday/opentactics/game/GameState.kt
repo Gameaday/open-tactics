@@ -1,6 +1,9 @@
 package com.gameaday.opentactics.game
 
-import com.gameaday.opentactics.model.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
 
 class GameState(
     val board: GameBoard,

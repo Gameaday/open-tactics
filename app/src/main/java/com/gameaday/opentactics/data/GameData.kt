@@ -5,7 +5,7 @@ import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.Team
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
-import java.util.*
+import java.util.UUID
 
 @Parcelize
 @Serializable

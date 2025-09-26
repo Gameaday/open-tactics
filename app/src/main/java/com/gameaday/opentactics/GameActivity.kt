@@ -5,10 +5,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.gameaday.opentactics.data.*
+import com.gameaday.opentactics.data.CampaignProgress
+import com.gameaday.opentactics.data.GamePreferences
+import com.gameaday.opentactics.data.GameSave
+import com.gameaday.opentactics.data.PlayerProfile
+import com.gameaday.opentactics.data.SaveGameManager
+import com.gameaday.opentactics.data.SavedGameState
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.game.GameState
-import com.gameaday.opentactics.model.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.CharacterClass
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
 import com.gameaday.opentactics.view.GameBoardView
 import kotlinx.coroutines.launch
 

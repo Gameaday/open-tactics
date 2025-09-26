@@ -4,7 +4,10 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.graphics.drawable.VectorDrawable
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -14,7 +17,13 @@ import android.view.animation.DecelerateInterpolator
 import androidx.core.content.ContextCompat
 import com.gameaday.opentactics.R
 import com.gameaday.opentactics.game.GameState
-import com.gameaday.opentactics.model.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.CharacterClass
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
+import com.gameaday.opentactics.model.TerrainType
+import com.gameaday.opentactics.model.Tile
 
 class GameBoardView
     @JvmOverloads
