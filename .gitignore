@@ -1,0 +1,44 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/app/build
+/app/.cxx
+/standalone/build
+/standalone/.gradle
+
+# Temporary files
+/src
+*.jar
+*.log
+*.tmp
+
+# Generated files
+lint-baseline.xml
+
+# Quality reports
+**/build/reports/
+**/build/outputs/logs/
+
+# Documentation
+**/build/dokka/
+**/build/javadoc/
+
+# Security
+keystore.jks
+*.keystore
+
+# OS specific
+Thumbs.db
+.DS_Store

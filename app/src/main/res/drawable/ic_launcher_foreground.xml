@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#6200EE">
+  <group android:scaleX="0.6"
+      android:scaleY="0.6"
+      android:translateX="21.6"
+      android:translateY="21.6">
+    <!-- Knight shield main icon -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M54,8L20,16V40C20,58 32,74.2 54,80C76,74.2 88,58 88,40V16L54,8ZM54,28C58.4,28 62.8,28.8 68,30.8V40C68,51 62.4,62.2 54,68.4C45.6,62.2 40,51 40,40V30.8C45.2,28.8 49.6,28 54,28Z"/>
+    <!-- Cross pattern for tactical theme -->
+    <path android:fillColor="#FF6200EE"
+        android:pathData="M48,20H60V32H72V44H60V68H48V44H36V32H48V20Z"/>
+  </group>
+</vector>

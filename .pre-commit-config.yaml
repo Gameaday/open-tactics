@@ -1,0 +1,36 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ktlint
+        name: ktlint
+        description: Check Kotlin code style
+        entry: ./gradlew ktlintCheck
+        language: system
+        pass_filenames: false
+        files: \.kt$
+
+      - id: detekt
+        name: detekt
+        description: Run detekt static analysis
+        entry: ./gradlew detekt
+        language: system
+        pass_filenames: false
+        files: \.kt$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-xml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.10.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
