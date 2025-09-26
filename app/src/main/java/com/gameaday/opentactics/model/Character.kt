@@ -55,6 +55,19 @@ data class Character(
 
     val canMove: Boolean
         get() = !hasMovedThisTurn && isAlive
+    
+    // Aliases for test compatibility
+    var hasActed: Boolean
+        get() = hasActedThisTurn
+        set(value) { hasActedThisTurn = value }
+    
+    var hasMoved: Boolean
+        get() = hasMovedThisTurn  
+        set(value) { hasMovedThisTurn = value }
+    
+    fun resetActions() {
+        resetTurn()
+    }
 
     fun resetTurn() {
         hasActedThisTurn = false
@@ -67,6 +80,14 @@ data class Character(
 
     fun heal(amount: Int) {
         currentHp = minOf(maxHp, currentHp + amount)
+    }
+    
+    fun useMana(amount: Int) {
+        currentMp = maxOf(0, currentMp - amount)
+    }
+    
+    fun restoreMana(amount: Int) {
+        currentMp = minOf(maxMp, currentMp + amount)
     }
 
     fun gainExperience(exp: Int) {
