@@ -13,21 +13,18 @@ data class Stats(
     val defense: Int,
     val speed: Int,
     val skill: Int,
-    val luck: Int
+    val luck: Int,
 ) : Parcelable {
-    operator fun plus(other: Stats): Stats {
-        return Stats(
+    operator fun plus(other: Stats): Stats =
+        Stats(
             hp + other.hp,
             mp + other.mp,
             attack + other.attack,
             defense + other.defense,
             speed + other.speed,
             skill + other.skill,
-            luck + other.luck
+            luck + other.luck,
         )
-    }
-    
-    fun toDisplayString(): String {
-        return "HP: $hp  MP: $mp  ATK: $attack\nDEF: $defense  SPD: $speed  SKL: $skill\nLCK: $luck"
-    }
+
+    fun toDisplayString(): String = "HP: $hp  MP: $mp  ATK: $attack\nDEF: $defense  SPD: $speed  SKL: $skill\nLCK: $luck"
 }
