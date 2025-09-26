@@ -1,7 +1,12 @@
 package com.gameaday.opentactics
 
 import com.gameaday.opentactics.game.GameState
-import com.gameaday.opentactics.model.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.CharacterClass
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
+import com.gameaday.opentactics.model.TerrainType
 
 fun main() {
     println("=================================")

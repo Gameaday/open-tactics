@@ -22,7 +22,7 @@ allprojects {
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         version.set("1.3.1")
         android.set(true)
-        ignoreFailures.set(true) // Allow build to complete while we fix formatting
+        ignoreFailures.set(false)
     }
 }
 

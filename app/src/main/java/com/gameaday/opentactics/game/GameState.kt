@@ -11,15 +11,16 @@ class GameState(
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 1
-    
+
     // Properties expected by tests
     val currentTeam: Team get() = currentTurn
     val turnCounter: Int get() = turnCount
-    val isGameOver: Boolean 
-        get() = gamePhase == GamePhase.GAME_OVER || 
-                getAlivePlayerCharacters().isEmpty() || 
+    val isGameOver: Boolean
+        get() =
+            gamePhase == GamePhase.GAME_OVER ||
+                getAlivePlayerCharacters().isEmpty() ||
                 getAliveEnemyCharacters().isEmpty()
-    val currentPlayerCharacter: Character? 
+    val currentPlayerCharacter: Character?
         get() = if (currentTurn == Team.PLAYER) selectedCharacter else null
 
     enum class GamePhase {
@@ -35,9 +36,9 @@ class GameState(
     fun getPlayerCharacters(): List<Character> = playerCharacters.toList()
 
     fun getEnemyCharacters(): List<Character> = enemyCharacters.toList()
-    
+
     fun getAlivePlayerCharacters(): List<Character> = playerCharacters.filter { it.isAlive }
-    
+
     fun getAliveEnemyCharacters(): List<Character> = enemyCharacters.filter { it.isAlive }
 
     fun addPlayerCharacter(character: Character) {
@@ -51,11 +52,12 @@ class GameState(
     fun selectCharacter(character: Character?): Boolean {
         if (character != null && character.team == currentTurn && character.isAlive) {
             selectedCharacter = character
-            gamePhase = when {
-                character.canMove -> GamePhase.MOVEMENT
-                character.canAct -> GamePhase.ACTION
-                else -> GamePhase.UNIT_SELECT
-            }
+            gamePhase =
+                when {
+                    character.canMove -> GamePhase.MOVEMENT
+                    character.canAct -> GamePhase.ACTION
+                    else -> GamePhase.UNIT_SELECT
+                }
             return true
         } else {
             selectedCharacter = null
