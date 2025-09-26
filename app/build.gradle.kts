@@ -4,6 +4,7 @@ plugins {
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jlleitschuh.gradle.ktlint")
+    id("jacoco")
 }
 
 // Version configuration
@@ -12,7 +13,7 @@ val versionMinor = 0
 val versionPatch = 0
 
 fun generateVersionCode(): Int {
-    val commitCount = "git rev-list --count HEAD".runCommand() ?: 1
+    val commitCount = "git rev-list --count HEAD".runCommand()?.toIntOrNull() ?: 1
     return commitCount
 }
 
@@ -48,12 +49,12 @@ fun String.runCommand(): String? {
 
 android {
     namespace = "com.gameaday.opentactics"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.gameaday.opentactics"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         
         versionCode = if (project.hasProperty("versionCode")) {
             (project.property("versionCode") as String).toInt()
@@ -139,12 +140,12 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
     }
     
     buildFeatures {
@@ -216,4 +217,86 @@ tasks.register("printVersionInfo") {
         println("Version Code: ${android.defaultConfig.versionCode}")
         println("Application ID: ${android.defaultConfig.applicationId}")
     }
+}
+
+// JaCoCo configuration for code coverage
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+    
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R\$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/databinding/**/*.*",
+        "**/generated/**/*.*"
+    )
+    
+    val debugTree = fileTree("${buildDir}/intermediates/classes/debug")
+    debugTree.exclude(fileFilter)
+    val kotlinDebugTree = fileTree("${buildDir}/tmp/kotlin-classes/debug")
+    kotlinDebugTree.exclude(fileFilter)
+    
+    classDirectories.setFrom(debugTree, kotlinDebugTree)
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
+    executionData.setFrom(fileTree(buildDir).include("**/jacoco/*.exec"))
+}
+
+tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn("jacocoTestReport")
+    
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()  // 80% coverage minimum
+            }
+        }
+        
+        rule {
+            element = "CLASS"
+            limit {
+                minimum = "0.70".toBigDecimal()  // 70% minimum per class
+            }
+            excludes = listOf(
+                "*.BuildConfig",
+                "*.*Test*",
+                "*.R",
+                "*.R$*",
+                "*.*Activity",
+                "*.*Fragment"
+            )
+        }
+    }
+    
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R\$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*",
+        "**/databinding/**/*.*",
+        "**/generated/**/*.*"
+    )
+    
+    val debugTree = fileTree("${buildDir}/intermediates/classes/debug")
+    debugTree.exclude(fileFilter)
+    val kotlinDebugTree = fileTree("${buildDir}/tmp/kotlin-classes/debug")
+    kotlinDebugTree.exclude(fileFilter)
+    
+    classDirectories.setFrom(debugTree, kotlinDebugTree)
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
+    executionData.setFrom(fileTree(buildDir).include("**/jacoco/*.exec"))
 }

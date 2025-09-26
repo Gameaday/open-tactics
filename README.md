@@ -30,8 +30,8 @@ A Fire Emblem-style tactical RPG for Android, built with modern Kotlin architect
 ## Development
 
 ### Prerequisites
-- Android Studio Arctic Fox or later
-- JDK 17+
+- Android Studio Hedgehog or later  
+- JDK 21 LTS
 - Android SDK 24+
 
 ### Build Variants
@@ -61,6 +61,18 @@ cd open-tactics
 ```bash
 ./gradlew test
 ./gradlew connectedAndroidTest
+```
+
+#### Test Coverage
+```bash
+# Generate coverage report
+./gradlew jacocoTestReport
+
+# Verify coverage meets minimum requirements (80%)
+./gradlew jacocoTestCoverageVerification
+
+# View HTML coverage report
+open app/build/reports/jacoco/jacocoTestReport/html/index.html
 ```
 
 ### Code Quality
