@@ -2,15 +2,11 @@ package com.gameaday.opentactics.model
 
 data class GameBoard(
     val width: Int,
-    val height: Int,
-    private val tiles: Array<Array<Tile>>
+    val height: Int
 ) {
-    init {
-        // Initialize tiles
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                tiles[y][x] = Tile(Position(x, y), TerrainType.PLAIN)
-            }
+    private val tiles: Array<Array<Tile>> = Array(height) { y ->
+        Array(width) { x ->
+            Tile(Position(x, y), TerrainType.PLAIN)
         }
     }
 
@@ -83,11 +79,11 @@ data class GameBoard(
             val board = GameBoard(12, 8)
             
             // Add some terrain variety
-            board.getTile(2, 2)?.let { it.terrain = TerrainType.FOREST }
-            board.getTile(3, 2)?.let { it.terrain = TerrainType.FOREST }
-            board.getTile(8, 4)?.let { it.terrain = TerrainType.MOUNTAIN }
-            board.getTile(9, 4)?.let { it.terrain = TerrainType.MOUNTAIN }
-            board.getTile(5, 1)?.let { it.terrain = TerrainType.FORT }
+            board.getTile(2, 2)?.terrain = TerrainType.FOREST
+            board.getTile(3, 2)?.terrain = TerrainType.FOREST
+            board.getTile(8, 4)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(9, 4)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(5, 1)?.terrain = TerrainType.FORT
             
             return board
         }

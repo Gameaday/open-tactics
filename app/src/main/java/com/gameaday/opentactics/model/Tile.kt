@@ -23,7 +23,7 @@ enum class TerrainType(
 @Serializable
 data class Tile(
     val position: Position,
-    val terrain: TerrainType,
+    var terrain: TerrainType,
     var occupant: Character? = null
 ) : Parcelable {
     val isOccupied: Boolean
