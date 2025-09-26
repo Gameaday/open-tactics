@@ -1,0 +1,1 @@
+Classic tactical RPG with strategic turn-based combat. Lead heroes through grid-based battles with deep gameplay mechanics.

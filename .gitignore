@@ -23,3 +23,22 @@ local.properties
 *.jar
 *.log
 *.tmp
+
+# Generated files
+lint-baseline.xml
+
+# Quality reports
+**/build/reports/
+**/build/outputs/logs/
+
+# Documentation
+**/build/dokka/
+**/build/javadoc/
+
+# Security
+keystore.jks
+*.keystore
+
+# OS specific
+Thumbs.db
+.DS_Store

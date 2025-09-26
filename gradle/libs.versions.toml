@@ -1,0 +1,82 @@
+[versions]
+# SDK and Tools
+compileSdk = "34"
+minSdk = "24"
+targetSdk = "34"
+
+# Gradle Plugins
+android-gradle = "8.1.4"
+kotlin = "1.9.10"
+ktlint-gradle = "11.6.1"
+
+# AndroidX
+androidx-core = "1.12.0"
+androidx-appcompat = "1.6.1"
+androidx-constraintlayout = "2.1.4"
+androidx-lifecycle = "2.7.0"
+androidx-fragment = "1.6.2"
+androidx-preference = "1.2.1"
+androidx-navigation = "2.7.5"
+androidx-security = "1.1.0-alpha06"
+
+# Material Design
+material = "1.10.0"
+
+# Serialization
+kotlinx-serialization = "1.6.0"
+
+# Testing
+junit = "4.13.2"
+androidx-test-ext = "1.1.5"
+androidx-test-espresso = "3.5.1"
+androidx-test-core = "1.5.0"
+androidx-test-runner = "1.5.2"
+androidx-test-rules = "1.5.0"
+androidx-test-uiautomator = "2.2.0"
+mockito = "5.7.0"
+mockito-kotlin = "5.1.0"
+robolectric = "4.11.1"
+
+[libraries]
+# AndroidX
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidx-constraintlayout" }
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "androidx-lifecycle" }
+androidx-fragment = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidx-fragment" }
+androidx-preference = { group = "androidx.preference", name = "preference-ktx", version.ref = "androidx-preference" }
+androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "androidx-navigation" }
+androidx-navigation-ui = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "androidx-navigation" }
+androidx-security = { group = "androidx.security", name = "security-crypto", version.ref = "androidx-security" }
+
+# Material Design
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+# Testing
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-test-espresso" }
+androidx-test-espresso-contrib = { group = "androidx.test.espresso", name = "espresso-contrib", version.ref = "androidx-test-espresso" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
+androidx-test-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "androidx-test-uiautomator" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito-kotlin" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+[bundles]
+androidx-lifecycle = ["androidx-lifecycle-viewmodel", "androidx-lifecycle-livedata"]
+androidx-navigation = ["androidx-navigation-fragment", "androidx-navigation-ui"]
+testing-unit = ["junit", "mockito-core", "mockito-kotlin", "androidx-test-core", "robolectric"]
+testing-android = ["androidx-test-ext", "androidx-test-espresso-core", "androidx-test-espresso-contrib", "androidx-test-runner", "androidx-test-rules", "androidx-test-uiautomator"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "android-gradle" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }
