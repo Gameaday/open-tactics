@@ -1,7 +1,14 @@
 package com.gameaday.opentactics
 
-import com.gameaday.opentactics.model.*
-import org.junit.Assert.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.CharacterClass
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GameModelTest {

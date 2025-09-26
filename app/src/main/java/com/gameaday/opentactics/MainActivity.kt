@@ -7,11 +7,13 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.gameaday.opentactics.data.*
+import com.gameaday.opentactics.data.PlayerProfile
+import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -204,9 +206,9 @@ class MainActivity : AppCompatActivity() {
             .Builder(this)
             .setTitle("Delete Save Game")
             .setMessage(
-                "Are you sure you want to delete this save?\n\n${saveFile.playerName} - Chapter ${saveFile.campaignLevel}\n${dateFormat.format(
-                    Date(saveFile.lastSaved),
-                )}",
+                "Are you sure you want to delete this save?\n\n${saveFile.playerName} - Chapter ${saveFile.campaignLevel}\n${
+                    dateFormat.format(Date(saveFile.lastSaved))
+                }",
             ).setPositiveButton("Delete") { _, _ ->
                 lifecycleScope.launch {
                     saveGameManager.deleteSave(saveFile.saveId).fold(

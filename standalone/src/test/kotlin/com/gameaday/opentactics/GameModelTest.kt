@@ -1,6 +1,10 @@
 package com.gameaday.opentactics
 
-import com.gameaday.opentactics.model.*
+import com.gameaday.opentactics.model.Character
+import com.gameaday.opentactics.model.CharacterClass
+import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Team
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
