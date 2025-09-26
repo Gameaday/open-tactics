@@ -1,11 +1,9 @@
 package com.gameaday.opentactics.model
 
-import org.junit.Test
 import org.junit.Assert.*
-import org.junit.Before
+import org.junit.Test
 
 class PositionTest {
-
     @Test
     fun testPositionCreation() {
         val position = Position(5, 3)
@@ -18,7 +16,7 @@ class PositionTest {
         val pos1 = Position(0, 0)
         val pos2 = Position(3, 4)
         val pos3 = Position(-2, 1)
-        
+
         // Manhattan distance
         assertEquals(7, pos1.distanceTo(pos2))
         assertEquals(3, pos1.distanceTo(pos3))
@@ -40,13 +38,13 @@ class PositionTest {
         val west = Position(4, 5)
         val diagonal = Position(6, 6)
         val farAway = Position(8, 8)
-        
+
         // Adjacent positions (distance = 1)
         assertTrue(center.isAdjacentTo(north))
         assertTrue(center.isAdjacentTo(south))
         assertTrue(center.isAdjacentTo(east))
         assertTrue(center.isAdjacentTo(west))
-        
+
         // Non-adjacent positions
         assertFalse(center.isAdjacentTo(diagonal)) // Distance = 2
         assertFalse(center.isAdjacentTo(farAway)) // Distance > 2
@@ -57,7 +55,7 @@ class PositionTest {
     fun testGetNeighbors() {
         val position = Position(5, 5)
         val neighbors = position.getNeighbors()
-        
+
         assertEquals(4, neighbors.size)
         assertTrue(neighbors.contains(Position(4, 5))) // West
         assertTrue(neighbors.contains(Position(6, 5))) // East
@@ -69,19 +67,19 @@ class PositionTest {
     fun testGetNeighborsAtOrigin() {
         val origin = Position(0, 0)
         val neighbors = origin.getNeighbors()
-        
+
         assertEquals(4, neighbors.size)
         assertTrue(neighbors.contains(Position(-1, 0))) // West
-        assertTrue(neighbors.contains(Position(1, 0)))  // East
+        assertTrue(neighbors.contains(Position(1, 0))) // East
         assertTrue(neighbors.contains(Position(0, -1))) // North
-        assertTrue(neighbors.contains(Position(0, 1)))  // South
+        assertTrue(neighbors.contains(Position(0, 1))) // South
     }
 
     @Test
     fun testGetNeighborsWithNegativeCoordinates() {
         val position = Position(-2, -3)
         val neighbors = position.getNeighbors()
-        
+
         assertEquals(4, neighbors.size)
         assertTrue(neighbors.contains(Position(-3, -3))) // West
         assertTrue(neighbors.contains(Position(-1, -3))) // East
@@ -94,7 +92,7 @@ class PositionTest {
         val pos1 = Position(3, 4)
         val pos2 = Position(3, 4)
         val pos3 = Position(4, 3)
-        
+
         assertEquals(pos1, pos2)
         assertNotEquals(pos1, pos3)
     }
@@ -104,7 +102,7 @@ class PositionTest {
         val pos1 = Position(3, 4)
         val pos2 = Position(3, 4)
         val pos3 = Position(4, 3)
-        
+
         assertEquals(pos1.hashCode(), pos2.hashCode())
         assertNotEquals(pos1.hashCode(), pos3.hashCode())
     }
@@ -113,7 +111,7 @@ class PositionTest {
     fun testToString() {
         val position = Position(3, 4)
         val string = position.toString()
-        
+
         assertTrue(string.contains("3"))
         assertTrue(string.contains("4"))
     }

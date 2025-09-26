@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
     application
-    id("org.jlleitschuh.gradle.ktlint")
+    alias(libs.plugins.ktlint)
 }
 
 application {

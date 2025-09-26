@@ -5,52 +5,51 @@ import com.gameaday.opentactics.model.*
 class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
-    private val enemyCharacters: MutableList<Character> = mutableListOf()
+    private val enemyCharacters: MutableList<Character> = mutableListOf(),
 ) {
     var currentTurn: Team = Team.PLAYER
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 1
-    
+
     enum class GamePhase {
         UNIT_SELECT,
         MOVEMENT,
         ACTION,
         ENEMY_TURN,
-        GAME_OVER
+        GAME_OVER,
     }
-    
+
     fun getAllCharacters(): List<Character> = playerCharacters + enemyCharacters
-    
+
     fun getPlayerCharacters(): List<Character> = playerCharacters.toList()
-    
+
     fun getEnemyCharacters(): List<Character> = enemyCharacters.toList()
-    
+
     fun addPlayerCharacter(character: Character) {
         playerCharacters.add(character)
     }
-    
+
     fun addEnemyCharacter(character: Character) {
         enemyCharacters.add(character)
     }
-    
+
     fun selectCharacter(character: Character?) {
         selectedCharacter = character
-        gamePhase = if (character != null && character.team == currentTurn) {
-            when {
-                character.canMove -> GamePhase.MOVEMENT
-                character.canAct -> GamePhase.ACTION
-                else -> GamePhase.UNIT_SELECT
+        gamePhase =
+            if (character != null && character.team == currentTurn) {
+                when {
+                    character.canMove -> GamePhase.MOVEMENT
+                    character.canAct -> GamePhase.ACTION
+                    else -> GamePhase.UNIT_SELECT
+                }
+            } else {
+                GamePhase.UNIT_SELECT
             }
-        } else {
-            GamePhase.UNIT_SELECT
-        }
     }
-    
-    fun canSelectCharacter(character: Character): Boolean {
-        return character.team == currentTurn && (character.canMove || character.canAct)
-    }
-    
+
+    fun canSelectCharacter(character: Character): Boolean = character.team == currentTurn && (character.canMove || character.canAct)
+
     fun endTurn() {
         when (currentTurn) {
             Team.PLAYER -> {
@@ -71,7 +70,7 @@ class GameState(
         }
         selectedCharacter = null
     }
-    
+
     private fun executeEnemyTurn() {
         // Simple AI: Move towards nearest player unit and attack if possible
         for (enemy in enemyCharacters.filter { it.isAlive && it.canAct }) {
@@ -85,7 +84,7 @@ class GameState(
                         enemy.hasMovedThisTurn = true
                     }
                 }
-                
+
                 // Try to attack
                 if (enemy.canAct && enemy.position.distanceTo(nearestPlayer.position) <= enemy.characterClass.attackRange) {
                     performAttack(enemy, nearestPlayer)
@@ -93,42 +92,44 @@ class GameState(
                 }
             }
         }
-        
+
         // End enemy turn
         endTurn()
     }
-    
-    private fun findNearestPlayerCharacter(enemy: Character): Character? {
-        return playerCharacters
+
+    private fun findNearestPlayerCharacter(enemy: Character): Character? =
+        playerCharacters
             .filter { it.isAlive }
             .minByOrNull { it.position.distanceTo(enemy.position) }
-    }
-    
-    private fun findBestMovePosition(character: Character, target: Character): Position? {
+
+    private fun findBestMovePosition(
+        character: Character,
+        target: Character,
+    ): Position? {
         val possibleMoves = calculatePossibleMoves(character)
         return possibleMoves.minByOrNull { it.distanceTo(target.position) }
     }
-    
+
     fun calculatePossibleMoves(character: Character): List<Position> {
         if (!character.canMove) return emptyList()
-        
+
         val moves = mutableListOf<Position>()
         val visited = mutableSetOf<Position>()
         val queue = mutableListOf(Pair(character.position, 0))
-        
+
         while (queue.isNotEmpty()) {
             val (currentPos, distance) = queue.removeFirst()
-            
+
             if (currentPos in visited) continue
             visited.add(currentPos)
-            
+
             if (distance > 0) { // Don't include starting position
                 val tile = board.getTile(currentPos)
                 if (tile != null && tile.canBeOccupiedBy(character)) {
                     moves.add(currentPos)
                 }
             }
-            
+
             if (distance < character.characterClass.movementRange) {
                 for (neighbor in currentPos.getNeighbors()) {
                     if (board.isValidPosition(neighbor) && neighbor !in visited) {
@@ -140,16 +141,16 @@ class GameState(
                 }
             }
         }
-        
+
         return moves
     }
-    
+
     fun calculateAttackTargets(character: Character): List<Character> {
         if (!character.canAct) return emptyList()
-        
+
         val targets = mutableListOf<Character>()
         val attackRange = character.characterClass.attackRange
-        
+
         for (target in getAllCharacters()) {
             if (target.team != character.team && target.isAlive) {
                 if (character.position.distanceTo(target.position) <= attackRange) {
@@ -157,21 +158,25 @@ class GameState(
                 }
             }
         }
-        
+
         return targets
     }
-    
-    fun performAttack(attacker: Character, target: Character): BattleResult {
+
+    fun performAttack(
+        attacker: Character,
+        target: Character,
+    ): BattleResult {
         val damage = calculateDamage(attacker, target)
         target.takeDamage(damage)
-        
-        val result = BattleResult(
-            attacker = attacker,
-            target = target,
-            damage = damage,
-            targetDefeated = !target.isAlive
-        )
-        
+
+        val result =
+            BattleResult(
+                attacker = attacker,
+                target = target,
+                damage = damage,
+                targetDefeated = !target.isAlive,
+            )
+
         if (result.targetDefeated) {
             attacker.gainExperience(target.level * 25)
             board.removeCharacter(target)
@@ -179,21 +184,24 @@ class GameState(
         } else {
             attacker.gainExperience(10)
         }
-        
+
         checkGameEnd()
         return result
     }
-    
-    private fun calculateDamage(attacker: Character, target: Character): Int {
+
+    private fun calculateDamage(
+        attacker: Character,
+        target: Character,
+    ): Int {
         val attackStat = attacker.currentStats.attack
         val defenseStat = target.currentStats.defense
         val baseDamage = maxOf(1, attackStat - defenseStat / 2)
-        
+
         // Add some randomness (±25%)
         val variance = (baseDamage * 0.25).toInt()
         return maxOf(1, baseDamage + (-variance..variance).random())
     }
-    
+
     private fun removeDefeatedCharacter(character: Character) {
         when (character.team) {
             Team.PLAYER -> playerCharacters.remove(character)
@@ -201,7 +209,7 @@ class GameState(
             else -> {}
         }
     }
-    
+
     private fun checkGameEnd() {
         when {
             playerCharacters.none { it.isAlive } -> {
@@ -212,19 +220,15 @@ class GameState(
             }
         }
     }
-    
-    fun isGameWon(): Boolean {
-        return enemyCharacters.none { it.isAlive }
-    }
-    
-    fun isGameLost(): Boolean {
-        return playerCharacters.none { it.isAlive }
-    }
+
+    fun isGameWon(): Boolean = enemyCharacters.none { it.isAlive }
+
+    fun isGameLost(): Boolean = playerCharacters.none { it.isAlive }
 }
 
 data class BattleResult(
     val attacker: Character,
     val target: Character,
     val damage: Int,
-    val targetDefeated: Boolean
+    val targetDefeated: Boolean,
 )

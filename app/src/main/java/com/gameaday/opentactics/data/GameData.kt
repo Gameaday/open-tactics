@@ -1,10 +1,10 @@
 package com.gameaday.opentactics.data
 
 import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-import kotlinx.serialization.Serializable
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.Team
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import java.util.*
 
 @Parcelize
@@ -16,7 +16,7 @@ data class GameSave(
     val totalPlayTime: Long,
     val lastSaved: Long = System.currentTimeMillis(),
     val gameState: SavedGameState,
-    val isAutoSave: Boolean = false
+    val isAutoSave: Boolean = false,
 ) : Parcelable
 
 @Parcelize
@@ -28,7 +28,7 @@ data class SavedGameState(
     val enemyCharacters: List<Character>,
     val currentTurn: Team,
     val turnCount: Int,
-    val campaignProgress: CampaignProgress
+    val campaignProgress: CampaignProgress,
 ) : Parcelable
 
 @Parcelize
@@ -38,7 +38,7 @@ data class CampaignProgress(
     val chaptersCompleted: Int = 0,
     val totalBattlesWon: Int = 0,
     val totalExperienceGained: Int = 0,
-    val unitsLost: Int = 0
+    val unitsLost: Int = 0,
 ) : Parcelable
 
 @Parcelize
@@ -52,7 +52,7 @@ data class PlayerProfile(
     val totalBattlesWon: Int = 0,
     val achievementsUnlocked: List<String> = emptyList(),
     val statisticsUnlocked: Map<String, Int> = emptyMap(),
-    val preferences: GamePreferences = GamePreferences()
+    val preferences: GamePreferences = GamePreferences(),
 ) : Parcelable
 
 @Parcelize
@@ -63,5 +63,5 @@ data class GamePreferences(
     val animationSpeed: Float = 1.0f,
     val showDamageNumbers: Boolean = true,
     val autoSaveEnabled: Boolean = true,
-    val autoSaveFrequency: Int = 5 // turns
+    val autoSaveFrequency: Int = 5, // turns
 ) : Parcelable

@@ -1,10 +1,9 @@
 package com.gameaday.opentactics.model
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class CharacterClassTest {
-
     @Test
     fun testKnightStats() {
         val knight = CharacterClass.KNIGHT
