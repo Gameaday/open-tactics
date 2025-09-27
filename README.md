@@ -89,7 +89,7 @@ open app/build/reports/jacoco/jacocoTestReport/html/index.html
 ./gradlew detekt
 
 # Android lint
-./gradlew lintDebug
+./gradlew lint
 ```
 
 #### Quality Gates
