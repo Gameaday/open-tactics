@@ -121,7 +121,7 @@ class GameState(
         val queue = mutableListOf(Pair(character.position, 0))
 
         while (queue.isNotEmpty()) {
-            val (currentPos, distance) = queue.removeFirst()
+            val (currentPos, distance) = queue.removeAt(0)
 
             if (currentPos in visited) continue
             visited.add(currentPos)
