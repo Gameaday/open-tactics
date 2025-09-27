@@ -37,7 +37,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run lint checks
-        run: ./gradlew lintDebug
+        run: ./gradlew lint
 
       - name: Run detekt static analysis
         run: ./gradlew detekt

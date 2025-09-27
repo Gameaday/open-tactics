@@ -34,3 +34,10 @@ tasks.register("qualityCheck") {
         subprojects.map { "${it.name}:test" },
     )
 }
+
+// Convenience task for Android lint
+tasks.register("lint") {
+    dependsOn("app:lint")
+    group = "verification"
+    description = "Runs Android lint on the default variant"
+}
