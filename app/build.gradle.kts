@@ -178,8 +178,6 @@ android {
         checkReleaseBuilds = true
         warningsAsErrors = false
 
-        baseline = file("lint-baseline.xml")
-
         disable +=
             listOf(
                 "TypographyFractions",

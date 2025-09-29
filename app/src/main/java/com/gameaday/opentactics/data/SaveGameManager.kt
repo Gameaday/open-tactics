@@ -3,7 +3,7 @@ package com.gameaday.opentactics.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -20,13 +20,15 @@ class SaveGameManager(
             ignoreUnknownKeys = true
         }
 
-    private val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
 
     private val profilePrefs: SharedPreferences by lazy {
         EncryptedSharedPreferences.create(
-            "player_profile",
-            masterKeyAlias,
             context,
+            "player_profile",
+            masterKey,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
         )

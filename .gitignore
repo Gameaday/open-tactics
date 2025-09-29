@@ -18,6 +18,9 @@ local.properties
 /standalone/build
 /standalone/.gradle
 
+# Kotlin compiler
+.kotlin/
+
 # Temporary files
 /src
 *.jar
