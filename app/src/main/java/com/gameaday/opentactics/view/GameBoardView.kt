@@ -94,6 +94,8 @@ class GameBoardView
         private val selectedHighlightColor = Color.parseColor("#FF00BCD4") // Cyan
 
         // Icon resources
+        // Character class icons mapping
+        // New classes (Pegasus Knight, Wyvern Rider, Manakete, Dragon) will use fallback text rendering
         private val iconMap =
             mapOf(
                 CharacterClass.KNIGHT to R.drawable.ic_knight,

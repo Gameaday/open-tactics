@@ -116,6 +116,7 @@ class GameDemo {
         println("Game initialized with $playerCount player units and $enemyCount enemy units")
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun printBoard() {
         val board = gameState.board
 
@@ -144,6 +145,10 @@ class GameDemo {
                                         CharacterClass.MAGE -> "♗"
                                         CharacterClass.HEALER -> "♕"
                                         CharacterClass.THIEF -> "♘"
+                                        CharacterClass.PEGASUS_KNIGHT -> "♘"
+                                        CharacterClass.WYVERN_RIDER -> "♖"
+                                        CharacterClass.MANAKETE -> "♛"
+                                        CharacterClass.DRAGON -> "♚"
                                     }
                                 Team.ENEMY ->
                                     when (character.characterClass) {
@@ -152,6 +157,10 @@ class GameDemo {
                                         CharacterClass.MAGE -> "♝"
                                         CharacterClass.HEALER -> "♛"
                                         CharacterClass.THIEF -> "♞"
+                                        CharacterClass.PEGASUS_KNIGHT -> "♞"
+                                        CharacterClass.WYVERN_RIDER -> "♜"
+                                        CharacterClass.MANAKETE -> "♛"
+                                        CharacterClass.DRAGON -> "♚"
                                     }
                                 else -> "?"
                             }

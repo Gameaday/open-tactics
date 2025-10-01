@@ -3,12 +3,15 @@ package com.gameaday.opentactics.model
 import kotlinx.serialization.Serializable
 
 @Serializable
+@Suppress("LongParameterList")
 enum class CharacterClass(
     val displayName: String,
     val baseStats: Stats,
     val movementRange: Int,
     val attackRange: Int,
     val canFly: Boolean = false,
+    val canTransform: Boolean = false,
+    val transformsToName: String? = null,
 ) {
     KNIGHT(
         "Knight",
@@ -49,4 +52,45 @@ enum class CharacterClass(
         attackRange = 1,
         canFly = false,
     ),
+
+    PEGASUS_KNIGHT(
+        "Pegasus Knight",
+        Stats(hp = 20, mp = 8, attack = 13, defense = 10, speed = 16, skill = 14, luck = 12),
+        movementRange = 6,
+        attackRange = 1,
+        canFly = true,
+    ),
+
+    WYVERN_RIDER(
+        "Wyvern Rider",
+        Stats(hp = 28, mp = 6, attack = 16, defense = 16, speed = 12, skill = 12, luck = 8),
+        movementRange = 6,
+        attackRange = 1,
+        canFly = true,
+    ),
+
+    MANAKETE(
+        "Manakete",
+        Stats(hp = 22, mp = 15, attack = 10, defense = 12, speed = 10, skill = 12, luck = 10),
+        movementRange = 3,
+        attackRange = 1,
+        canFly = false,
+        canTransform = true,
+        transformsToName = "DRAGON",
+    ),
+
+    DRAGON(
+        "Dragon",
+        Stats(hp = 35, mp = 20, attack = 22, defense = 20, speed = 14, skill = 16, luck = 12),
+        movementRange = 5,
+        attackRange = 2,
+        canFly = true,
+        canTransform = false,
+    );
+
+    val transformsTo: CharacterClass?
+        get() = transformsToName?.let { name ->
+            values().find { it.name == name }
+        }
 }
+

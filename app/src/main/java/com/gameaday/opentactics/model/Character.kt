@@ -20,7 +20,7 @@ enum class Team {
 data class Character(
     val id: String,
     val name: String,
-    val characterClass: CharacterClass,
+    var characterClass: CharacterClass,
     val team: Team,
     var position: Position,
     var level: Int = 1,
@@ -29,6 +29,8 @@ data class Character(
     var currentMp: Int = characterClass.baseStats.mp,
     var hasActedThisTurn: Boolean = false,
     var hasMovedThisTurn: Boolean = false,
+    var isTransformed: Boolean = false,
+    var originalClass: CharacterClass? = null,
 ) : Parcelable {
     val currentStats: Stats
         get() {
@@ -114,4 +116,60 @@ data class Character(
         currentHp = maxHp
         currentMp = maxMp
     }
+
+    /**
+     * Transform the character to their transformed class (e.g., Manakete -> Dragon)
+     * @return true if transformation was successful, false otherwise
+     */
+    fun transform(): Boolean {
+        if (!characterClass.canTransform) return false
+        val transformTo = characterClass.transformsTo ?: return false
+        
+        // Store original class
+        originalClass = characterClass
+        
+        // Transform
+        characterClass = transformTo
+        isTransformed = true
+        
+        // Restore HP/MP to maximum of new form
+        currentHp = maxHp
+        currentMp = maxMp
+        
+        return true
+    }
+
+    /**
+     * Revert transformation back to original class
+     * @return true if reversion was successful, false otherwise
+     */
+    fun revertTransform(): Boolean {
+        if (!isTransformed) return false
+        val original = originalClass ?: return false
+        
+        // Calculate HP/MP ratio before transformation
+        val hpRatio = currentHp.toFloat() / maxHp
+        val mpRatio = currentMp.toFloat() / maxMp
+        
+        // Revert to original class
+        characterClass = original
+        isTransformed = false
+        originalClass = null
+        
+        // Restore HP/MP proportionally
+        currentHp = (maxHp * hpRatio).toInt().coerceIn(1, maxHp)
+        currentMp = (maxMp * mpRatio).toInt().coerceIn(0, maxMp)
+        
+        return true
+    }
+
+    /**
+     * Check if character can transform (has transformation ability and not already transformed)
+     */
+    fun canTransformNow(): Boolean = characterClass.canTransform && !isTransformed
+
+    /**
+     * Check if character can revert transformation
+     */
+    fun canRevertTransform(): Boolean = isTransformed && originalClass != null
 }
