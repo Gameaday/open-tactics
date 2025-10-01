@@ -79,6 +79,7 @@ class GameActivity : AppCompatActivity() {
         playerProfile?.let { saveGameManager.saveProfile(it) }
     }
 
+    @Suppress("LongMethod") // Game initialization requires many character setups
     private fun initializeNewGame(playerName: String) {
         val board = GameBoard.createTestMap()
         gameState = GameState(board)

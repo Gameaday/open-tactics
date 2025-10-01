@@ -7,6 +7,7 @@ import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Team
 import com.gameaday.opentactics.model.TerrainType
+import com.gameaday.opentactics.model.Weapon
 
 // Character starting positions
 private const val PLAYER_KNIGHT_X = 1

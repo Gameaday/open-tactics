@@ -1,3 +1,4 @@
+@file:Suppress("MagicNumber")
 package com.gameaday.opentactics.model
 
 // Simplified weapon system for standalone (no serialization needed for console demo)

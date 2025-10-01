@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber") // Weapon stats are inherently numeric
+
 package com.gameaday.opentactics.model
 
 import android.os.Parcelable
