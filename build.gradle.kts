@@ -41,3 +41,23 @@ tasks.register("lint") {
     group = "verification"
     description = "Runs Android lint on the default variant"
 }
+
+// Convenience task to run all unit tests across all flavors
+tasks.register("testAllUnitTests") {
+    dependsOn(
+        ":app:testDevDebugUnitTest",
+        ":app:testProdDebugUnitTest",
+    )
+    group = "verification"
+    description = "Runs unit tests for all product flavors (dev and prod) in debug mode"
+}
+
+// Convenience task to assemble all debug variants
+tasks.register("assembleAllDebug") {
+    dependsOn(
+        ":app:assembleDevDebug",
+        ":app:assembleProdDebug",
+    )
+    group = "build"
+    description = "Assembles debug builds for all product flavors (dev and prod)"
+}
