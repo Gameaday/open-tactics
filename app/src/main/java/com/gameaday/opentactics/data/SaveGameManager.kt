@@ -20,9 +20,11 @@ class SaveGameManager(
             ignoreUnknownKeys = true
         }
 
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    private val masterKey =
+        MasterKey
+            .Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
 
     private val profilePrefs: SharedPreferences by lazy {
         EncryptedSharedPreferences.create(
