@@ -3,6 +3,32 @@ package com.gameaday.opentactics.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.KSerializer
+
+/**
+ * Custom serializer for IntRange
+ */
+@Serializer(forClass = IntRange::class)
+object IntRangeSerializer : KSerializer<IntRange> {
+    override val descriptor: SerialDescriptor = 
+        PrimitiveSerialDescriptor("IntRange", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: IntRange) {
+        encoder.encodeString("${value.first}..${value.last}")
+    }
+
+    override fun deserialize(decoder: Decoder): IntRange {
+        val string = decoder.decodeString()
+        val parts = string.split("..")
+        return IntRange(parts[0].toInt(), parts[1].toInt())
+    }
+}
 
 /**
  * Weapon types follow Fire Emblem triangle system:
@@ -40,6 +66,7 @@ data class Weapon(
     val hit: Int, // Hit rate bonus (0-100)
     val critical: Int, // Critical hit bonus (0-100)
     val weight: Int, // Affects speed penalty
+    @Serializable(with = IntRangeSerializer::class)
     val range: IntRange, // Attack range (e.g., 1..1 for melee, 2..2 for bow)
     val maxUses: Int, // Durability
     var currentUses: Int = maxUses, // Remaining uses

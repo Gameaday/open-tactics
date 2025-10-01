@@ -180,6 +180,9 @@ class GameState(
     ): BattleResult {
         val damage = calculateDamage(attacker, target)
         target.takeDamage(damage)
+        
+        // Use weapon durability
+        attacker.useEquippedWeapon()
 
         val result =
             BattleResult(
@@ -205,9 +208,39 @@ class GameState(
         attacker: Character,
         target: Character,
     ): Int {
-        val attackStat = attacker.currentStats.attack
-        val defenseStat = target.currentStats.defense
-        val baseDamage = maxOf(1, attackStat - defenseStat / 2)
+        val attackerWeapon = attacker.equippedWeapon
+        val targetWeapon = target.equippedWeapon
+        
+        // Base attack from character stats
+        var attackPower = attacker.currentStats.attack
+        
+        // Add weapon might
+        if (attackerWeapon != null && !attackerWeapon.isBroken) {
+            attackPower += attackerWeapon.might
+            
+            // Apply weapon triangle bonus
+            if (targetWeapon != null) {
+                val triangleBonus = attackerWeapon.getTriangleBonus(targetWeapon.type)
+                attackPower = (attackPower * triangleBonus).toInt()
+            }
+            
+            // Apply effective damage bonus
+            if (attackerWeapon.isEffectiveAgainst(target.characterClass)) {
+                attackPower *= 2
+            }
+        }
+        
+        // Get defender's defense
+        var defensePower = target.currentStats.defense
+        
+        // Apply terrain defensive bonus
+        val targetTile = board.getTile(target.position)
+        if (targetTile != null) {
+            defensePower += targetTile.terrain.defensiveBonus
+        }
+        
+        // Calculate base damage
+        val baseDamage = maxOf(1, attackPower - defensePower / 2)
 
         // Add some randomness (±25%)
         val variance = (baseDamage * DAMAGE_VARIANCE).toInt()

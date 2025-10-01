@@ -24,6 +24,8 @@ data class Character(
     var hasMovedThisTurn: Boolean = false,
     var isTransformed: Boolean = false,
     var originalClass: CharacterClass? = null,
+    var inventory: MutableList<Weapon> = mutableListOf(),
+    var equippedWeaponIndex: Int = -1,
 ) {
     val currentStats: Stats
         get() {
@@ -140,4 +142,70 @@ data class Character(
      * Check if character can revert transformation
      */
     fun canRevertTransform(): Boolean = isTransformed && originalClass != null
+    
+    // Weapon and Inventory Management
+    
+    val equippedWeapon: Weapon?
+        get() = if (equippedWeaponIndex >= 0 && equippedWeaponIndex < inventory.size) {
+            inventory[equippedWeaponIndex]
+        } else null
+    
+    fun addWeapon(weapon: Weapon): Boolean {
+        if (inventory.size >= MAX_INVENTORY_SIZE) return false
+        inventory.add(weapon)
+        if (equippedWeaponIndex < 0) {
+            equippedWeaponIndex = inventory.size - 1
+        }
+        return true
+    }
+    
+    fun removeWeapon(index: Int): Weapon? {
+        if (index < 0 || index >= inventory.size) return null
+        
+        val weapon = inventory.removeAt(index)
+        
+        when {
+            equippedWeaponIndex == index -> {
+                equippedWeaponIndex = if (inventory.isNotEmpty()) 0 else -1
+            }
+            equippedWeaponIndex > index -> {
+                equippedWeaponIndex--
+            }
+        }
+        
+        return weapon
+    }
+    
+    fun equipWeapon(index: Int): Boolean {
+        if (index < 0 || index >= inventory.size) return false
+        if (inventory[index].isBroken) return false
+        
+        equippedWeaponIndex = index
+        return true
+    }
+    
+    fun getAttackRange(): IntRange {
+        return equippedWeapon?.range ?: characterClass.attackRange..characterClass.attackRange
+    }
+    
+    fun canAttackPosition(targetPos: Position): Boolean {
+        val distance = position.distanceTo(targetPos)
+        val range = getAttackRange()
+        return distance in range
+    }
+    
+    fun useEquippedWeapon(): Boolean {
+        val weapon = equippedWeapon ?: return false
+        val broke = weapon.use()
+        
+        if (broke) {
+            removeWeapon(equippedWeaponIndex)
+        }
+        
+        return broke
+    }
+    
+    companion object {
+        const val MAX_INVENTORY_SIZE = 5
+    }
 }

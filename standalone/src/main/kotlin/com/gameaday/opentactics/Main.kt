@@ -58,7 +58,9 @@ class GameDemo {
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.PLAYER,
                 position = Position(PLAYER_KNIGHT_X, PLAYER_KNIGHT_Y),
-            )
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         val archer =
             Character(
@@ -67,7 +69,9 @@ class GameDemo {
                 characterClass = CharacterClass.ARCHER,
                 team = Team.PLAYER,
                 position = Position(PLAYER_ARCHER_X, PLAYER_ARCHER_Y),
-            )
+            ).apply {
+                addWeapon(Weapon.ironBow())
+            }
 
         val mage =
             Character(
@@ -76,7 +80,9 @@ class GameDemo {
                 characterClass = CharacterClass.MAGE,
                 team = Team.PLAYER,
                 position = Position(PLAYER_MAGE_X, PLAYER_MAGE_Y),
-            )
+            ).apply {
+                addWeapon(Weapon.fire())
+            }
 
         // Create enemy characters
         val enemyKnight =
@@ -86,7 +92,9 @@ class GameDemo {
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.ENEMY,
                 position = Position(ENEMY_KNIGHT_X, ENEMY_KNIGHT_Y),
-            )
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         val enemyArcher =
             Character(
@@ -95,7 +103,9 @@ class GameDemo {
                 characterClass = CharacterClass.ARCHER,
                 team = Team.ENEMY,
                 position = Position(ENEMY_ARCHER_X, ENEMY_ARCHER_Y),
-            )
+            ).apply {
+                addWeapon(Weapon.ironBow())
+            }
 
         // Add characters to game state
         gameState.addPlayerCharacter(knight)

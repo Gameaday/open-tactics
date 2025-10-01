@@ -31,6 +31,8 @@ data class Character(
     var hasMovedThisTurn: Boolean = false,
     var isTransformed: Boolean = false,
     var originalClass: CharacterClass? = null,
+    var inventory: MutableList<Weapon> = mutableListOf(),
+    var equippedWeaponIndex: Int = -1, // -1 means no weapon equipped
 ) : Parcelable {
     val currentStats: Stats
         get() {
@@ -172,4 +174,100 @@ data class Character(
      * Check if character can revert transformation
      */
     fun canRevertTransform(): Boolean = isTransformed && originalClass != null
+    
+    // Weapon and Inventory Management
+    
+    /**
+     * Get the currently equipped weapon, or null if none equipped
+     */
+    val equippedWeapon: Weapon?
+        get() = if (equippedWeaponIndex >= 0 && equippedWeaponIndex < inventory.size) {
+            inventory[equippedWeaponIndex]
+        } else null
+    
+    /**
+     * Add a weapon to inventory
+     * @return true if added successfully, false if inventory is full
+     */
+    fun addWeapon(weapon: Weapon): Boolean {
+        if (inventory.size >= MAX_INVENTORY_SIZE) return false
+        inventory.add(weapon)
+        // Auto-equip if no weapon equipped
+        if (equippedWeaponIndex < 0) {
+            equippedWeaponIndex = inventory.size - 1
+        }
+        return true
+    }
+    
+    /**
+     * Remove a weapon from inventory
+     * @return the removed weapon, or null if index invalid
+     */
+    fun removeWeapon(index: Int): Weapon? {
+        if (index < 0 || index >= inventory.size) return null
+        
+        val weapon = inventory.removeAt(index)
+        
+        // Adjust equipped index
+        when {
+            equippedWeaponIndex == index -> {
+                // Unequip if removing equipped weapon
+                equippedWeaponIndex = if (inventory.isNotEmpty()) 0 else -1
+            }
+            equippedWeaponIndex > index -> {
+                // Shift down if removing before equipped
+                equippedWeaponIndex--
+            }
+        }
+        
+        return weapon
+    }
+    
+    /**
+     * Equip a weapon by inventory index
+     * @return true if equipped successfully
+     */
+    fun equipWeapon(index: Int): Boolean {
+        if (index < 0 || index >= inventory.size) return false
+        if (inventory[index].isBroken) return false
+        
+        equippedWeaponIndex = index
+        return true
+    }
+    
+    /**
+     * Get effective attack range considering equipped weapon
+     */
+    fun getAttackRange(): IntRange {
+        return equippedWeapon?.range ?: characterClass.attackRange..characterClass.attackRange
+    }
+    
+    /**
+     * Check if character can attack a position
+     */
+    fun canAttackPosition(targetPos: Position): Boolean {
+        val distance = position.distanceTo(targetPos)
+        val range = getAttackRange()
+        return distance in range
+    }
+    
+    /**
+     * Use equipped weapon (reduces durability)
+     * @return true if weapon broke from use
+     */
+    fun useEquippedWeapon(): Boolean {
+        val weapon = equippedWeapon ?: return false
+        val broke = weapon.use()
+        
+        if (broke) {
+            // Remove broken weapon and try to equip another
+            removeWeapon(equippedWeaponIndex)
+        }
+        
+        return broke
+    }
+    
+    companion object {
+        const val MAX_INVENTORY_SIZE = 5
+    }
 }
