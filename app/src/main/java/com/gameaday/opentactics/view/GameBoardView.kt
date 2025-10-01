@@ -47,6 +47,7 @@ class GameBoardView
         private var shakeOffsetY: Float = 0f
         private var effectAlpha: Float = 0f
         private var animatingCharacter: Character? = null
+        private var animatingTarget: Character? = null
 
         // Paints
         private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -57,8 +58,13 @@ class GameBoardView
                 style = Paint.Style.STROKE
             }
 
-        @Suppress("UnusedPrivateProperty")
-        private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val iconPaint =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                textAlign = Paint.Align.CENTER
+                textSize = 24f
+                color = Color.WHITE
+                typeface = Typeface.DEFAULT_BOLD
+            }
         private val textPaint =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textAlign = Paint.Align.CENTER
@@ -134,13 +140,13 @@ class GameBoardView
             invalidate()
         }
 
-        @Suppress("UnusedParameter")
         fun animateAttack(
             attacker: Character,
             target: Character,
             onComplete: () -> Unit = {},
         ) {
             animatingCharacter = attacker
+            animatingTarget = target
 
             // Create shake animation for attacker
             val shakeX =
@@ -178,6 +184,7 @@ class GameBoardView
                     object : android.animation.AnimatorListenerAdapter() {
                         override fun onAnimationEnd(animation: android.animation.Animator) {
                             animatingCharacter = null
+                            animatingTarget = null
                             shakeOffsetX = 0f
                             shakeOffsetY = 0f
                             effectAlpha = 0f
@@ -398,6 +405,12 @@ class GameBoardView
                     icon.setBounds(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
                     icon.draw(canvas)
                 }
+            } else {
+                // Fallback: draw class initial using iconPaint
+                iconPaint.textSize = tileRadius
+                iconPaint.color = primaryColor
+                val classInitial = character.characterClass.displayName.first().toString()
+                canvas.drawText(classInitial, centerX, centerY + tileRadius / 3f, iconPaint)
             }
 
             // Draw HP bar if damaged
@@ -450,7 +463,14 @@ class GameBoardView
             tilePaint.color = Color.argb((255 * effectAlpha).toInt(), 255, 255, 0) // Yellow flash
             val radius = tileSize * 0.6f * effectAlpha
 
-            // Draw effect at all attack targets
+            // Draw effect at the target's position if animating
+            animatingTarget?.let { target ->
+                val centerX = boardOffsetX + target.position.x * tileSize + tileSize / 2f
+                val centerY = boardOffsetY + target.position.y * tileSize + tileSize / 2f
+                canvas.drawCircle(centerX, centerY, radius, tilePaint)
+            }
+
+            // Also draw effect at all attack targets for highlighting
             for (pos in highlightedAttacks) {
                 val centerX = boardOffsetX + pos.x * tileSize + tileSize / 2f
                 val centerY = boardOffsetY + pos.y * tileSize + tileSize / 2f

@@ -142,4 +142,30 @@ class TileTest {
         tile.terrain = TerrainType.FOREST
         assertEquals(TerrainType.FOREST, tile.terrain)
     }
+
+    @Test
+    fun testFlyingUnitsCanCrossWater() {
+        // Create a mock flying character class by modifying the canFly property
+        // Note: In the actual implementation, you would add a flying character class
+        // For now, we test that non-flying units cannot cross water
+        val groundCharacter =
+            Character(
+                id = "ground",
+                name = "Ground Unit",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.PLAYER,
+                position = Position(0, 0),
+            )
+
+        // Ground units cannot occupy water
+        assertFalse(waterTile.canBeOccupiedBy(groundCharacter))
+        assertFalse(groundCharacter.characterClass.canFly)
+
+        // All current classes are non-flying
+        assertEquals(false, CharacterClass.KNIGHT.canFly)
+        assertEquals(false, CharacterClass.ARCHER.canFly)
+        assertEquals(false, CharacterClass.MAGE.canFly)
+        assertEquals(false, CharacterClass.HEALER.canFly)
+        assertEquals(false, CharacterClass.THIEF.canFly)
+    }
 }

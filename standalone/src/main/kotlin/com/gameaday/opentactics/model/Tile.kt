@@ -36,10 +36,10 @@ data class Tile(
     val isOccupied: Boolean
         get() = occupant != null
 
-    @Suppress("UnusedParameter")
     fun canBeOccupiedBy(character: Character): Boolean {
         if (isOccupied) return false
-        if (terrain == TerrainType.WATER) return false // TODO: Add flying units later
+        // Flying units can pass over water terrain
+        if (terrain == TerrainType.WATER && !character.characterClass.canFly) return false
         return true
     }
 }
