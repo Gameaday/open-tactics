@@ -49,7 +49,13 @@ A Fire Emblem-style tactical RPG for Android, built with modern Kotlin architect
 ```bash
 git clone https://github.com/Gameaday/open-tactics.git
 cd open-tactics
-./gradlew assembleDebug
+
+# Build debug variants for all flavors
+./gradlew assembleAllDebug
+
+# Or build specific variant
+./gradlew assembleDevDebug
+./gradlew assembleProdDebug
 ```
 
 #### Run Console Demo
@@ -59,8 +65,18 @@ cd open-tactics
 
 #### Run Tests
 ```bash
+# Run all module tests (standalone + app)
 ./gradlew test
-./gradlew connectedAndroidTest
+
+# Run all app unit tests across all flavors
+./gradlew testAllUnitTests
+
+# Run tests for specific flavor
+./gradlew testDevDebugUnitTest
+./gradlew testProdDebugUnitTest
+
+# Run instrumented tests (requires connected device/emulator)
+./gradlew connectedDevDebugAndroidTest
 ```
 
 #### Test Coverage

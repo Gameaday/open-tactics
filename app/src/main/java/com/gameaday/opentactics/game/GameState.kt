@@ -13,7 +13,7 @@ class GameState(
     var currentTurn: Team = Team.PLAYER
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
-    var turnCount: Int = 1
+    var turnCount: Int = 0
 
     // Properties expected by tests
     val currentTeam: Team get() = currentTurn
@@ -21,8 +21,8 @@ class GameState(
     val isGameOver: Boolean
         get() =
             gamePhase == GamePhase.GAME_OVER ||
-                getAlivePlayerCharacters().isEmpty() ||
-                getAliveEnemyCharacters().isEmpty()
+                (playerCharacters.isNotEmpty() && getAlivePlayerCharacters().isEmpty()) ||
+                (enemyCharacters.isNotEmpty() && getAliveEnemyCharacters().isEmpty())
     val currentPlayerCharacter: Character?
         get() = if (currentTurn == Team.PLAYER) selectedCharacter else null
 
@@ -242,9 +242,9 @@ class GameState(
         }
     }
 
-    fun isGameWon(): Boolean = enemyCharacters.none { it.isAlive }
+    fun isGameWon(): Boolean = enemyCharacters.isNotEmpty() && enemyCharacters.none { it.isAlive }
 
-    fun isGameLost(): Boolean = playerCharacters.none { it.isAlive }
+    fun isGameLost(): Boolean = playerCharacters.isNotEmpty() && playerCharacters.none { it.isAlive }
 }
 
 data class BattleResult(

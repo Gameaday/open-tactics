@@ -21,9 +21,9 @@ class PositionTest {
         val pos3 = Position(-2, 1)
 
         // Manhattan distance
-        assertEquals(7, pos1.distanceTo(pos2))
-        assertEquals(3, pos1.distanceTo(pos3))
-        assertEquals(6, pos2.distanceTo(pos3))
+        assertEquals(7, pos1.distanceTo(pos2)) // |0-3| + |0-4| = 3 + 4 = 7
+        assertEquals(3, pos1.distanceTo(pos3)) // |0-(-2)| + |0-1| = 2 + 1 = 3
+        assertEquals(8, pos2.distanceTo(pos3)) // |3-(-2)| + |4-1| = 5 + 3 = 8
     }
 
     @Test
