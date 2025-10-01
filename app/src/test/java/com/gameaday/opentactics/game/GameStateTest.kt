@@ -195,13 +195,15 @@ class GameStateTest {
         assertEquals(Team.PLAYER, gameState.currentTeam)
         assertEquals(0, gameState.turnCounter)
 
+        // endTurn() from PLAYER switches to ENEMY, executes enemy turn (which is instant if no enemies),
+        // then automatically switches back to PLAYER with incremented turn counter
         gameState.endTurn()
-        assertEquals(Team.ENEMY, gameState.currentTeam)
-        assertEquals(0, gameState.turnCounter) // Turn counter increases when returning to PLAYER
+        assertEquals(Team.PLAYER, gameState.currentTeam) // Back to PLAYER after empty enemy turn
+        assertEquals(1, gameState.turnCounter) // Turn counter incremented
 
         gameState.endTurn()
         assertEquals(Team.PLAYER, gameState.currentTeam)
-        assertEquals(1, gameState.turnCounter)
+        assertEquals(2, gameState.turnCounter)
     }
 
     @Test

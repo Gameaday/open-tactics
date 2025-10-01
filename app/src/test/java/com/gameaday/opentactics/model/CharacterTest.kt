@@ -2,6 +2,7 @@ package com.gameaday.opentactics.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -158,8 +159,8 @@ class CharacterTest {
         assertEquals(50, knight.experience)
         assertEquals(1, knight.level) // Should not level up yet
 
-        knight.gainExperience(50) // Total 100 exp
-        assertEquals(100, knight.experience)
+        knight.gainExperience(50) // Total 100 exp, leveling up to level 2
+        assertEquals(0, knight.experience) // Experience is reset after level up (overflow system)
         assertEquals(2, knight.level) // Should level up
     }
 
@@ -215,22 +216,26 @@ class CharacterTest {
     fun testCharacterToString() {
         val string = knight.toString()
         assertTrue(string.contains("Sir Lancelot"))
-        assertTrue(string.contains("Knight"))
+        assertTrue(string.contains("KNIGHT")) // Enum name is uppercase
     }
 
     @Test
     fun testCharacterEquality() {
         val knight2 =
             Character(
-                id = "knight1", // Same ID
-                name = "Different Name",
-                characterClass = CharacterClass.ARCHER, // Different class
-                team = Team.ENEMY, // Different team
-                position = Position(0, 0), // Different position
+                id = "knight1",
+                name = "Sir Lancelot",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.PLAYER,
+                position = Position(2, 3), // Match knight's position
             )
 
-        // Characters with same ID should be equal
+        // Data class equality - all fields must match
         assertEquals(knight, knight2)
         assertEquals(knight.hashCode(), knight2.hashCode())
+
+        // Different ID means not equal
+        val knight3 = knight.copy(id = "different")
+        assertNotEquals(knight, knight3)
     }
 }
