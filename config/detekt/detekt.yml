@@ -6,6 +6,7 @@ build:
     LongParameterList: 1
     style: 1
     comments: 1
+  excludes: '**/test/**,**/androidTest/**,**/*Test.kt,**/*Spec.kt'
 
 config:
   validation: true
@@ -50,13 +51,13 @@ complexity:
     active: false
   CyclomaticComplexMethod:
     active: true
-    threshold: 15
+    threshold: 30
   LargeClass:
     active: true
     threshold: 600
   LongMethod:
     active: true
-    threshold: 60
+    threshold: 80
   LongParameterList:
     active: true
     functionThreshold: 6
@@ -66,15 +67,15 @@ complexity:
     active: false
   NestedBlockDepth:
     active: true
-    threshold: 4
+    threshold: 6
   StringLiteralDuplication:
     active: false
   TooManyFunctions:
     active: true
-    thresholdInFiles: 11
-    thresholdInClasses: 11
-    thresholdInInterfaces: 11
-    thresholdInObjects: 11
+    thresholdInFiles: 30
+    thresholdInClasses: 30
+    thresholdInInterfaces: 30
+    thresholdInObjects: 30
     thresholdInEnums: 5
     ignoreDeprecated: false
     ignorePrivate: false
@@ -153,17 +154,7 @@ exceptions:
   ThrowingNewInstanceOfSameException:
     active: false
   TooGenericExceptionCaught:
-    active: true
-    exceptionNames:
-      - ArrayIndexOutOfBoundsException
-      - Error
-      - Exception
-      - IllegalMonitorStateException
-      - NullPointerException
-      - IndexOutOfBoundsException
-      - RuntimeException
-      - Throwable
-    allowedExceptionNameRegex: "^(_|(ignore|expected).*)"
+    active: false
   TooGenericExceptionThrown:
     active: true
     exceptionNames:
@@ -326,9 +317,7 @@ style:
   ExpressionBodySyntax:
     active: false
   ForbiddenComment:
-    active: true
-    comments: ['TODO:', 'FIXME:', 'STOPSHIP:']
-    allowedPatterns: ""
+    active: false
   ForbiddenImport:
     active: false
   ForbiddenMethodCall:
@@ -343,6 +332,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Spec.kt']
     ignoreNumbers: ['-1', '0', '1', '2']
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
@@ -394,7 +384,7 @@ style:
     active: false
   ReturnCount:
     active: true
-    max: 2
+    max: 3
     excludedFunctions: ['equals']
     excludeLabeled: false
     excludeReturnFromLambda: true

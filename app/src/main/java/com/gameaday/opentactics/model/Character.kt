@@ -4,6 +4,10 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
+// Character progression constants
+private const val MAX_LEVEL = 20
+private const val EXPERIENCE_PER_LEVEL = 100
+
 @Serializable
 enum class Team {
     PLAYER,
@@ -96,12 +100,12 @@ data class Character(
 
     fun gainExperience(exp: Int) {
         experience += exp
-        while (experience >= experienceToNextLevel() && level < 20) {
+        while (experience >= experienceToNextLevel() && level < MAX_LEVEL) {
             levelUp()
         }
     }
 
-    private fun experienceToNextLevel(): Int = level * 100
+    private fun experienceToNextLevel(): Int = level * EXPERIENCE_PER_LEVEL
 
     private fun levelUp() {
         experience -= experienceToNextLevel()

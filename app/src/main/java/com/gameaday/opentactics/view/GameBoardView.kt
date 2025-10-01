@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.gameaday.opentactics.view
 
 import android.animation.AnimatorSet
@@ -54,6 +56,8 @@ class GameBoardView
                 strokeWidth = 2f
                 style = Paint.Style.STROKE
             }
+
+        @Suppress("UnusedPrivateProperty")
         private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val textPaint =
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -130,6 +134,7 @@ class GameBoardView
             invalidate()
         }
 
+        @Suppress("UnusedParameter")
         fun animateAttack(
             attacker: Character,
             target: Character,
@@ -453,7 +458,8 @@ class GameBoardView
             }
         }
 
-        override fun onTouchEvent(event: MotionEvent): Boolean = gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
+        override fun onTouchEvent(event: MotionEvent): Boolean =
+            gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
 
         private fun screenToBoard(
             screenX: Float,

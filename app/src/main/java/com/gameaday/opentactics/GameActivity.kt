@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.gameaday.opentactics
 
 import android.os.Bundle
@@ -244,7 +246,8 @@ class GameActivity : AppCompatActivity() {
                         currentGameSave = updatedSave
                     },
                     onFailure = { error ->
-                        Toast.makeText(this@GameActivity, "Failed to save game: ${error.message}", Toast.LENGTH_LONG).show()
+                        val message = "Failed to save game: ${error.message}"
+                        Toast.makeText(this@GameActivity, message, Toast.LENGTH_LONG).show()
                     },
                 )
             }

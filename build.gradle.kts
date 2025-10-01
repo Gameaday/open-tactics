@@ -24,6 +24,13 @@ allprojects {
         android.set(true)
         ignoreFailures.set(false)
     }
+
+    // Detekt configuration
+    configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+        config.setFrom(files("${rootProject.projectDir}/config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
+        source.setFrom(files("src/main/java", "src/main/kotlin"))
+    }
 }
 
 // Task to run all quality checks

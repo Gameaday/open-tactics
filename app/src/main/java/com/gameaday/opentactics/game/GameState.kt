@@ -5,6 +5,11 @@ import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Team
 
+// Battle and experience constants
+private const val EXPERIENCE_PER_KILL_MULTIPLIER = 25
+private const val EXPERIENCE_PER_HIT = 10
+private const val DAMAGE_VARIANCE = 0.25
+
 class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
@@ -69,7 +74,8 @@ class GameState(
         }
     }
 
-    fun canSelectCharacter(character: Character): Boolean = character.team == currentTurn && (character.canMove || character.canAct)
+    fun canSelectCharacter(character: Character): Boolean =
+        character.team == currentTurn && (character.canMove || character.canAct)
 
     fun endTurn() {
         when (currentTurn) {
@@ -107,7 +113,9 @@ class GameState(
                 }
 
                 // Try to attack
-                if (enemy.canAct && enemy.position.distanceTo(nearestPlayer.position) <= enemy.characterClass.attackRange) {
+                val isInAttackRange =
+                    enemy.position.distanceTo(nearestPlayer.position) <= enemy.characterClass.attackRange
+                if (enemy.canAct && isInAttackRange) {
                     performAttack(enemy, nearestPlayer)
                     enemy.hasActedThisTurn = true
                 }
@@ -155,7 +163,8 @@ class GameState(
                 for (neighbor in currentPos.getNeighbors()) {
                     if (board.isValidPosition(neighbor) && neighbor !in visited) {
                         val tile = board.getTile(neighbor)
-                        if (tile != null && tile.terrain.movementCost <= character.characterClass.movementRange - distance) {
+                        val movementRemaining = character.characterClass.movementRange - distance
+                        if (tile != null && tile.terrain.movementCost <= movementRemaining) {
                             queue.add(Pair(neighbor, distance + tile.terrain.movementCost))
                         }
                     }
@@ -199,11 +208,11 @@ class GameState(
             )
 
         if (result.targetDefeated) {
-            attacker.gainExperience(target.level * 25)
+            attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
             board.removeCharacter(target)
             removeDefeatedCharacter(target)
         } else {
-            attacker.gainExperience(10)
+            attacker.gainExperience(EXPERIENCE_PER_HIT)
         }
 
         checkGameEnd()
@@ -219,7 +228,7 @@ class GameState(
         val baseDamage = maxOf(1, attackStat - defenseStat / 2)
 
         // Add some randomness (±25%)
-        val variance = (baseDamage * 0.25).toInt()
+        val variance = (baseDamage * DAMAGE_VARIANCE).toInt()
         return maxOf(1, baseDamage + (-variance..variance).random())
     }
 

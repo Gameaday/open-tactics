@@ -1,5 +1,9 @@
 package com.gameaday.opentactics.model
 
+// Character progression constants
+private const val MAX_LEVEL = 20
+private const val EXPERIENCE_PER_LEVEL = 100
+
 enum class Team {
     PLAYER,
     ENEMY,
@@ -64,12 +68,12 @@ data class Character(
 
     fun gainExperience(exp: Int) {
         experience += exp
-        while (experience >= experienceToNextLevel() && level < 20) {
+        while (experience >= experienceToNextLevel() && level < MAX_LEVEL) {
             levelUp()
         }
     }
 
-    private fun experienceToNextLevel(): Int = level * 100
+    private fun experienceToNextLevel(): Int = level * EXPERIENCE_PER_LEVEL
 
     private fun levelUp() {
         experience -= experienceToNextLevel()
