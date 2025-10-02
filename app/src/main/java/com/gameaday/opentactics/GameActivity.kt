@@ -19,6 +19,7 @@ import com.gameaday.opentactics.game.GameState
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
+import com.gameaday.opentactics.model.Item
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Stats
 import com.gameaday.opentactics.model.Team
@@ -157,6 +158,8 @@ class GameActivity : AppCompatActivity() {
                 ).apply {
                     addWeapon(Weapon.ironSword())
                     addWeapon(Weapon.steelSword())
+                    addItem(Item.vulnerary())
+                    addItem(Item.vulnerary())
                 },
                 Character(
                     id = "player_archer",
@@ -167,6 +170,7 @@ class GameActivity : AppCompatActivity() {
                 ).apply {
                     addWeapon(Weapon.ironBow())
                     addWeapon(Weapon.steelBow())
+                    addItem(Item.vulnerary())
                 },
                 Character(
                     id = "player_mage",
@@ -177,6 +181,7 @@ class GameActivity : AppCompatActivity() {
                 ).apply {
                     addWeapon(Weapon.fire())
                     addWeapon(Weapon.thunder())
+                    addItem(Item.tonic())
                 },
             )
 
@@ -495,27 +500,11 @@ class GameActivity : AppCompatActivity() {
         dialogView.findViewById<android.widget.TextView>(R.id.characterNameInventory).text =
             "${character.name} - ${character.characterClass.displayName}"
 
-        val adapter =
-            WeaponAdapter(character) { weapon, action ->
-                when (action) {
-                    "equip" -> {
-                        character.equipWeapon(weapon)
-                        Toast.makeText(this, "${weapon.name} equipped", Toast.LENGTH_SHORT).show()
-                        updateUI()
-                    }
-                    "drop" -> {
-                        if (character.inventory.size > 1) {
-                            character.removeWeapon(weapon)
-                            Toast.makeText(this, "${weapon.name} dropped", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this, "Cannot drop last weapon", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
+        // Combined adapter for weapons and items
+        val combinedAdapter = CombinedInventoryAdapter(character)
 
         recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        recyclerView.adapter = adapter
+        recyclerView.adapter = combinedAdapter
 
         val dialog =
             AlertDialog
@@ -530,27 +519,46 @@ class GameActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private inner class WeaponAdapter(
+    private inner class CombinedInventoryAdapter(
         private val character: Character,
-        private val onAction: (Weapon, String) -> Unit,
-    ) : androidx.recyclerview.widget.RecyclerView.Adapter<WeaponAdapter.WeaponViewHolder>() {
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+        private val typeWeapon = 0
+        private val typeItem = 1
+
+        override fun getItemViewType(position: Int): Int =
+            if (position < character.inventory.size) {
+                typeWeapon
+            } else {
+                typeItem
+            }
+
         override fun onCreateViewHolder(
             parent: android.view.ViewGroup,
             viewType: Int,
-        ): WeaponViewHolder {
-            val view = layoutInflater.inflate(R.layout.item_weapon, parent, false)
-            return WeaponViewHolder(view)
-        }
+        ): androidx.recyclerview.widget.RecyclerView.ViewHolder =
+            if (viewType == typeWeapon) {
+                val view = layoutInflater.inflate(R.layout.item_weapon, parent, false)
+                WeaponViewHolder(view)
+            } else {
+                val view = layoutInflater.inflate(R.layout.item_consumable, parent, false)
+                ItemViewHolder(view)
+            }
 
         override fun onBindViewHolder(
-            holder: WeaponViewHolder,
+            holder: androidx.recyclerview.widget.RecyclerView.ViewHolder,
             position: Int,
         ) {
-            val weapon = character.inventory[position]
-            holder.bind(weapon, character.equippedWeapon == weapon)
+            if (holder is WeaponViewHolder) {
+                val weapon = character.inventory[position]
+                holder.bind(weapon, character.equippedWeapon == weapon)
+            } else if (holder is ItemViewHolder) {
+                val itemIndex = position - character.inventory.size
+                val item = character.items[itemIndex]
+                holder.bind(item)
+            }
         }
 
-        override fun getItemCount(): Int = character.inventory.size
+        override fun getItemCount(): Int = character.inventory.size + character.items.size
 
         inner class WeaponViewHolder(
             view: android.view.View,
@@ -571,13 +579,53 @@ class GameActivity : AppCompatActivity() {
                 val btnEquip = itemView.findViewById<android.widget.Button>(R.id.btnEquipWeapon)
                 btnEquip.isEnabled = !isEquipped
                 btnEquip.setOnClickListener {
-                    onAction(weapon, "equip")
+                    character.equipWeapon(weapon)
+                    Toast.makeText(this@GameActivity, "${weapon.name} equipped", Toast.LENGTH_SHORT).show()
+                    updateUI()
                     notifyDataSetChanged()
                 }
 
                 val btnDrop = itemView.findViewById<android.widget.Button>(R.id.btnDropWeapon)
                 btnDrop.setOnClickListener {
-                    onAction(weapon, "drop")
+                    if (character.inventory.size > 1) {
+                        character.removeWeapon(weapon)
+                        Toast.makeText(this@GameActivity, "${weapon.name} dropped", Toast.LENGTH_SHORT).show()
+                        notifyDataSetChanged()
+                    } else {
+                        Toast.makeText(this@GameActivity, "Cannot drop last weapon", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        inner class ItemViewHolder(
+            view: android.view.View,
+        ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            fun bind(item: Item) {
+                itemView.findViewById<android.widget.TextView>(R.id.itemName).text = item.name
+                itemView.findViewById<android.widget.TextView>(R.id.itemDescription).text = item.description
+                itemView.findViewById<android.widget.TextView>(R.id.itemUses).text =
+                    "Uses: ${item.currentUses}/${item.maxUses}"
+
+                val btnUse = itemView.findViewById<android.widget.Button>(R.id.btnUseItem)
+                btnUse.setOnClickListener {
+                    // Use item on self
+                    if (character.useItem(item, character)) {
+                        Toast
+                            .makeText(
+                                this@GameActivity,
+                                "${character.name} used ${item.name}",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        updateUI()
+                        notifyDataSetChanged()
+                    }
+                }
+
+                val btnDiscard = itemView.findViewById<android.widget.Button>(R.id.btnDiscardItem)
+                btnDiscard.setOnClickListener {
+                    character.removeItem(item)
+                    Toast.makeText(this@GameActivity, "${item.name} discarded", Toast.LENGTH_SHORT).show()
                     notifyDataSetChanged()
                 }
             }

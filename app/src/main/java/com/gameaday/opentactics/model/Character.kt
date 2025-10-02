@@ -33,6 +33,7 @@ data class Character(
     var originalClass: CharacterClass? = null,
     var inventory: MutableList<Weapon> = mutableListOf(),
     var equippedWeaponIndex: Int = -1, // -1 means no weapon equipped
+    var items: MutableList<Item> = mutableListOf(), // Consumable items
     // Action history for undo functionality
     var previousPosition: Position? = null,
     var canStillMoveAfterAttack: Boolean = false, // Tracks Canto state
@@ -273,6 +274,48 @@ data class Character(
         // Restore HP/MP to maximum of new form
         currentHp = maxHp
         currentMp = maxMp
+
+        return true
+    }
+
+    /**
+     * Add an item to the character's inventory
+     */
+    fun addItem(item: Item) {
+        items.add(item)
+    }
+
+    /**
+     * Remove an item from the character's inventory
+     */
+    fun removeItem(item: Item) {
+        items.remove(item)
+    }
+
+    /**
+     * Use an item on a target (can be self or ally)
+     * @return true if item was used successfully
+     */
+    fun useItem(
+        item: Item,
+        target: Character,
+    ): Boolean {
+        if (!items.contains(item)) return false
+        if (item.isUsedUp) return false
+
+        // Apply item effects
+        if (item.healAmount > 0) {
+            target.heal(item.healAmount)
+        }
+        if (item.manaAmount > 0) {
+            target.restoreMana(item.manaAmount)
+        }
+
+        // Use the item
+        val usedUp = item.use()
+        if (usedUp) {
+            removeItem(item)
+        }
 
         return true
     }
