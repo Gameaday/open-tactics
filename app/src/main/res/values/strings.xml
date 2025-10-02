@@ -35,4 +35,7 @@
     <string name="chapter_locked">Locked</string>
     <string name="chapter_completed">Completed</string>
     <string name="start_chapter">Start Chapter</string>
+    
+    <!-- Range Display -->
+    <string name="show_ranges">Ranges</string>
 </resources>

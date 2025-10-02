@@ -377,6 +377,17 @@ class GameActivity : AppCompatActivity() {
         binding.btnAttack.setOnClickListener { handleAttackAction() }
         binding.btnWait.setOnClickListener { handleWaitAction() }
         binding.btnEndTurn.setOnClickListener { handleEndTurnAction() }
+        
+        // Range display toggle
+        var showingRanges = false
+        binding.btnToggleRanges.setOnClickListener {
+            showingRanges = !showingRanges
+            if (showingRanges) {
+                showEnemyRanges()
+            } else {
+                gameBoardView.clearHighlights()
+            }
+        }
 
         // Add save/load buttons to the overflow menu
         binding.root.setOnLongClickListener {
@@ -385,6 +396,15 @@ class GameActivity : AppCompatActivity() {
         }
 
         updateUI()
+    }
+    
+    private fun showEnemyRanges() {
+        val enemyRanges = mutableSetOf<Position>()
+        gameState.getAliveEnemyCharacters().forEach { enemy ->
+            val targets = gameState.calculateAttackTargets(enemy)
+            enemyRanges.addAll(targets.map { it.position })
+        }
+        gameBoardView.highlightEnemyRanges(enemyRanges.toList())
     }
 
     private fun showGameMenu() {

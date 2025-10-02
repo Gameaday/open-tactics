@@ -41,6 +41,7 @@ class GameBoardView
 
         private var highlightedMoves: List<Position> = emptyList()
         private var highlightedAttacks: List<Position> = emptyList()
+        private var highlightedEnemyRanges: List<Position> = emptyList()
 
         // Animation properties
         private var shakeOffsetX: Float = 0f
@@ -135,10 +136,16 @@ class GameBoardView
             highlightedAttacks = positions
             invalidate()
         }
+        
+        fun highlightEnemyRanges(positions: List<Position>) {
+            highlightedEnemyRanges = positions
+            invalidate()
+        }
 
         fun clearHighlights() {
             highlightedMoves = emptyList()
             highlightedAttacks = emptyList()
+            highlightedEnemyRanges = emptyList()
             invalidate()
         }
 
@@ -248,6 +255,9 @@ class GameBoardView
 
             // Draw attack highlights
             drawHighlights(canvas, highlightedAttacks, attackHighlightColor)
+            
+            // Draw enemy range highlights (red semi-transparent)
+            drawHighlights(canvas, highlightedEnemyRanges, Color.argb(80, 255, 0, 0))
 
             // Draw selected character highlight
             gameState.selectedCharacter?.let { character ->

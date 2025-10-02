@@ -103,12 +103,24 @@
 
     </LinearLayout>
 
+    <!-- Range Display Toggle Button -->
+    <Button
+        android:id="@+id/btnToggleRanges"
+        style="@style/GameButtonStyle"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:text="@string/show_ranges"
+        android:textSize="12sp" />
+
     <!-- Character Info Panel -->
     <LinearLayout
         android:id="@+id/characterInfoPanel"
         android:layout_width="200dp"
         android:layout_height="150dp"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/btnToggleRanges"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
         android:background="@color/purple_500"
