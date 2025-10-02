@@ -2,6 +2,7 @@
 
 package com.gameaday.opentactics
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -354,6 +355,21 @@ class GameActivity : AppCompatActivity() {
         gameBoardView.onTileClicked = { position -> handleTileClick(position) }
 
         binding.gameContainer.addView(gameBoardView)
+
+        // Setup chapter objective HUD
+        updateChapterObjectiveHUD()
+    }
+
+    private fun updateChapterObjectiveHUD() {
+        val chapter = gameState.currentChapter
+        if (chapter != null) {
+            binding.chapterTitle.text = "Ch${chapter.number}: ${chapter.title}"
+            binding.chapterObjective.text = chapter.objectiveDetails
+            binding.chapterObjectivePanel.visibility = android.view.View.VISIBLE
+        } else {
+            binding.chapterObjectivePanel.visibility = android.view.View.GONE
+        }
+        binding.turnCounter.text = "Turn: ${gameState.turnCount}"
     }
 
     private fun setupControls() {
@@ -624,36 +640,158 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun checkGameEnd() {
-        when {
-            gameState.isGameWon() -> {
-                // Update profile statistics
-                playerProfile =
-                    playerProfile?.copy(
-                        totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
-                        campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
-                    )
-                savePlayerProfile()
+        val chapter = gameState.currentChapter
 
-                AlertDialog
-                    .Builder(this)
-                    .setTitle("Victory!")
-                    .setMessage("All enemies have been defeated! Your progress has been saved.")
-                    .setPositiveButton("Continue") { _, _ ->
-                        performManualSave()
-                        finish()
-                    }.show()
+        // Check chapter objectives if chapter is set
+        if (chapter != null) {
+            val isVictory = chapter.isObjectiveComplete(
+                gameState.getPlayerCharacters(),
+                gameState.getEnemyCharacters(),
+                gameState.turnCount,
+                emptyList(), // TODO: Track throne units
+                gameState.escapedUnitCount
+            )
+
+            val isDefeat = chapter.isObjectiveFailed(
+                gameState.getPlayerCharacters(),
+                gameState.turnCount
+            )
+
+            when {
+                isVictory -> showVictoryScreen(chapter)
+                isDefeat -> showDefeatScreen(chapter)
             }
-            gameState.isGameLost() -> {
-                AlertDialog
-                    .Builder(this)
-                    .setTitle("Defeat")
-                    .setMessage("All your units have fallen... Your progress has been saved.")
-                    .setPositiveButton("Retry") { _, _ ->
-                        // Could reload from save here
-                        finish()
-                    }.show()
+        } else {
+            // Fallback to old victory/defeat logic
+            when {
+                gameState.isGameWon() -> {
+                    playerProfile =
+                        playerProfile?.copy(
+                            totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
+                            campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
+                        )
+                    savePlayerProfile()
+
+                    AlertDialog
+                        .Builder(this)
+                        .setTitle("Victory!")
+                        .setMessage("All enemies have been defeated! Your progress has been saved.")
+                        .setPositiveButton("Continue") { _, _ ->
+                            performManualSave()
+                            finish()
+                        }.show()
+                }
+                gameState.isGameLost() -> {
+                    AlertDialog
+                        .Builder(this)
+                        .setTitle("Defeat")
+                        .setMessage("All your units have fallen... Your progress has been saved.")
+                        .setPositiveButton("Retry") { _, _ ->
+                            finish()
+                        }.show()
+                }
             }
         }
+    }
+
+    private fun showVictoryScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        // Update profile statistics
+        playerProfile =
+            playerProfile?.copy(
+                totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
+            )
+        savePlayerProfile()
+
+        // Build victory message
+        val message = buildString {
+            append("Chapter ${chapter.number} Complete!\n\n")
+            if (chapter.postVictoryDialogue.isNotEmpty()) {
+                append(chapter.postVictoryDialogue)
+                append("\n\n")
+            }
+            append("Objective: ${chapter.objectiveDetails}\n")
+            append("Turns: ${gameState.turnCount}\n")
+            append("Units: ${gameState.getAlivePlayerCharacters().size}/${gameState.getPlayerCharacters().size} survived")
+        }
+
+        val hasNextChapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapter.number + 1) != null
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("⭐ Victory! ⭐")
+            .setMessage(message)
+            .setPositiveButton(if (hasNextChapter) "Next Chapter" else "Finish") { _, _ ->
+                performManualSave()
+                if (hasNextChapter) {
+                    // Start next chapter
+                    startNextChapter(chapter.number + 1)
+                } else {
+                    // Campaign complete
+                    showCampaignComplete()
+                }
+            }
+            .setNegativeButton("Return to Menu") { _, _ ->
+                performManualSave()
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showDefeatScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        val message = buildString {
+            append("Chapter ${chapter.number} Failed\n\n")
+            if (chapter.postDefeatDialogue.isNotEmpty()) {
+                append(chapter.postDefeatDialogue)
+                append("\n\n")
+            } else {
+                append("All your units have fallen...\n\n")
+            }
+            append("Would you like to retry?")
+        }
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("💀 Defeat 💀")
+            .setMessage(message)
+            .setPositiveButton("Retry Chapter") { _, _ ->
+                // Restart current chapter
+                recreate()
+            }
+            .setNegativeButton("Return to Menu") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun startNextChapter(nextChapterNumber: Int) {
+        val intent =
+            Intent(this, GameActivity::class.java).apply {
+                putExtra(EXTRA_PLAYER_NAME, currentGameSave?.playerName ?: "Player")
+                putExtra(EXTRA_IS_NEW_GAME, true)
+                putExtra(EXTRA_CHAPTER_NUMBER, nextChapterNumber)
+            }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun showCampaignComplete() {
+        playerProfile =
+            playerProfile?.copy(
+                campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
+            )
+        savePlayerProfile()
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("🎉 Campaign Complete! 🎉")
+            .setMessage("Congratulations! You have completed all chapters!\n\nThank you for playing Open Tactics!")
+            .setPositiveButton("Return to Menu") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun updateUI() {
@@ -672,6 +810,9 @@ class GameActivity : AppCompatActivity() {
         } else {
             hideCharacterInfo()
         }
+
+        // Update turn counter
+        binding.turnCounter.text = "Turn: ${gameState.turnCount}"
 
         gameBoardView.invalidate()
     }
