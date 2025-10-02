@@ -58,8 +58,9 @@ class ExpAndLevelUpTest {
     }
 
     @Test
-    fun testLevelUpRestoresHealth() {
+    fun testLevelUpAddsHealthIncrease() {
         // Damage the character first
+        val initialMaxHp = character.maxHp
         character.takeDamage(10)
         val damagedHp = character.currentHp
         assertTrue(damagedHp < character.maxHp)
@@ -67,22 +68,26 @@ class ExpAndLevelUpTest {
         // Level up
         character.gainExperience(100)
 
-        // HP should be fully restored
-        assertEquals(character.maxHp, character.currentHp)
+        // HP should increase by the stat gain (not full heal)
+        // Current HP = damaged HP + (new max HP - old max HP)
+        val hpGain = character.maxHp - initialMaxHp
+        assertEquals(damagedHp + hpGain, character.currentHp)
     }
 
     @Test
-    fun testLevelUpRestoresMana() {
+    fun testLevelUpAddsManaIncrease() {
         // Use some mana first (if the character has any)
         if (character.maxMp > 0) {
             val initialMaxMp = character.maxMp
             character.currentMp = character.maxMp / 2
+            val currentMp = character.currentMp
 
             // Level up
             character.gainExperience(100)
 
-            // MP should be fully restored
-            assertEquals(character.maxMp, character.currentMp)
+            // MP should increase by the stat gain (not full restore)
+            val mpGain = character.maxMp - initialMaxMp
+            assertEquals(currentMp + mpGain, character.currentMp)
         }
     }
 

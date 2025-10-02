@@ -5,6 +5,7 @@ import com.gameaday.opentactics.model.Chapter
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Stats
 import com.gameaday.opentactics.model.Team
 
 // Battle and experience constants
@@ -518,15 +519,15 @@ class GameState(
         // Use weapon durability
         attacker.useEquippedWeapon()
 
-        // Award EXP
+        // Award EXP and track stat gains
         val expGained =
             if (!target.isAlive) {
-                attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
                 target.level * EXPERIENCE_PER_KILL_MULTIPLIER
             } else {
-                attacker.gainExperience(EXPERIENCE_PER_HIT)
                 EXPERIENCE_PER_HIT
             }
+
+        val statGains = attacker.gainExperienceWithTracking(expGained)
 
         val result =
             BattleResult(
@@ -537,6 +538,7 @@ class GameState(
                 wasCritical = isCritical,
                 expGained = expGained,
                 previousLevel = previousLevel,
+                statGains = statGains,
             )
 
         if (result.targetDefeated) {
@@ -580,11 +582,12 @@ class GameState(
         // Award EXP for healing (only if target was actually wounded)
         val expGained =
             if (target.currentHp < target.maxHp || healAmount > 0) {
-                healer.gainExperience(EXPERIENCE_PER_HEAL)
                 EXPERIENCE_PER_HEAL
             } else {
                 0
             }
+
+        val statGains = healer.gainExperienceWithTracking(expGained)
 
         val result =
             SupportResult(
@@ -593,6 +596,7 @@ class GameState(
                 healAmount = healAmount,
                 expGained = expGained,
                 previousLevel = previousLevel,
+                statGains = statGains,
             )
 
         return result
@@ -887,6 +891,7 @@ data class BattleResult(
     val wasCritical: Boolean = false,
     val expGained: Int = 0,
     val previousLevel: Int = 0,
+    val statGains: Stats? = null,
 )
 
 data class SupportResult(
@@ -895,4 +900,5 @@ data class SupportResult(
     val healAmount: Int,
     val expGained: Int = 0,
     val previousLevel: Int = 0,
+    val statGains: Stats? = null,
 )

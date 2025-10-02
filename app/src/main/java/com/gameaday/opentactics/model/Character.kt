@@ -39,21 +39,11 @@ data class Character(
     // Enemy AI properties
     var isBoss: Boolean = false,
     var aiType: AIBehavior = AIBehavior.AGGRESSIVE,
+    // Stat bonuses from level ups (accumulated random growths)
+    var statBonuses: Stats = Stats(0, 0, 0, 0, 0, 0, 0),
 ) : Parcelable {
     val currentStats: Stats
-        get() {
-            val levelBonus =
-                Stats(
-                    hp = level - 1,
-                    mp = (level - 1) / 2,
-                    attack = (level - 1) / 2,
-                    defense = (level - 1) / 2,
-                    speed = (level - 1) / 3,
-                    skill = (level - 1) / 2,
-                    luck = (level - 1) / 3,
-                )
-            return characterClass.baseStats + levelBonus
-        }
+        get() = characterClass.baseStats + statBonuses
 
     val maxHp: Int
         get() = currentStats.hp
@@ -179,12 +169,90 @@ data class Character(
 
     private fun experienceToNextLevel(): Int = level * EXPERIENCE_PER_LEVEL
 
-    private fun levelUp() {
+    /**
+     * Level up the character with random stat increases based on growth rates
+     * @return Stats object showing which stats increased (0 or 1 for each stat)
+     */
+    private fun levelUp(): Stats {
         experience -= experienceToNextLevel()
         level++
-        // Heal to full on level up
-        currentHp = maxHp
-        currentMp = maxMp
+
+        // Store old max HP/MP
+        val oldMaxHp = maxHp
+        val oldMaxMp = maxMp
+
+        // Roll for stat increases based on growth rates
+        val growthRates = characterClass.growthRates
+        var statGains =
+            Stats(
+                hp = if ((1..100).random() <= growthRates.hp) 1 else 0,
+                mp = if ((1..100).random() <= growthRates.mp) 1 else 0,
+                attack = if ((1..100).random() <= growthRates.attack) 1 else 0,
+                defense = if ((1..100).random() <= growthRates.defense) 1 else 0,
+                speed = if ((1..100).random() <= growthRates.speed) 1 else 0,
+                skill = if ((1..100).random() <= growthRates.skill) 1 else 0,
+                luck = if ((1..100).random() <= growthRates.luck) 1 else 0,
+            )
+
+        // Guarantee at least one stat increase
+        val totalGains =
+            statGains.hp + statGains.mp + statGains.attack +
+                statGains.defense + statGains.speed + statGains.skill + statGains.luck
+        if (totalGains == 0) {
+            // Pick a random stat to increase based on highest growth rates
+            val stats =
+                listOf(
+                    "hp" to growthRates.hp,
+                    "mp" to growthRates.mp,
+                    "attack" to growthRates.attack,
+                    "defense" to growthRates.defense,
+                    "speed" to growthRates.speed,
+                    "skill" to growthRates.skill,
+                    "luck" to growthRates.luck,
+                ).sortedByDescending { it.second }
+
+            // Increase the stat with highest growth rate
+            statGains =
+                when (stats[0].first) {
+                    "hp" -> statGains.copy(hp = 1)
+                    "mp" -> statGains.copy(mp = 1)
+                    "attack" -> statGains.copy(attack = 1)
+                    "defense" -> statGains.copy(defense = 1)
+                    "speed" -> statGains.copy(speed = 1)
+                    "skill" -> statGains.copy(skill = 1)
+                    "luck" -> statGains.copy(luck = 1)
+                    else -> statGains.copy(hp = 1)
+                }
+        }
+
+        // Apply stat bonuses
+        statBonuses = statBonuses + statGains
+
+        // Add the HP/MP increases to current values (not full heal)
+        val newMaxHp = maxHp
+        val newMaxMp = maxMp
+        currentHp += (newMaxHp - oldMaxHp)
+        currentMp += (newMaxMp - oldMaxMp)
+
+        return statGains
+    }
+
+    /**
+     * Get the stat gains from the last level up
+     * This should be called right after gainExperience to get the gains
+     */
+    var lastLevelUpGains: Stats? = null
+
+    fun gainExperienceWithTracking(exp: Int): Stats? {
+        val oldLevel = level
+        experience += exp
+        var totalGains: Stats? = null
+        while (experience >= experienceToNextLevel() && level < MAX_LEVEL) {
+            val gains = levelUp()
+            totalGains = if (totalGains == null) gains else totalGains + gains
+        }
+        lastLevelUpGains = if (level > oldLevel) totalGains else null
+        return lastLevelUpGains
     }
 
     /**

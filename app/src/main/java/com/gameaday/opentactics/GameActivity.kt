@@ -20,6 +20,7 @@ import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Stats
 import com.gameaday.opentactics.model.Team
 import com.gameaday.opentactics.model.Weapon
 import com.gameaday.opentactics.view.GameBoardView
@@ -1177,8 +1178,8 @@ class GameActivity : AppCompatActivity() {
             showExpGainEffect(result.attacker, result.expGained)
 
             // Check for level up
-            if (newLevel > previousLevel) {
-                showLevelUpEffect(result.attacker, previousLevel, newLevel)
+            if (newLevel > previousLevel && result.statGains != null) {
+                showLevelUpEffect(result.attacker, previousLevel, newLevel, result.statGains)
             }
         }
     }
@@ -1240,8 +1241,8 @@ class GameActivity : AppCompatActivity() {
             showExpGainEffect(result.user, result.expGained)
 
             // Check for level up
-            if (newLevel > previousLevel) {
-                showLevelUpEffect(result.user, previousLevel, newLevel)
+            if (newLevel > previousLevel && result.statGains != null) {
+                showLevelUpEffect(result.user, previousLevel, newLevel, result.statGains)
             }
         }
     }
@@ -1265,19 +1266,59 @@ class GameActivity : AppCompatActivity() {
         character: Character,
         oldLevel: Int,
         newLevel: Int,
+        statGains: Stats,
     ) {
         // Show level up dialog with stat increases
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val oldStats = character.currentStats - statGains
+            val newStats = character.currentStats
+
             val levelUpMessage =
                 buildString {
                     append("${character.name} reached Level $newLevel!\n\n")
-                    append("HP: ${character.maxHp}\n")
-                    append("MP: ${character.maxMp}\n")
-                    append("ATK: ${character.currentStats.attack}\n")
-                    append("DEF: ${character.currentStats.defense}\n")
-                    append("SPD: ${character.currentStats.speed}\n")
-                    append("SKL: ${character.currentStats.skill}\n")
-                    append("LCK: ${character.currentStats.luck}\n")
+
+                    // Show stat changes with arrows
+                    if (statGains.hp > 0) {
+                        append("HP: ${oldStats.hp}→${newStats.hp}\n")
+                    } else {
+                        append("HP: ${newStats.hp}\n")
+                    }
+
+                    if (statGains.mp > 0) {
+                        append("MP: ${oldStats.mp}→${newStats.mp}\n")
+                    } else {
+                        append("MP: ${newStats.mp}\n")
+                    }
+
+                    if (statGains.attack > 0) {
+                        append("ATK: ${oldStats.attack}→${newStats.attack}\n")
+                    } else {
+                        append("ATK: ${newStats.attack}\n")
+                    }
+
+                    if (statGains.defense > 0) {
+                        append("DEF: ${oldStats.defense}→${newStats.defense}\n")
+                    } else {
+                        append("DEF: ${newStats.defense}\n")
+                    }
+
+                    if (statGains.speed > 0) {
+                        append("SPD: ${oldStats.speed}→${newStats.speed}\n")
+                    } else {
+                        append("SPD: ${newStats.speed}\n")
+                    }
+
+                    if (statGains.skill > 0) {
+                        append("SKL: ${oldStats.skill}→${newStats.skill}\n")
+                    } else {
+                        append("SKL: ${newStats.skill}\n")
+                    }
+
+                    if (statGains.luck > 0) {
+                        append("LCK: ${oldStats.luck}→${newStats.luck}")
+                    } else {
+                        append("LCK: ${newStats.luck}")
+                    }
                 }
 
             AlertDialog
