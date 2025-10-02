@@ -136,7 +136,7 @@ class GameBoardView
             highlightedAttacks = positions
             invalidate()
         }
-        
+
         fun highlightEnemyRanges(positions: List<Position>) {
             highlightedEnemyRanges = positions
             invalidate()
@@ -255,7 +255,7 @@ class GameBoardView
 
             // Draw attack highlights
             drawHighlights(canvas, highlightedAttacks, attackHighlightColor)
-            
+
             // Draw enemy range highlights (red semi-transparent)
             drawHighlights(canvas, highlightedEnemyRanges, Color.argb(80, 255, 0, 0))
 
@@ -421,7 +421,10 @@ class GameBoardView
                 // Fallback: draw class initial using iconPaint
                 iconPaint.textSize = tileRadius
                 iconPaint.color = primaryColor
-                val classInitial = character.characterClass.displayName.first().toString()
+                val classInitial =
+                    character.characterClass.displayName
+                        .first()
+                        .toString()
                 canvas.drawText(classInitial, centerX, centerY + tileRadius / 3f, iconPaint)
             }
 
@@ -439,19 +442,23 @@ class GameBoardView
                 centerY + tileRadius + 20f,
                 textPaint,
             )
-            
+
             // Draw boss indicator (crown)
             if (isBossUnit(character)) {
                 drawBossIndicator(canvas, centerX, centerY - tileRadius - 30f)
             }
         }
-        
+
         private fun isBossUnit(character: Character): Boolean {
             val chapter = gameState?.currentChapter ?: return false
             return chapter.bossUnit?.id == character.id
         }
-        
-        private fun drawBossIndicator(canvas: Canvas, x: Float, y: Float) {
+
+        private fun drawBossIndicator(
+            canvas: Canvas,
+            x: Float,
+            y: Float,
+        ) {
             // Draw a gold star/crown indicator for boss units
             textPaint.textSize = tileSize * 0.3f
             textPaint.color = Color.YELLOW
@@ -507,8 +514,7 @@ class GameBoardView
             }
         }
 
-        override fun onTouchEvent(event: MotionEvent): Boolean =
-            gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
+        override fun onTouchEvent(event: MotionEvent): Boolean = gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
 
         private fun screenToBoard(
             screenX: Float,

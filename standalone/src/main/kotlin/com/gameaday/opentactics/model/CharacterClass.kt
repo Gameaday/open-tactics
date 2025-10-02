@@ -87,11 +87,12 @@ enum class CharacterClass(
         attackRange = 2,
         canFly = true,
         canTransform = false,
-    );
+    ),
+    ;
 
     val transformsTo: CharacterClass?
-        get() = transformsToName?.let { name ->
-            values().find { it.name == name }
-        }
+        get() =
+            transformsToName?.let { name ->
+                values().find { it.name == name }
+            }
 }
-

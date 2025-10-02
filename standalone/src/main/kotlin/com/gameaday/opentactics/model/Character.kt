@@ -1,6 +1,5 @@
 package com.gameaday.opentactics.model
 
-
 // Character progression constants
 private const val MAX_LEVEL = 20
 private const val EXPERIENCE_PER_LEVEL = 100
@@ -30,7 +29,7 @@ data class Character(
     // Action history for undo functionality
     var previousPosition: Position? = null,
     var canStillMoveAfterAttack: Boolean = false, // Tracks Canto state
-)  {
+) {
     val currentStats: Stats
         get() {
             val levelBonus =
@@ -99,7 +98,7 @@ data class Character(
      */
     fun commitAction() {
         hasActedThisTurn = true
-        
+
         // If character has Canto, they can move after attack
         if (characterClass.hasCanto) {
             canStillMoveAfterAttack = true
@@ -127,14 +126,13 @@ data class Character(
     /**
      * Check if character can still move (including Canto movement after attack)
      */
-    fun canMoveNow(): Boolean {
-        return when {
+    fun canMoveNow(): Boolean =
+        when {
             !isAlive -> false
             !hasMovedThisTurn -> true // Haven't moved yet
             canStillMoveAfterAttack -> true // Has Canto and can move again
             else -> false
         }
-    }
 
     /**
      * Wait - ends all possible actions for this turn
@@ -186,18 +184,18 @@ data class Character(
     fun transform(): Boolean {
         if (!characterClass.canTransform) return false
         val transformTo = characterClass.transformsTo ?: return false
-        
+
         // Store original class
         originalClass = characterClass
-        
+
         // Transform
         characterClass = transformTo
         isTransformed = true
-        
+
         // Restore HP/MP to maximum of new form
         currentHp = maxHp
         currentMp = maxMp
-        
+
         return true
     }
 
@@ -208,20 +206,20 @@ data class Character(
     fun revertTransform(): Boolean {
         if (!isTransformed) return false
         val original = originalClass ?: return false
-        
+
         // Calculate HP/MP ratio before transformation
         val hpRatio = currentHp.toFloat() / maxHp
         val mpRatio = currentMp.toFloat() / maxMp
-        
+
         // Revert to original class
         characterClass = original
         isTransformed = false
         originalClass = null
-        
+
         // Restore HP/MP proportionally
         currentHp = (maxHp * hpRatio).toInt().coerceIn(1, maxHp)
         currentMp = (maxMp * mpRatio).toInt().coerceIn(0, maxMp)
-        
+
         return true
     }
 
@@ -234,17 +232,20 @@ data class Character(
      * Check if character can revert transformation
      */
     fun canRevertTransform(): Boolean = isTransformed && originalClass != null
-    
+
     // Weapon and Inventory Management
-    
+
     /**
      * Get the currently equipped weapon, or null if none equipped
      */
     val equippedWeapon: Weapon?
-        get() = if (equippedWeaponIndex >= 0 && equippedWeaponIndex < inventory.size) {
-            inventory[equippedWeaponIndex]
-        } else null
-    
+        get() =
+            if (equippedWeaponIndex >= 0 && equippedWeaponIndex < inventory.size) {
+                inventory[equippedWeaponIndex]
+            } else {
+                null
+            }
+
     /**
      * Add a weapon to inventory
      * @return true if added successfully, false if inventory is full
@@ -258,16 +259,16 @@ data class Character(
         }
         return true
     }
-    
+
     /**
      * Remove a weapon from inventory
      * @return the removed weapon, or null if index invalid
      */
     fun removeWeapon(index: Int): Weapon? {
         if (index < 0 || index >= inventory.size) return null
-        
+
         val weapon = inventory.removeAt(index)
-        
+
         // Adjust equipped index
         when {
             equippedWeaponIndex == index -> {
@@ -279,10 +280,10 @@ data class Character(
                 equippedWeaponIndex--
             }
         }
-        
+
         return weapon
     }
-    
+
     /**
      * Equip a weapon by inventory index
      * @return true if equipped successfully
@@ -290,18 +291,16 @@ data class Character(
     fun equipWeapon(index: Int): Boolean {
         if (index < 0 || index >= inventory.size) return false
         if (inventory[index].isBroken) return false
-        
+
         equippedWeaponIndex = index
         return true
     }
-    
+
     /**
      * Get effective attack range considering equipped weapon
      */
-    fun getAttackRange(): IntRange {
-        return equippedWeapon?.range ?: characterClass.attackRange..characterClass.attackRange
-    }
-    
+    fun getAttackRange(): IntRange = equippedWeapon?.range ?: characterClass.attackRange..characterClass.attackRange
+
     /**
      * Check if character can attack a position
      */
@@ -310,7 +309,7 @@ data class Character(
         val range = getAttackRange()
         return distance in range
     }
-    
+
     /**
      * Use equipped weapon (reduces durability)
      * @return true if weapon broke from use
@@ -318,15 +317,15 @@ data class Character(
     fun useEquippedWeapon(): Boolean {
         val weapon = equippedWeapon ?: return false
         val broke = weapon.use()
-        
+
         if (broke) {
             // Remove broken weapon and try to equip another
             removeWeapon(equippedWeaponIndex)
         }
-        
+
         return broke
     }
-    
+
     companion object {
         const val MAX_INVENTORY_SIZE = 5
     }

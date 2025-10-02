@@ -26,6 +26,32 @@ data class Stats(
             luck + other.luck,
         )
 
-    fun toDisplayString(): String =
-        "HP: $hp  MP: $mp  ATK: $attack\nDEF: $defense  SPD: $speed  SKL: $skill\nLCK: $luck"
+    operator fun minus(other: Stats): Stats =
+        Stats(
+            hp - other.hp,
+            mp - other.mp,
+            attack - other.attack,
+            defense - other.defense,
+            speed - other.speed,
+            skill - other.skill,
+            luck - other.luck,
+        )
+
+    fun toDisplayString(): String = "HP: $hp  MP: $mp  ATK: $attack\nDEF: $defense  SPD: $speed  SKL: $skill\nLCK: $luck"
 }
+
+/**
+ * Growth rates for stat increases on level up
+ * Values are percentages (0-100) representing the chance of that stat increasing
+ */
+@Parcelize
+@Serializable
+data class GrowthRates(
+    val hp: Int,
+    val mp: Int,
+    val attack: Int,
+    val defense: Int,
+    val speed: Int,
+    val skill: Int,
+    val luck: Int,
+) : Parcelable

@@ -2,15 +2,16 @@ package com.gameaday.opentactics.game
 
 import com.gameaday.opentactics.model.AIBehavior
 import com.gameaday.opentactics.model.Chapter
-import com.gameaday.opentactics.model.ChapterObjective
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
+import com.gameaday.opentactics.model.Stats
 import com.gameaday.opentactics.model.Team
 
 // Battle and experience constants
 private const val EXPERIENCE_PER_KILL_MULTIPLIER = 25
 private const val EXPERIENCE_PER_HIT = 10
+private const val EXPERIENCE_PER_HEAL = 12 // EXP for using healing staff
 private const val DAMAGE_VARIANCE = 0.25
 private const val CRITICAL_HIT_MULTIPLIER = 3
 
@@ -94,33 +95,36 @@ class GameState(
         }
     }
 
-    fun canSelectCharacter(character: Character): Boolean =
-        character.team == currentTurn && (character.canMove || character.canAct)
+    fun canSelectCharacter(character: Character): Boolean = character.team == currentTurn && (character.canMove || character.canAct)
 
     /**
      * Perform a character move
      * @return true if move was successful
      */
     @Suppress("ReturnCount") // Multiple validation points require early returns
-    fun performMove(character: Character, destination: Position): Boolean {
+    fun performMove(
+        character: Character,
+        destination: Position,
+    ): Boolean {
         if (character != selectedCharacter) return false
         if (!character.canMoveNow()) return false
-        
+
         val possibleMoves = calculatePossibleMoves(character)
         if (destination !in possibleMoves) return false
-        
+
         val previousPos = character.position
         board.moveCharacter(character, destination)
         character.commitMove(previousPos)
         moveBeforeAction = !character.hasActedThisTurn
-        
+
         // Update game phase based on what actions are still available
-        gamePhase = when {
-            character.canAct -> GamePhase.ACTION
-            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
-            else -> GamePhase.CONFIRM_WAIT
-        }
-        
+        gamePhase =
+            when {
+                character.canAct -> GamePhase.ACTION
+                character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+                else -> GamePhase.CONFIRM_WAIT
+            }
+
         return true
     }
 
@@ -131,11 +135,11 @@ class GameState(
     fun undoMove(): Boolean {
         val character = selectedCharacter ?: return false
         val previousPos = character.undoMove() ?: return false
-        
+
         board.moveCharacter(character, previousPos)
         gamePhase = GamePhase.MOVEMENT
         moveBeforeAction = false
-        
+
         return true
     }
 
@@ -149,16 +153,17 @@ class GameState(
         if (!character.canAct) return null
         if (target.team == character.team) return null
         if (!character.canAttackPosition(target.position)) return null
-        
+
         val result = performAttack(character, target)
         character.commitAction()
-        
+
         // Update game phase based on Canto ability
-        gamePhase = when {
-            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
-            else -> GamePhase.CONFIRM_WAIT
-        }
-        
+        gamePhase =
+            when {
+                character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+                else -> GamePhase.CONFIRM_WAIT
+            }
+
         return result
     }
 
@@ -180,7 +185,7 @@ class GameState(
                 currentTurn = Team.ENEMY
                 gamePhase = GamePhase.ENEMY_TURN
                 turnCount++
-                spawnReinforcements()  // Spawn reinforcements at start of enemy turn
+                spawnReinforcements() // Spawn reinforcements at start of enemy turn
                 executeEnemyTurn()
             }
             Team.ENEMY -> {
@@ -214,7 +219,7 @@ class GameState(
         // End enemy turn
         endTurn()
     }
-    
+
     /**
      * Get the AI behavior for an enemy unit
      */
@@ -224,17 +229,17 @@ class GameState(
             if (chapter.bossUnit?.id == enemy.id) {
                 return chapter.bossUnit.aiType
             }
-            
+
             // Check other enemy units for their behavior
             chapter.enemyUnits.find { it.id == enemy.id }?.let { spawn ->
                 return spawn.aiType
             }
         }
-        
+
         // Default behavior
         return AIBehavior.AGGRESSIVE
     }
-    
+
     /**
      * Execute AI behavior for an enemy unit
      */
@@ -247,23 +252,24 @@ class GameState(
             AIBehavior.SUPPORT -> executeSupportBehavior(enemy)
         }
     }
-    
+
     /**
      * Aggressive AI: Always move towards and attack nearest player unit
      */
     private fun executeAggressiveBehavior(enemy: Character) {
         val target = findNearestPlayerCharacter(enemy) ?: return
-        
+
         // Try to attack first if in range
         val distance = enemy.position.distanceTo(target.position)
-        val inRange = enemy.equippedWeapon?.let {  distance in it.range }
-            ?: (distance <= enemy.characterClass.attackRange)
-        
+        val inRange =
+            enemy.equippedWeapon?.let { distance in it.range }
+                ?: (distance <= enemy.characterClass.attackRange)
+
         if (enemy.canAct && inRange) {
             performAttack(enemy, target)
             enemy.commitAction()
         }
-        
+
         // Then try to move (or move closer if couldn't attack)
         if (enemy.canMoveNow()) {
             val moveTarget = findBestMovePosition(enemy, target)
@@ -271,46 +277,50 @@ class GameState(
                 board.moveCharacter(enemy, it)
                 enemy.commitMove(enemy.position)
             }
-            
+
             // If has Canto and already attacked, try to attack again or retreat
             if (enemy.characterClass.hasCanto && !enemy.canAct) {
                 // Try to attack again if now in range
                 val newDistance = enemy.position.distanceTo(target.position)
-                val newInRange = enemy.equippedWeapon?.let { newDistance in it.range }
-                    ?: (newDistance <= enemy.characterClass.attackRange)
+                val newInRange =
+                    enemy.equippedWeapon?.let { newDistance in it.range }
+                        ?: (newDistance <= enemy.characterClass.attackRange)
                 if (newInRange) {
                     performAttack(enemy, target)
                     enemy.commitAction()
                 }
             }
         }
-        
+
         // If can still attack after moving
         if (enemy.canAct) {
             val distanceAfterMove = enemy.position.distanceTo(target.position)
-            val inRangeAfterMove = enemy.equippedWeapon?.let { distanceAfterMove in it.range }
-                ?: (distanceAfterMove <= enemy.characterClass.attackRange)
+            val inRangeAfterMove =
+                enemy.equippedWeapon?.let { distanceAfterMove in it.range }
+                    ?: (distanceAfterMove <= enemy.characterClass.attackRange)
             if (inRangeAfterMove) {
                 performAttack(enemy, target)
                 enemy.commitAction()
             }
         }
-        
+
         enemy.commitWait()
     }
-    
+
     /**
      * Defensive AI: Only attacks when player units are in range, doesn't actively pursue
      */
     private fun executeDefensiveBehavior(enemy: Character) {
         // Find all player units in attack range
-        val targetsInRange = playerCharacters.filter { player ->
-            val distance = enemy.position.distanceTo(player.position)
-            val inRange = enemy.equippedWeapon?.let { distance in it.range }
-                ?: (distance <= enemy.characterClass.attackRange)
-            player.isAlive && inRange
-        }
-        
+        val targetsInRange =
+            playerCharacters.filter { player ->
+                val distance = enemy.position.distanceTo(player.position)
+                val inRange =
+                    enemy.equippedWeapon?.let { distance in it.range }
+                        ?: (distance <= enemy.characterClass.attackRange)
+                player.isAlive && inRange
+            }
+
         if (targetsInRange.isNotEmpty() && enemy.canAct) {
             // Attack the weakest target in range
             val target = targetsInRange.minByOrNull { it.currentStats.hp } ?: return
@@ -324,47 +334,51 @@ class GameState(
                 enemy.commitMove(enemy.position)
             }
         }
-        
+
         enemy.commitWait()
     }
-    
+
     /**
      * Stationary AI: Does not move unless attacked, only attacks units in range
      */
     private fun executeStationaryBehavior(enemy: Character) {
         // Only act if has been attacked this turn or player is in range
-        val targetsInRange = playerCharacters.filter { player ->
-            val distance = enemy.position.distanceTo(player.position)
-            val inRange = enemy.equippedWeapon?.let { distance in it.range }
-                ?: (distance <= enemy.characterClass.attackRange)
-            player.isAlive && inRange
-        }
-        
+        val targetsInRange =
+            playerCharacters.filter { player ->
+                val distance = enemy.position.distanceTo(player.position)
+                val inRange =
+                    enemy.equippedWeapon?.let { distance in it.range }
+                        ?: (distance <= enemy.characterClass.attackRange)
+                player.isAlive && inRange
+            }
+
         if (targetsInRange.isNotEmpty() && enemy.canAct) {
             // Attack the closest target
-            val target = targetsInRange.minByOrNull { 
-                enemy.position.distanceTo(it.position)
-            } ?: return
+            val target =
+                targetsInRange.minByOrNull {
+                    enemy.position.distanceTo(it.position)
+                } ?: return
             performAttack(enemy, target)
             enemy.commitAction()
         }
-        
+
         enemy.commitWait()
     }
-    
+
     /**
      * Support AI: Prioritizes healing allies (future: buffing)
      */
     private fun executeSupportBehavior(enemy: Character) {
         // If this is a healer, try to heal wounded allies
         if (enemy.characterClass == com.gameaday.opentactics.model.CharacterClass.HEALER) {
-            val woundedAllies = enemyCharacters.filter { ally ->
-                ally.isAlive && 
-                ally != enemy && 
-                ally.currentHp < ally.maxHp &&
-                enemy.position.distanceTo(ally.position) <= enemy.characterClass.attackRange
-            }
-            
+            val woundedAllies =
+                enemyCharacters.filter { ally ->
+                    ally.isAlive &&
+                        ally != enemy &&
+                        ally.currentHp < ally.maxHp &&
+                        enemy.position.distanceTo(ally.position) <= enemy.characterClass.attackRange
+                }
+
             if (woundedAllies.isNotEmpty()) {
                 // Heal the most wounded ally
                 val target = woundedAllies.minByOrNull { it.currentStats.hp } ?: return
@@ -382,17 +396,17 @@ class GameState(
             // Fall back to defensive behavior
             executeDefensiveBehavior(enemy)
         }
-        
+
         enemy.commitWait()
     }
-    
+
     /**
      * Find best defensive position with terrain bonuses
      */
     private fun findBestDefensivePosition(character: Character): Position? {
         val possibleMoves = calculatePossibleMoves(character)
         if (possibleMoves.isEmpty()) return null
-        
+
         // Prefer positions with high defensive bonuses
         return possibleMoves.maxByOrNull { pos ->
             val tile = board.getTile(pos)
@@ -466,17 +480,54 @@ class GameState(
         return targets
     }
 
+    /**
+     * Calculate valid heal targets for a character with a healing staff
+     */
+    fun calculateHealTargets(character: Character): List<Character> {
+        if (!character.canAct) return emptyList()
+
+        val staff = character.equippedWeapon
+        if (staff == null || !staff.canHeal) return emptyList()
+
+        val targets = mutableListOf<Character>()
+        val healRange = staff.range.first // Use weapon range
+
+        for (target in getAllCharacters()) {
+            // Can heal allies (same team) who are wounded
+            if (target.team == character.team && target.isAlive && target.currentHp < target.maxHp) {
+                if (character.position.distanceTo(target.position) <= healRange) {
+                    targets.add(target)
+                }
+            }
+        }
+
+        return targets
+    }
+
     fun performAttack(
         attacker: Character,
         target: Character,
     ): BattleResult {
+        // Track level before EXP gain
+        val previousLevel = attacker.level
+
         // Check for critical hit
         val isCritical = checkCriticalHit(attacker)
         val damage = calculateDamage(attacker, target, isCritical)
         target.takeDamage(damage)
-        
+
         // Use weapon durability
         attacker.useEquippedWeapon()
+
+        // Award EXP and track stat gains
+        val expGained =
+            if (!target.isAlive) {
+                target.level * EXPERIENCE_PER_KILL_MULTIPLIER
+            } else {
+                EXPERIENCE_PER_HIT
+            }
+
+        val statGains = attacker.gainExperienceWithTracking(expGained)
 
         val result =
             BattleResult(
@@ -485,20 +536,72 @@ class GameState(
                 damage = damage,
                 targetDefeated = !target.isAlive,
                 wasCritical = isCritical,
+                expGained = expGained,
+                previousLevel = previousLevel,
+                statGains = statGains,
             )
 
         if (result.targetDefeated) {
-            attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
             board.removeCharacter(target)
             removeDefeatedCharacter(target)
-        } else {
-            attacker.gainExperience(EXPERIENCE_PER_HIT)
         }
 
         checkGameEnd()
         return result
     }
-    
+
+    /**
+     * Perform a healing action with a staff
+     * @param healer The character using the healing staff
+     * @param target The character being healed
+     * @return SupportResult with healing details and EXP gained
+     */
+    fun performHeal(
+        healer: Character,
+        target: Character,
+    ): SupportResult {
+        // Track level before EXP gain
+        val previousLevel = healer.level
+
+        // Calculate heal amount based on staff
+        val staff = healer.equippedWeapon
+        val healAmount =
+            when {
+                staff == null || !staff.canHeal -> 0
+                staff.name == "Heal" -> 10
+                staff.name == "Mend" -> 20
+                else -> 10
+            }
+
+        // Apply healing
+        target.heal(healAmount)
+
+        // Use staff durability
+        healer.useEquippedWeapon()
+
+        // Award EXP for healing (only if target was actually wounded)
+        val expGained =
+            if (target.currentHp < target.maxHp || healAmount > 0) {
+                EXPERIENCE_PER_HEAL
+            } else {
+                0
+            }
+
+        val statGains = healer.gainExperienceWithTracking(expGained)
+
+        val result =
+            SupportResult(
+                user = healer,
+                target = target,
+                healAmount = healAmount,
+                expGained = expGained,
+                previousLevel = previousLevel,
+                statGains = statGains,
+            )
+
+        return result
+    }
+
     private fun checkCriticalHit(attacker: Character): Boolean {
         // Critical rate = (Skill + Luck / 2)
         val critRate = attacker.currentStats.skill + (attacker.currentStats.luck / 2)
@@ -512,38 +615,38 @@ class GameState(
     ): Int {
         val attackerWeapon = attacker.equippedWeapon
         val targetWeapon = target.equippedWeapon
-        
+
         // Base attack from character stats
         var attackPower = attacker.currentStats.attack
-        
+
         // Add weapon might
         if (attackerWeapon != null && !attackerWeapon.isBroken) {
             attackPower += attackerWeapon.might
-            
+
             // Apply weapon triangle bonus
             if (targetWeapon != null) {
                 val triangleBonus = attackerWeapon.getTriangleBonus(targetWeapon.type)
                 attackPower = (attackPower * triangleBonus).toInt()
             }
-            
+
             // Apply effective damage bonus (2x against specific classes)
             if (attackerWeapon.isEffectiveAgainst(target.characterClass)) {
                 attackPower *= 2
             }
         }
-        
+
         // Get defender's defense
         var defensePower = target.currentStats.defense
-        
+
         // Apply terrain defensive bonus
         val targetTile = board.getTile(target.position)
         if (targetTile != null) {
             defensePower += targetTile.terrain.defensiveBonus
         }
-        
+
         // Calculate base damage
         val baseDamage = maxOf(1, attackPower - defensePower / 2)
-        
+
         // Apply critical hit multiplier
         val criticalDamage = if (isCritical) baseDamage * CRITICAL_HIT_MULTIPLIER else baseDamage
 
@@ -568,19 +671,19 @@ class GameState(
                     enemyCharacters,
                     turnCount,
                     unitsOnThrone,
-                    escapedUnitCount
+                    escapedUnitCount,
                 )
             ) {
                 gamePhase = GamePhase.GAME_OVER
                 return
             }
-            
+
             if (chapter.isObjectiveFailed(playerCharacters, turnCount)) {
                 gamePhase = GamePhase.GAME_OVER
                 return
             }
         }
-        
+
         // Default victory/defeat conditions
         when {
             playerCharacters.none { it.isAlive } -> {
@@ -599,7 +702,7 @@ class GameState(
                 enemyCharacters,
                 turnCount,
                 unitsOnThrone,
-                escapedUnitCount
+                escapedUnitCount,
             )
         }
         // Default: all enemies defeated
@@ -613,7 +716,7 @@ class GameState(
         // Default: all players defeated
         return playerCharacters.isNotEmpty() && playerCharacters.none { it.isAlive }
     }
-    
+
     /**
      * Mark a unit as being on the throne (for SEIZE_THRONE objective)
      */
@@ -624,7 +727,7 @@ class GameState(
             }
         }
     }
-    
+
     /**
      * Mark a unit as escaped (for ESCAPE objective)
      */
@@ -637,7 +740,7 @@ class GameState(
             }
         }
     }
-    
+
     /**
      * Spawn reinforcements for the current turn
      */
@@ -646,14 +749,15 @@ class GameState(
             val reinforcements = chapter.getReinforcementsForTurn(turnCount)
             reinforcements.forEach { spawn ->
                 // Create character from spawn data
-                val reinforcement = Character(
-                    id = spawn.id,
-                    name = spawn.name,
-                    characterClass = spawn.characterClass,
-                    team = Team.ENEMY,
-                    position = spawn.position,
-                    level = spawn.level
-                )
+                val reinforcement =
+                    Character(
+                        id = spawn.id,
+                        name = spawn.name,
+                        characterClass = spawn.characterClass,
+                        team = Team.ENEMY,
+                        position = spawn.position,
+                        level = spawn.level,
+                    )
                 // Add weapons from equipment list
                 spawn.equipment.forEach { weaponId ->
                     // Weapon factory would go here
@@ -663,63 +767,73 @@ class GameState(
             }
         }
     }
-    
+
     /**
      * Calculate battle forecast between attacker and target
      * Shows predicted damage, hit rates, and potential outcomes
      */
-    fun calculateBattleForecast(attacker: Character, target: Character): BattleForecast {
+    fun calculateBattleForecast(
+        attacker: Character,
+        target: Character,
+    ): BattleForecast {
         // Calculate attacker's damage
         val attackerDamage = calculateDamage(attacker, target)
-        
+
         // Calculate if target can counter-attack
         val canCounter = canCounterAttack(attacker, target)
         val counterDamage = if (canCounter) calculateDamage(target, attacker) else 0
-        
+
         // Calculate hit rates (simplified - base 90%, adjusted by speed difference)
         val speedDiff = attacker.currentStats.speed - target.currentStats.speed
-        val attackerHitRate = minOf(
-            HIT_RATE_MAX,
-            maxOf(HIT_RATE_MIN, BASE_HIT_RATE + speedDiff * SPEED_HIT_RATE_MODIFIER)
-        )
-        val targetHitRate = if (canCounter) minOf(
-            HIT_RATE_MAX,
-            maxOf(HIT_RATE_MIN, BASE_HIT_RATE - speedDiff * SPEED_HIT_RATE_MODIFIER)
-        ) else 0
-        
+        val attackerHitRate =
+            minOf(
+                HIT_RATE_MAX,
+                maxOf(HIT_RATE_MIN, BASE_HIT_RATE + speedDiff * SPEED_HIT_RATE_MODIFIER),
+            )
+        val targetHitRate =
+            if (canCounter) {
+                minOf(
+                    HIT_RATE_MAX,
+                    maxOf(HIT_RATE_MIN, BASE_HIT_RATE - speedDiff * SPEED_HIT_RATE_MODIFIER),
+                )
+            } else {
+                0
+            }
+
         // Calculate if attacker can double attack (speed >= target speed + 5)
         val attackerDoubles = attacker.currentStats.speed >= target.currentStats.speed + DOUBLE_ATTACK_SPEED_THRESHOLD
-        val targetDoubles = canCounter &&
-            target.currentStats.speed >= attacker.currentStats.speed + DOUBLE_ATTACK_SPEED_THRESHOLD
-        
+        val targetDoubles =
+            canCounter &&
+                target.currentStats.speed >= attacker.currentStats.speed + DOUBLE_ATTACK_SPEED_THRESHOLD
+
         // Predict battle outcome
         var predictedAttackerHp = attacker.currentStats.hp
         var predictedTargetHp = target.currentStats.hp
-        
+
         // Attacker's first strike
         if (attackerHitRate >= FORECAST_HIT_ASSUMPTION) { // Assume hit if 75%+ chance
             predictedTargetHp = maxOf(0, predictedTargetHp - attackerDamage)
         }
-        
+
         // Target counter if alive
         if (predictedTargetHp > 0 && canCounter && targetHitRate >= FORECAST_HIT_ASSUMPTION) {
             predictedAttackerHp = maxOf(0, predictedAttackerHp - counterDamage)
         }
-        
+
         // Double attacks if applicable and target alive
         if (predictedTargetHp > 0 && attackerDoubles && predictedAttackerHp > 0) {
             if (attackerHitRate >= FORECAST_HIT_ASSUMPTION) {
                 predictedTargetHp = maxOf(0, predictedTargetHp - attackerDamage)
             }
         }
-        
+
         @Suppress("ComplexCondition") // Battle simulation requires multiple state checks
         if (predictedAttackerHp > 0 && predictedTargetHp > 0 && targetDoubles && canCounter) {
             if (targetHitRate >= FORECAST_HIT_ASSUMPTION) {
                 predictedAttackerHp = maxOf(0, predictedAttackerHp - counterDamage)
             }
         }
-        
+
         return BattleForecast(
             attackerDamage = attackerDamage,
             targetDamage = counterDamage,
@@ -731,20 +845,23 @@ class GameState(
             predictedAttackerHp = predictedAttackerHp,
             predictedTargetHp = predictedTargetHp,
             targetWillBeDefeated = predictedTargetHp <= 0,
-            attackerWillBeDefeated = predictedAttackerHp <= 0
+            attackerWillBeDefeated = predictedAttackerHp <= 0,
         )
     }
-    
+
     /**
      * Check if target can counter-attack
      */
-    private fun canCounterAttack(attacker: Character, target: Character): Boolean {
+    private fun canCounterAttack(
+        attacker: Character,
+        target: Character,
+    ): Boolean {
         if (!target.canAct) return false
         if (target.equippedWeapon == null || target.equippedWeapon!!.isBroken) return false
-        
+
         val distance = attacker.position.distanceTo(target.position)
         val targetWeaponRange = target.equippedWeapon!!.range
-        
+
         return distance in targetWeaponRange
     }
 }
@@ -772,4 +889,16 @@ data class BattleResult(
     val damage: Int,
     val targetDefeated: Boolean,
     val wasCritical: Boolean = false,
+    val expGained: Int = 0,
+    val previousLevel: Int = 0,
+    val statGains: Stats? = null,
+)
+
+data class SupportResult(
+    val user: Character,
+    val target: Character,
+    val healAmount: Int,
+    val expGained: Int = 0,
+    val previousLevel: Int = 0,
+    val statGains: Stats? = null,
 )
