@@ -610,6 +610,12 @@ class GameActivity : AppCompatActivity() {
 
         if (gameState.currentTurn == Team.PLAYER) {
             Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+            
+            // Check game end conditions at start of player turn
+            checkGameEnd()
+        } else if (gameState.currentTurn == Team.ENEMY) {
+            // Start enemy turn automation
+            executeEnemyTurn()
         }
 
         // Check for auto-save
@@ -617,6 +623,48 @@ class GameActivity : AppCompatActivity() {
         if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
             performAutoSave()
         }
+    }
+
+    private fun executeEnemyTurn() {
+        // Show enemy turn banner
+        Toast.makeText(this, "Enemy Turn", Toast.LENGTH_SHORT).show()
+        
+        // Disable UI during enemy turn
+        setUIEnabled(false)
+        
+        // Process all enemy units with a delay between actions
+        val enemies = gameState.getAliveEnemyCharacters()
+        var delayMs = 500L
+        
+        enemies.forEach { enemy ->
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (enemy.isAlive && !enemy.hasActedThisTurn) {
+                    // Execute AI behavior
+                    gameState.executeEnemyAction(enemy)
+                    
+                    // Refresh UI
+                    gameBoardView.invalidate()
+                    updateUI()
+                }
+            }, delayMs)
+            delayMs += 800L // 800ms delay between enemy actions
+        }
+        
+        // End enemy turn after all actions complete
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            gameState.endTurn()
+            setUIEnabled(true)
+            updateUI()
+            checkGameEnd()
+            Toast.makeText(this, "Player Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+        }, delayMs + 500)
+    }
+    
+    private fun setUIEnabled(enabled: Boolean) {
+        binding.btnMove.isEnabled = enabled
+        binding.btnAttack.isEnabled = enabled
+        binding.btnWait.isEnabled = enabled
+        binding.btnEndTurn.isEnabled = enabled
     }
 
     private fun showCharacterInfo(character: Character) {

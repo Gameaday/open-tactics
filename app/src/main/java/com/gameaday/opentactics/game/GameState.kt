@@ -194,6 +194,15 @@ class GameState(
         checkGameEnd()
     }
 
+    /**
+     * Execute AI action for a single enemy unit (called from UI for animated turns)
+     */
+    fun executeEnemyAction(enemy: Character) {
+        if (!enemy.isAlive || enemy.hasActedThisTurn) return
+        val behavior = getEnemyBehavior(enemy)
+        executeAIBehavior(enemy, behavior)
+    }
+
     private fun executeEnemyTurn() {
         // Execute AI for each enemy unit based on their behavior
         for (enemy in enemyCharacters.filter { it.isAlive && it.canAct }) {
