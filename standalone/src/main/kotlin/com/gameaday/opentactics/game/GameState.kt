@@ -92,7 +92,9 @@ class GameState(
         }
     }
 
-    fun canSelectCharacter(character: Character): Boolean = character.team == currentTurn && (character.canMove || character.canAct)
+    fun canSelectCharacter(character: Character): Boolean =
+        character.team == currentTurn &&
+            (character.canMove || character.canAct)
 
     /**
      * Perform a character move

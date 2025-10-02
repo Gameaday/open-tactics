@@ -22,6 +22,7 @@ class ChapterSelectActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_UNLOCKED_CHAPTER = "unlocked_chapter"
+        private const val LOCKED_CHAPTER_ALPHA = 0.5f
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,7 +99,7 @@ class ChapterSelectActivity : AppCompatActivity() {
             if (isLocked) {
                 holder.status.visibility = View.VISIBLE
                 holder.status.text = "🔒 Locked"
-                holder.itemView.alpha = 0.5f
+                holder.itemView.alpha = LOCKED_CHAPTER_ALPHA
                 holder.itemView.isEnabled = false
             } else {
                 holder.status.visibility = View.GONE

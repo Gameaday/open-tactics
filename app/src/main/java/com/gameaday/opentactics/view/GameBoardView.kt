@@ -514,7 +514,9 @@ class GameBoardView
             }
         }
 
-        override fun onTouchEvent(event: MotionEvent): Boolean = gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
+        override fun onTouchEvent(event: MotionEvent): Boolean =
+            gestureDetector.onTouchEvent(event) ||
+                super.onTouchEvent(event)
 
         private fun screenToBoard(
             screenX: Float,

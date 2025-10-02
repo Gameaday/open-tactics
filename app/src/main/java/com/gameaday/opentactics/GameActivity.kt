@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber")
+@file:Suppress("MagicNumber", "TooManyFunctions", "LargeClass")
 
 package com.gameaday.opentactics
 
@@ -126,7 +126,8 @@ class GameActivity : AppCompatActivity() {
         val board =
             when (chapter.mapLayout) {
                 com.gameaday.opentactics.model.MapLayout.TEST_MAP -> GameBoard.createTestMap()
-                com.gameaday.opentactics.model.MapLayout.FOREST_AMBUSH -> GameBoard.createTestMap() // TODO: Create specific maps
+                // TODO: Create specific maps
+                com.gameaday.opentactics.model.MapLayout.FOREST_AMBUSH -> GameBoard.createTestMap()
                 com.gameaday.opentactics.model.MapLayout.MOUNTAIN_PASS -> GameBoard.createTestMap()
                 com.gameaday.opentactics.model.MapLayout.CASTLE_SIEGE -> GameBoard.createTestMap()
                 com.gameaday.opentactics.model.MapLayout.VILLAGE_DEFENSE -> GameBoard.createTestMap()
@@ -232,103 +233,6 @@ class GameActivity : AppCompatActivity() {
 
         // Create initial save data
         currentGameSave = createGameSave(playerName, chapterNumber)
-    }
-
-    @Suppress("LongMethod") // Game initialization requires many character setups - DEPRECATED
-    private fun initializeNewGameOld(playerName: String) {
-        val board = GameBoard.createTestMap()
-        gameState = GameState(board)
-
-        // Create player characters with the enhanced stats
-        val knight =
-            Character(
-                id = "player_knight",
-                name = "Sir Garrett",
-                characterClass = CharacterClass.KNIGHT,
-                team = Team.PLAYER,
-                position = Position(1, 6),
-            ).apply {
-                addWeapon(Weapon.ironSword())
-                addWeapon(Weapon.steelSword())
-            }
-
-        val archer =
-            Character(
-                id = "player_archer",
-                name = "Lyanna",
-                characterClass = CharacterClass.ARCHER,
-                team = Team.PLAYER,
-                position = Position(2, 7),
-            ).apply {
-                addWeapon(Weapon.ironBow())
-                addWeapon(Weapon.steelBow())
-            }
-
-        val mage =
-            Character(
-                id = "player_mage",
-                name = "Aldric",
-                characterClass = CharacterClass.MAGE,
-                team = Team.PLAYER,
-                position = Position(0, 7),
-            ).apply {
-                addWeapon(Weapon.fire())
-                addWeapon(Weapon.thunder())
-            }
-
-        // Create enemy characters
-        val enemyKnight =
-            Character(
-                id = "enemy_knight",
-                name = "Dark Knight",
-                characterClass = CharacterClass.KNIGHT,
-                team = Team.ENEMY,
-                position = Position(10, 1),
-            ).apply {
-                addWeapon(Weapon.ironSword())
-            }
-
-        val enemyArcher =
-            Character(
-                id = "enemy_archer",
-                name = "Bandit Archer",
-                characterClass = CharacterClass.ARCHER,
-                team = Team.ENEMY,
-                position = Position(9, 2),
-            ).apply {
-                addWeapon(Weapon.ironBow())
-            }
-
-        val enemyThief =
-            Character(
-                id = "enemy_thief",
-                name = "Rogue",
-                characterClass = CharacterClass.THIEF,
-                team = Team.ENEMY,
-                position = Position(11, 0),
-            ).apply {
-                addWeapon(Weapon.ironSword())
-            }
-
-        // Add characters to game state
-        gameState.addPlayerCharacter(knight)
-        gameState.addPlayerCharacter(archer)
-        gameState.addPlayerCharacter(mage)
-
-        gameState.addEnemyCharacter(enemyKnight)
-        gameState.addEnemyCharacter(enemyArcher)
-        gameState.addEnemyCharacter(enemyThief)
-
-        // Place characters on board
-        board.placeCharacter(knight, knight.position)
-        board.placeCharacter(archer, archer.position)
-        board.placeCharacter(mage, mage.position)
-        board.placeCharacter(enemyKnight, enemyKnight.position)
-        board.placeCharacter(enemyArcher, enemyArcher.position)
-        board.placeCharacter(enemyThief, enemyThief.position)
-
-        // Create initial save data
-        currentGameSave = createGameSave(playerName, 1)
     }
 
     private fun loadGame(saveId: String) {
@@ -1323,7 +1227,8 @@ class GameActivity : AppCompatActivity() {
 
             val levelUpMessage =
                 buildString {
-                    append("${character.name} reached Level $newLevel!\n\n")
+                    append("${character.name} reached Level $newLevel!\n")
+                    append("(Level $oldLevel → $newLevel)\n\n")
 
                     // Show stat changes with arrows
                     if (statGains.hp > 0) {
@@ -1455,7 +1360,9 @@ class GameActivity : AppCompatActivity() {
                 }
                 append("Objective: ${chapter.objectiveDetails}\n")
                 append("Turns: ${gameState.turnCount}\n")
-                append("Units: ${gameState.getAlivePlayerCharacters().size}/${gameState.getPlayerCharacters().size} survived")
+                val aliveCount = gameState.getAlivePlayerCharacters().size
+                val totalCount = gameState.getPlayerCharacters().size
+                append("Units: $aliveCount/$totalCount survived")
             }
 
         val hasNextChapter =
@@ -1509,9 +1416,6 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun startNextChapter(nextChapterNumber: Int) {
-        // Save current player characters to carry over
-        val carriedCharacters = gameState.getAlivePlayerCharacters()
-
         // Create a save that will be loaded in the next chapter
         val carryOverSave =
             createGameSave(

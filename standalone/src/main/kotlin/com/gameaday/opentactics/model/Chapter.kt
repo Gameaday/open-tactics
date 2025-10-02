@@ -478,7 +478,8 @@ object ChapterRepository {
                         ),
                     ),
                 preBattleDialogue = "Commander: The village is surrounded! We must reach the escape route quickly!",
-                postVictoryDialogue = "Commander: We made it! The villagers are safe, and we live to fight another day.",
+                postVictoryDialogue =
+                    "Commander: We made it! The villagers are safe, and we live to fight another day.",
                 postDefeatDialogue = "The escape route was blocked...",
             ),
         )

@@ -17,6 +17,7 @@ enum class Team {
 
 @Parcelize
 @Serializable
+@Suppress("TooManyFunctions") // Character class requires many functions for game mechanics
 data class Character(
     val id: String,
     val name: String,
