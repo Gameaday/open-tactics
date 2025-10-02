@@ -676,16 +676,123 @@ class GameActivity : AppCompatActivity() {
                 "Sound Effects: ${if (preferences.soundEffectsEnabled) "On" else "Off"}",
                 "Auto-save: ${if (preferences.autoSaveEnabled) "On" else "Off"}",
                 "Animation Speed: ${preferences.animationSpeed}x",
+                "Auto-save Frequency: Every ${preferences.autoSaveFrequency} turns",
             )
 
         AlertDialog
             .Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
-                // Settings implementation would go here
-                Toast.makeText(this, "Settings feature coming soon!", Toast.LENGTH_SHORT).show()
+                when (which) {
+                    0 -> toggleMusicSetting()
+                    1 -> toggleSoundEffectsSetting()
+                    2 -> toggleAutoSave()
+                    3 -> changeAnimationSpeed()
+                    4 -> changeAutoSaveFrequency()
+                }
             }.setNegativeButton("Close", null)
             .show()
+    }
+    
+    private fun toggleMusicSetting() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(musicEnabled = !currentPrefs.musicEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Music ${if (newPrefs.musicEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog() // Refresh dialog
+    }
+    
+    private fun toggleSoundEffectsSetting() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(soundEffectsEnabled = !currentPrefs.soundEffectsEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Sound effects ${if (newPrefs.soundEffectsEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog()
+    }
+    
+    private fun changeAnimationSpeed() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val speeds = arrayOf("0.5x", "1.0x", "1.5x", "2.0x")
+        val currentIndex = when (currentPrefs.animationSpeed) {
+            0.5f -> 0
+            1.0f -> 1
+            1.5f -> 2
+            2.0f -> 3
+            else -> 1
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Animation Speed")
+            .setSingleChoiceItems(speeds, currentIndex) { dialog, which ->
+                val newSpeed = when (which) {
+                    0 -> 0.5f
+                    1 -> 1.0f
+                    2 -> 1.5f
+                    3 -> 2.0f
+                    else -> 1.0f
+                }
+                val newPrefs = currentPrefs.copy(animationSpeed = newSpeed)
+                updatePreferences(newPrefs)
+                Toast.makeText(this, "Animation speed set to ${newSpeed}x", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                showSettingsDialog()
+            }
+            .setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            .show()
+    }
+    
+    private fun toggleAutoSave() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(autoSaveEnabled = !currentPrefs.autoSaveEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Auto-save ${if (newPrefs.autoSaveEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog()
+    }
+    
+    private fun changeAutoSaveFrequency() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val frequencies = arrayOf("Every 3 turns", "Every 5 turns", "Every 10 turns")
+        val currentIndex = when (currentPrefs.autoSaveFrequency) {
+            3 -> 0
+            5 -> 1
+            10 -> 2
+            else -> 1
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Auto-save Frequency")
+            .setSingleChoiceItems(frequencies, currentIndex) { dialog, which ->
+                val newFrequency = when (which) {
+                    0 -> 3
+                    1 -> 5
+                    2 -> 10
+                    else -> 5
+                }
+                val newPrefs = currentPrefs.copy(autoSaveFrequency = newFrequency)
+                updatePreferences(newPrefs)
+                Toast.makeText(this, "Auto-save every $newFrequency turns", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                showSettingsDialog()
+            }
+            .setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            .show()
+    }
+    
+    private fun updatePreferences(newPrefs: GamePreferences) {
+        playerProfile = playerProfile?.copy(preferences = newPrefs)
+        savePlayerProfile()
     }
 
     private fun confirmQuitToMenu() {
