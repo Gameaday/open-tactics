@@ -1131,7 +1131,7 @@ class GameActivity : AppCompatActivity() {
 
             // Check for level up
             if (newLevel > previousLevel && result.statGains != null) {
-                showLevelUpEffect(result.attacker, newLevel, result.statGains)
+                showLevelUpEffect(result.attacker, previousLevel, newLevel, result.statGains)
             }
         }
     }
@@ -1194,7 +1194,7 @@ class GameActivity : AppCompatActivity() {
 
             // Check for level up
             if (newLevel > previousLevel && result.statGains != null) {
-                showLevelUpEffect(result.user, newLevel, result.statGains)
+                showLevelUpEffect(result.user, previousLevel, newLevel, result.statGains)
             }
         }
     }
@@ -1216,6 +1216,7 @@ class GameActivity : AppCompatActivity() {
 
     private fun showLevelUpEffect(
         character: Character,
+        oldLevel: Int,
         newLevel: Int,
         statGains: Stats,
     ) {
@@ -1226,7 +1227,8 @@ class GameActivity : AppCompatActivity() {
 
             val levelUpMessage =
                 buildString {
-                    append("${character.name} reached Level $newLevel!\n\n")
+                    append("${character.name} reached Level $newLevel!\n")
+                    append("(Level $oldLevel → $newLevel)\n\n")
 
                     // Show stat changes with arrows
                     if (statGains.hp > 0) {
