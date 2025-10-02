@@ -78,15 +78,27 @@ data class GameBoard(
 
     // Create a simple test map
     companion object {
+        // Test map dimensions and terrain positions
+        private const val TEST_MAP_WIDTH = 12
+        private const val TEST_MAP_HEIGHT = 8
+        private const val FOREST_X1 = 2
+        private const val FOREST_Y1 = 2
+        private const val FOREST_X2 = 3
+        private const val MOUNTAIN_X1 = 8
+        private const val MOUNTAIN_Y1 = 4
+        private const val MOUNTAIN_X2 = 9
+        private const val FORT_X = 5
+        private const val FORT_Y = 1
+
         fun createTestMap(): GameBoard {
-            val board = GameBoard(12, 8)
+            val board = GameBoard(TEST_MAP_WIDTH, TEST_MAP_HEIGHT)
 
             // Add some terrain variety
-            board.getTile(2, 2)?.terrain = TerrainType.FOREST
-            board.getTile(3, 2)?.terrain = TerrainType.FOREST
-            board.getTile(8, 4)?.terrain = TerrainType.MOUNTAIN
-            board.getTile(9, 4)?.terrain = TerrainType.MOUNTAIN
-            board.getTile(5, 1)?.terrain = TerrainType.FORT
+            board.getTile(FOREST_X1, FOREST_Y1)?.terrain = TerrainType.FOREST
+            board.getTile(FOREST_X2, FOREST_Y1)?.terrain = TerrainType.FOREST
+            board.getTile(MOUNTAIN_X1, MOUNTAIN_Y1)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(MOUNTAIN_X2, MOUNTAIN_Y1)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(FORT_X, FORT_Y)?.terrain = TerrainType.FORT
 
             return board
         }

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.gameaday.opentactics
 
 import android.os.Bundle
@@ -18,6 +20,7 @@ import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Team
+import com.gameaday.opentactics.model.Weapon
 import com.gameaday.opentactics.view.GameBoardView
 import kotlinx.coroutines.launch
 
@@ -76,6 +79,7 @@ class GameActivity : AppCompatActivity() {
         playerProfile?.let { saveGameManager.saveProfile(it) }
     }
 
+    @Suppress("LongMethod") // Game initialization requires many character setups
     private fun initializeNewGame(playerName: String) {
         val board = GameBoard.createTestMap()
         gameState = GameState(board)
@@ -88,7 +92,10 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.PLAYER,
                 position = Position(1, 6),
-            )
+            ).apply {
+                addWeapon(Weapon.ironSword())
+                addWeapon(Weapon.steelSword())
+            }
 
         val archer =
             Character(
@@ -97,7 +104,10 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.ARCHER,
                 team = Team.PLAYER,
                 position = Position(2, 7),
-            )
+            ).apply {
+                addWeapon(Weapon.ironBow())
+                addWeapon(Weapon.steelBow())
+            }
 
         val mage =
             Character(
@@ -106,7 +116,10 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.MAGE,
                 team = Team.PLAYER,
                 position = Position(0, 7),
-            )
+            ).apply {
+                addWeapon(Weapon.fire())
+                addWeapon(Weapon.thunder())
+            }
 
         // Create enemy characters
         val enemyKnight =
@@ -116,7 +129,9 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.ENEMY,
                 position = Position(10, 1),
-            )
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         val enemyArcher =
             Character(
@@ -125,7 +140,9 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.ARCHER,
                 team = Team.ENEMY,
                 position = Position(9, 2),
-            )
+            ).apply {
+                addWeapon(Weapon.ironBow())
+            }
 
         val enemyThief =
             Character(
@@ -134,7 +151,9 @@ class GameActivity : AppCompatActivity() {
                 characterClass = CharacterClass.THIEF,
                 team = Team.ENEMY,
                 position = Position(11, 0),
-            )
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         // Add characters to game state
         gameState.addPlayerCharacter(knight)
@@ -244,7 +263,8 @@ class GameActivity : AppCompatActivity() {
                         currentGameSave = updatedSave
                     },
                     onFailure = { error ->
-                        Toast.makeText(this@GameActivity, "Failed to save game: ${error.message}", Toast.LENGTH_LONG).show()
+                        val message = "Failed to save game: ${error.message}"
+                        Toast.makeText(this@GameActivity, message, Toast.LENGTH_LONG).show()
                     },
                 )
             }

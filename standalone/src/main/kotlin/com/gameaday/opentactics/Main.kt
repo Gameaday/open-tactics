@@ -7,6 +7,22 @@ import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Team
 import com.gameaday.opentactics.model.TerrainType
+import com.gameaday.opentactics.model.Weapon
+
+// Character starting positions
+private const val PLAYER_KNIGHT_X = 1
+private const val PLAYER_KNIGHT_Y = 6
+private const val PLAYER_ARCHER_X = 2
+private const val PLAYER_ARCHER_Y = 7
+private const val PLAYER_MAGE_X = 0
+private const val PLAYER_MAGE_Y = 7
+private const val ENEMY_KNIGHT_X = 10
+private const val ENEMY_KNIGHT_Y = 1
+private const val ENEMY_ARCHER_X = 9
+private const val ENEMY_ARCHER_Y = 2
+
+// Simulation constants
+private const val MAX_SIMULATION_TURNS = 20
 
 fun main() {
     println("=================================")
@@ -42,8 +58,10 @@ class GameDemo {
                 name = "Sir Garrett",
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.PLAYER,
-                position = Position(1, 6),
-            )
+                position = Position(PLAYER_KNIGHT_X, PLAYER_KNIGHT_Y),
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         val archer =
             Character(
@@ -51,8 +69,10 @@ class GameDemo {
                 name = "Lyanna",
                 characterClass = CharacterClass.ARCHER,
                 team = Team.PLAYER,
-                position = Position(2, 7),
-            )
+                position = Position(PLAYER_ARCHER_X, PLAYER_ARCHER_Y),
+            ).apply {
+                addWeapon(Weapon.ironBow())
+            }
 
         val mage =
             Character(
@@ -60,8 +80,10 @@ class GameDemo {
                 name = "Aldric",
                 characterClass = CharacterClass.MAGE,
                 team = Team.PLAYER,
-                position = Position(0, 7),
-            )
+                position = Position(PLAYER_MAGE_X, PLAYER_MAGE_Y),
+            ).apply {
+                addWeapon(Weapon.fire())
+            }
 
         // Create enemy characters
         val enemyKnight =
@@ -70,8 +92,10 @@ class GameDemo {
                 name = "Dark Knight",
                 characterClass = CharacterClass.KNIGHT,
                 team = Team.ENEMY,
-                position = Position(10, 1),
-            )
+                position = Position(ENEMY_KNIGHT_X, ENEMY_KNIGHT_Y),
+            ).apply {
+                addWeapon(Weapon.ironSword())
+            }
 
         val enemyArcher =
             Character(
@@ -79,8 +103,10 @@ class GameDemo {
                 name = "Bandit Archer",
                 characterClass = CharacterClass.ARCHER,
                 team = Team.ENEMY,
-                position = Position(9, 2),
-            )
+                position = Position(ENEMY_ARCHER_X, ENEMY_ARCHER_Y),
+            ).apply {
+                addWeapon(Weapon.ironBow())
+            }
 
         // Add characters to game state
         gameState.addPlayerCharacter(knight)
@@ -96,11 +122,12 @@ class GameDemo {
         board.placeCharacter(enemyKnight, enemyKnight.position)
         board.placeCharacter(enemyArcher, enemyArcher.position)
 
-        println(
-            "Game initialized with ${gameState.getPlayerCharacters().size} player units and ${gameState.getEnemyCharacters().size} enemy units",
-        )
+        val playerCount = gameState.getPlayerCharacters().size
+        val enemyCount = gameState.getEnemyCharacters().size
+        println("Game initialized with $playerCount player units and $enemyCount enemy units")
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun printBoard() {
         val board = gameState.board
 
@@ -129,6 +156,10 @@ class GameDemo {
                                         CharacterClass.MAGE -> "♗"
                                         CharacterClass.HEALER -> "♕"
                                         CharacterClass.THIEF -> "♘"
+                                        CharacterClass.PEGASUS_KNIGHT -> "♘"
+                                        CharacterClass.WYVERN_RIDER -> "♖"
+                                        CharacterClass.MANAKETE -> "♛"
+                                        CharacterClass.DRAGON -> "♚"
                                     }
                                 Team.ENEMY ->
                                     when (character.characterClass) {
@@ -137,6 +168,10 @@ class GameDemo {
                                         CharacterClass.MAGE -> "♝"
                                         CharacterClass.HEALER -> "♛"
                                         CharacterClass.THIEF -> "♞"
+                                        CharacterClass.PEGASUS_KNIGHT -> "♞"
+                                        CharacterClass.WYVERN_RIDER -> "♜"
+                                        CharacterClass.MANAKETE -> "♛"
+                                        CharacterClass.DRAGON -> "♚"
                                     }
                                 else -> "?"
                             }
@@ -168,9 +203,8 @@ class GameDemo {
 
     private fun simulateBattle() {
         var turnCount = 0
-        val maxTurns = 20
 
-        while (!gameState.isGameWon() && !gameState.isGameLost() && turnCount < maxTurns) {
+        while (!gameState.isGameWon() && !gameState.isGameLost() && turnCount < MAX_SIMULATION_TURNS) {
             turnCount++
 
             println("\n--- TURN $turnCount (${gameState.currentTurn}) ---")
@@ -193,7 +227,7 @@ class GameDemo {
         when {
             gameState.isGameWon() -> println("🎉 VICTORY! All enemies defeated!")
             gameState.isGameLost() -> println("💀 DEFEAT! All player units fallen!")
-            else -> println("⏰ Battle ended after $maxTurns turns")
+            else -> println("⏰ Battle ended after $MAX_SIMULATION_TURNS turns")
         }
 
         printFinalStats()
@@ -253,17 +287,17 @@ class GameDemo {
         println("PLAYER UNITS:")
         for (unit in gameState.getPlayerCharacters().filter { it.isAlive }) {
             val stats = unit.currentStats
-            println(
-                "  ${unit.name} (Lv.${unit.level} ${unit.characterClass.displayName}) - HP: ${unit.currentHp}/${stats.hp}, ATK: ${stats.attack}, DEF: ${stats.defense}",
-            )
+            val unitInfo = "${unit.name} (Lv.${unit.level} ${unit.characterClass.displayName})"
+            val statInfo = "HP: ${unit.currentHp}/${stats.hp}, ATK: ${stats.attack}, DEF: ${stats.defense}"
+            println("  $unitInfo - $statInfo")
         }
 
         println("ENEMY UNITS:")
         for (unit in gameState.getEnemyCharacters().filter { it.isAlive }) {
             val stats = unit.currentStats
-            println(
-                "  ${unit.name} (Lv.${unit.level} ${unit.characterClass.displayName}) - HP: ${unit.currentHp}/${stats.hp}, ATK: ${stats.attack}, DEF: ${stats.defense}",
-            )
+            val unitInfo = "${unit.name} (Lv.${unit.level} ${unit.characterClass.displayName})"
+            val statInfo = "HP: ${unit.currentHp}/${stats.hp}, ATK: ${stats.attack}, DEF: ${stats.defense}"
+            println("  $unitInfo - $statInfo")
         }
     }
 

@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.gameaday.opentactics
 
 import android.content.Intent
@@ -125,7 +127,8 @@ class MainActivity : AppCompatActivity() {
                 items.add("--- Saved Games ---")
                 saveIds.add("")
                 manualSaves.forEach { save ->
-                    items.add("${save.playerName} - Chapter ${save.campaignLevel}\n${dateFormat.format(Date(save.lastSaved))}")
+                    val saveDate = dateFormat.format(Date(save.lastSaved))
+                    items.add("${save.playerName} - Chapter ${save.campaignLevel}\n$saveDate")
                     saveIds.add(save.saveId)
                 }
             }
@@ -134,7 +137,8 @@ class MainActivity : AppCompatActivity() {
                 items.add("--- Auto-Saves ---")
                 saveIds.add("")
                 autoSaves.forEach { save ->
-                    items.add("${save.playerName} - Chapter ${save.campaignLevel} (Auto)\n${dateFormat.format(Date(save.lastSaved))}")
+                    val saveDate = dateFormat.format(Date(save.lastSaved))
+                    items.add("${save.playerName} - Chapter ${save.campaignLevel} (Auto)\n$saveDate")
                     saveIds.add(save.saveId)
                 }
             }
@@ -158,7 +162,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showManageSavesDialog() {
         lifecycleScope.launch {
-            val saveFiles = saveGameManager.listSaveFiles().filter { !it.isAutoSave } // Only show manual saves for management
+            // Only show manual saves for management
+            val saveFiles = saveGameManager.listSaveFiles().filter { !it.isAutoSave }
             if (saveFiles.isEmpty()) {
                 AlertDialog
                     .Builder(this@MainActivity)

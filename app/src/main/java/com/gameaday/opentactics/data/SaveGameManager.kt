@@ -11,6 +11,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
+// Maximum number of auto-save files to keep
+private const val MAX_AUTO_SAVES = 3
+
 class SaveGameManager(
     private val context: Context,
 ) {
@@ -200,8 +203,8 @@ class SaveGameManager(
                 ?.sortedByDescending { it.lastModified() }
                 ?: return
 
-        // Keep only the 3 most recent
-        autoSaves.drop(3).forEach { it.delete() }
+        // Keep only the most recent auto-saves
+        autoSaves.drop(MAX_AUTO_SAVES).forEach { it.delete() }
     }
 
     data class SaveFileInfo(
