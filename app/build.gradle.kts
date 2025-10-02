@@ -240,7 +240,10 @@ jacoco {
 }
 
 tasks.register<JacocoReport>("jacocoTestReport") {
-    dependsOn("testDevDebugUnitTest", "testProdDebugUnitTest")
+    val devDebugTest = tasks.named("testDevDebugUnitTest")
+    val prodDebugTest = tasks.named("testProdDebugUnitTest")
+    
+    dependsOn(devDebugTest, prodDebugTest)
 
     reports {
         xml.required.set(true)
@@ -260,14 +263,20 @@ tasks.register<JacocoReport>("jacocoTestReport") {
             "**/generated/**/*.*",
         )
 
-    val debugTree = fileTree("${layout.buildDirectory.asFile.get()}/intermediates/classes/debug")
-    debugTree.exclude(fileFilter)
-    val kotlinDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/debug")
-    kotlinDebugTree.exclude(fileFilter)
+    // Use only devDebug variant classes to avoid duplicates (source code is the same for all flavors)
+    val devDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/devDebug")
+    devDebugTree.exclude(fileFilter)
 
-    classDirectories.setFrom(debugTree, kotlinDebugTree)
+    classDirectories.setFrom(devDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    executionData.setFrom(fileTree(layout.buildDirectory.asFile.get()).include("**/jacoco/*.exec"))
+    
+    // Get execution data from both test tasks (they test the same source code with different configurations)
+    executionData.setFrom(
+        files(
+            "${layout.buildDirectory.asFile.get()}/jacoco/testDevDebugUnitTest.exec",
+            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec"
+        ).filter { it.exists() }
+    )
 }
 
 tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
@@ -309,12 +318,18 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             "**/generated/**/*.*",
         )
 
-    val debugTree = fileTree("${layout.buildDirectory.asFile.get()}/intermediates/classes/debug")
-    debugTree.exclude(fileFilter)
-    val kotlinDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/debug")
-    kotlinDebugTree.exclude(fileFilter)
+    // Use only devDebug variant classes to avoid duplicates (source code is the same for all flavors)
+    val devDebugTree = fileTree("${layout.buildDirectory.asFile.get()}/tmp/kotlin-classes/devDebug")
+    devDebugTree.exclude(fileFilter)
 
-    classDirectories.setFrom(debugTree, kotlinDebugTree)
+    classDirectories.setFrom(devDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    executionData.setFrom(fileTree(layout.buildDirectory.asFile.get()).include("**/jacoco/*.exec"))
+    
+    // Get execution data from both test tasks (they test the same source code with different configurations)
+    executionData.setFrom(
+        files(
+            "${layout.buildDirectory.asFile.get()}/jacoco/testDevDebugUnitTest.exec",
+            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec"
+        ).filter { it.exists() }
+    )
 }
