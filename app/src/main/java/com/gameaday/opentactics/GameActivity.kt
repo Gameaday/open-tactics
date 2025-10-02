@@ -1304,7 +1304,7 @@ class GameActivity : AppCompatActivity() {
             Toast
                 .makeText(
                     this,
-                    "${character.name} gained $expGained EXP! (${character.experience}/${character.level * 100})",
+                    "${character.name} gained $expGained EXP! (${character.experience}/100)",
                     Toast.LENGTH_SHORT,
                 ).show()
         }, 500)

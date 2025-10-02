@@ -50,11 +50,11 @@ class ExpAndLevelUpTest {
 
     @Test
     fun testMultipleLevelUps() {
-        // Gain enough EXP for 2 level ups (100 + 200 = 300)
-        character.gainExperience(300)
+        // Gain enough EXP for 2 level ups (100 + 100 = 200)
+        character.gainExperience(200)
 
         assertEquals(3, character.level) // Should be level 3
-        assertTrue(character.experience < 300) // Some EXP leftover
+        assertEquals(0, character.experience) // All EXP consumed for level ups
     }
 
     @Test
@@ -101,17 +101,20 @@ class ExpAndLevelUpTest {
     }
 
     @Test
-    fun testExpRequirementScalesWithLevel() {
+    fun testExpRequirementIsFlat() {
         // Level 1->2 requires 100 EXP
         character.gainExperience(100)
         assertEquals(2, character.level)
+        assertEquals(0, character.experience)
 
-        // Level 2->3 requires 200 EXP
-        character.gainExperience(200)
+        // Level 2->3 also requires 100 EXP (flat requirement)
+        character.gainExperience(100)
         assertEquals(3, character.level)
+        assertEquals(0, character.experience)
 
-        // Level 3->4 requires 300 EXP
-        character.gainExperience(300)
+        // Level 3->4 also requires 100 EXP (flat requirement)
+        character.gainExperience(100)
         assertEquals(4, character.level)
+        assertEquals(0, character.experience)
     }
 }

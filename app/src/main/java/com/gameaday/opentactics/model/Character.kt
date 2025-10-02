@@ -168,7 +168,7 @@ data class Character(
         }
     }
 
-    private fun experienceToNextLevel(): Int = level * EXPERIENCE_PER_LEVEL
+    private fun experienceToNextLevel(): Int = EXPERIENCE_PER_LEVEL
 
     /**
      * Level up the character with random stat increases based on growth rates
