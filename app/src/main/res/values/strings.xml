@@ -47,4 +47,21 @@
     
     <!-- Enemy Turn -->
     <string name="skip_animations">Skip</string>
+
+    <!-- Trade System -->
+    <string name="trade_items">Trade Items</string>
+    <string name="unit_1">Unit 1</string>
+    <string name="unit_2">Unit 2</string>
+    <string name="arrow_right">→</string>
+    <string name="cancel">Cancel</string>
+    <string name="item_name">Item Name</string>
+    <string name="weapon_type">Type</string>
+    <string name="uses_label">Uses</string>
+    <string name="empty_slot">Empty</string>
+
+    <!-- Support System -->
+    <string name="support_partners">Support Partners</string>
+    <string name="support_rank">Rank</string>
+    <string name="support_bonuses">Bonuses</string>
+    <string name="no_supports">No support relationships yet</string>
 </resources>

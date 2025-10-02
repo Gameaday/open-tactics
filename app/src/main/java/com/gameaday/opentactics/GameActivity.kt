@@ -192,6 +192,9 @@ class GameActivity : AppCompatActivity() {
             board.placeCharacter(char, char.position)
         }
 
+        // Initialize support relationships between player characters
+        initializeSupportRelationships()
+
         // Create enemy characters from chapter data
         chapter.enemyUnits.forEach { enemySpawn ->
             val enemyChar =
@@ -233,6 +236,39 @@ class GameActivity : AppCompatActivity() {
 
         // Create initial save data
         currentGameSave = createGameSave(playerName, chapterNumber)
+    }
+
+    private fun initializeSupportRelationships() {
+        // Add support relationships between player characters
+        // Sir Garrett (Knight) and Lyanna (Archer)
+        gameState.addSupportRelationship(
+            com.gameaday.opentactics.model.SupportRelationship(
+                characterId1 = "player_knight",
+                characterId2 = "player_archer",
+                rank = com.gameaday.opentactics.model.SupportRank.C,
+                conversationsSeen = 1,
+            ),
+        )
+
+        // Sir Garrett (Knight) and Aldric (Mage)
+        gameState.addSupportRelationship(
+            com.gameaday.opentactics.model.SupportRelationship(
+                characterId1 = "player_knight",
+                characterId2 = "player_mage",
+                rank = com.gameaday.opentactics.model.SupportRank.B,
+                conversationsSeen = 2,
+            ),
+        )
+
+        // Lyanna (Archer) and Aldric (Mage)
+        gameState.addSupportRelationship(
+            com.gameaday.opentactics.model.SupportRelationship(
+                characterId1 = "player_archer",
+                characterId2 = "player_mage",
+                rank = com.gameaday.opentactics.model.SupportRank.C,
+                conversationsSeen = 1,
+            ),
+        )
     }
 
     private fun loadGame(saveId: String) {
@@ -536,6 +572,286 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
+    private fun showTradeDialog(
+        sourceCharacter: Character,
+        targetCharacter: Character,
+    ) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_trade, null)
+
+        dialogView.findViewById<android.widget.TextView>(R.id.sourceCharacterName).text = sourceCharacter.name
+        dialogView.findViewById<android.widget.TextView>(R.id.targetCharacterName).text = targetCharacter.name
+
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tradeItemsRecyclerView)
+        val adapter = TradeAdapter(sourceCharacter, targetCharacter)
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+
+        val dialog =
+            AlertDialog
+                .Builder(this)
+                .setView(dialogView)
+                .create()
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnCancelTrade).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private inner class TradeAdapter(
+        private val sourceCharacter: Character,
+        private val targetCharacter: Character,
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<TradeAdapter.TradeViewHolder>() {
+        private val maxItems = maxOf(sourceCharacter.inventory.size + sourceCharacter.items.size, 1)
+
+        override fun onCreateViewHolder(
+            parent: android.view.ViewGroup,
+            viewType: Int,
+        ): TradeViewHolder {
+            val view = layoutInflater.inflate(R.layout.item_trade, parent, false)
+            return TradeViewHolder(view)
+        }
+
+        override fun onBindViewHolder(
+            holder: TradeViewHolder,
+            position: Int,
+        ) {
+            holder.bind(position)
+        }
+
+        override fun getItemCount(): Int = maxItems
+
+        inner class TradeViewHolder(
+            view: android.view.View,
+        ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            fun bind(position: Int) {
+                val sourceWeaponCount = sourceCharacter.inventory.size
+                val targetWeaponCount = targetCharacter.inventory.size
+
+                // Get source item (weapon or consumable)
+                val sourceItem: Any? =
+                    when {
+                        position < sourceWeaponCount -> sourceCharacter.inventory[position]
+                        position < sourceWeaponCount + sourceCharacter.items.size ->
+                            sourceCharacter.items[position - sourceWeaponCount]
+                        else -> null
+                    }
+
+                // Get target item
+                val targetItem: Any? =
+                    when {
+                        position < targetWeaponCount -> targetCharacter.inventory[position]
+                        position < targetWeaponCount + targetCharacter.items.size ->
+                            targetCharacter.items[position - targetWeaponCount]
+                        else -> null
+                    }
+
+                // Bind source item
+                when (sourceItem) {
+                    is Weapon -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemName).text = sourceItem.name
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemType).text = sourceItem.type.name
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemUses).text =
+                            "Uses: ${sourceItem.currentUses}/${sourceItem.maxUses}"
+                    }
+                    is Item -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemName).text = sourceItem.name
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemType).text = sourceItem.type.name
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemUses).text =
+                            "Uses: ${sourceItem.currentUses}/${sourceItem.maxUses}"
+                    }
+                    else -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemName).text = "Empty"
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemType).text = ""
+                        itemView.findViewById<android.widget.TextView>(R.id.sourceItemUses).text = ""
+                    }
+                }
+
+                // Bind target item
+                when (targetItem) {
+                    is Weapon -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemName).text = targetItem.name
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemType).apply {
+                            text = targetItem.type.name
+                            visibility = android.view.View.VISIBLE
+                        }
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemUses).apply {
+                            text = "Uses: ${targetItem.currentUses}/${targetItem.maxUses}"
+                            visibility = android.view.View.VISIBLE
+                        }
+                    }
+                    is Item -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemName).text = targetItem.name
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemType).apply {
+                            text = targetItem.type.name
+                            visibility = android.view.View.VISIBLE
+                        }
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemUses).apply {
+                            text = "Uses: ${targetItem.currentUses}/${targetItem.maxUses}"
+                            visibility = android.view.View.VISIBLE
+                        }
+                    }
+                    else -> {
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemName).text = "Empty"
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemType).visibility =
+                            android.view.View.GONE
+                        itemView.findViewById<android.widget.TextView>(R.id.targetItemUses).visibility =
+                            android.view.View.GONE
+                    }
+                }
+
+                // Handle trade button
+                val btnTrade = itemView.findViewById<android.widget.Button>(R.id.btnTradeItem)
+                btnTrade.isEnabled = sourceItem != null || targetItem != null
+                btnTrade.setOnClickListener {
+                    performTrade(position, sourceItem, targetItem)
+                }
+            }
+
+            private fun performTrade(
+                position: Int,
+                sourceItem: Any?,
+                targetItem: Any?,
+            ) {
+                when {
+                    sourceItem is Weapon && targetItem is Weapon -> {
+                        // Swap weapons
+                        val sourceIdx = sourceCharacter.inventory.indexOf(sourceItem)
+                        val targetIdx = targetCharacter.inventory.indexOf(targetItem)
+                        sourceCharacter.inventory[sourceIdx] = targetItem
+                        targetCharacter.inventory[targetIdx] = sourceItem
+                    }
+                    sourceItem is Weapon && targetItem == null -> {
+                        // Give weapon to target
+                        if (targetCharacter.inventory.size < Character.MAX_INVENTORY_SIZE) {
+                            targetCharacter.inventory.add(sourceItem)
+                            sourceCharacter.inventory.remove(sourceItem)
+                        } else {
+                            Toast.makeText(this@GameActivity, "Target inventory full", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                    }
+                    sourceItem == null && targetItem is Weapon -> {
+                        // Take weapon from target
+                        if (sourceCharacter.inventory.size < Character.MAX_INVENTORY_SIZE) {
+                            sourceCharacter.inventory.add(targetItem)
+                            targetCharacter.inventory.remove(targetItem)
+                        } else {
+                            Toast.makeText(this@GameActivity, "Source inventory full", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+                    }
+                    sourceItem is Item && targetItem is Item -> {
+                        // Swap items
+                        val sourceIdx = sourceCharacter.items.indexOf(sourceItem)
+                        val targetIdx = targetCharacter.items.indexOf(targetItem)
+                        sourceCharacter.items[sourceIdx] = targetItem
+                        targetCharacter.items[targetIdx] = sourceItem
+                    }
+                    sourceItem is Item && targetItem == null -> {
+                        // Give item to target
+                        targetCharacter.items.add(sourceItem)
+                        sourceCharacter.items.remove(sourceItem)
+                    }
+                    sourceItem == null && targetItem is Item -> {
+                        // Take item from target
+                        sourceCharacter.items.add(targetItem)
+                        targetCharacter.items.remove(targetItem)
+                    }
+                }
+
+                Toast.makeText(this@GameActivity, "Trade completed", Toast.LENGTH_SHORT).show()
+                notifyDataSetChanged()
+                updateUI()
+            }
+        }
+    }
+
+    private fun showSupportDialog(character: Character) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_support, null)
+
+        dialogView.findViewById<android.widget.TextView>(R.id.characterNameSupport).text =
+            "${character.name} - ${character.characterClass.displayName}"
+
+        val supports = gameState.getCharacterSupports(character.id)
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.supportRecyclerView)
+        val noSupportsText = dialogView.findViewById<android.widget.TextView>(R.id.noSupportsText)
+
+        if (supports.isEmpty()) {
+            recyclerView.visibility = android.view.View.GONE
+            noSupportsText.visibility = android.view.View.VISIBLE
+        } else {
+            recyclerView.visibility = android.view.View.VISIBLE
+            noSupportsText.visibility = android.view.View.GONE
+
+            val adapter = SupportAdapter(character, supports)
+            recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+            recyclerView.adapter = adapter
+        }
+
+        val dialog =
+            AlertDialog
+                .Builder(this)
+                .setView(dialogView)
+                .create()
+
+        dialogView.findViewById<android.widget.Button>(R.id.btnCloseSupport).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private inner class SupportAdapter(
+        private val character: Character,
+        private val supports: List<com.gameaday.opentactics.model.SupportRelationship>,
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<SupportAdapter.SupportViewHolder>() {
+        override fun onCreateViewHolder(
+            parent: android.view.ViewGroup,
+            viewType: Int,
+        ): SupportViewHolder {
+            val view = layoutInflater.inflate(R.layout.item_support, parent, false)
+            return SupportViewHolder(view)
+        }
+
+        override fun onBindViewHolder(
+            holder: SupportViewHolder,
+            position: Int,
+        ) {
+            holder.bind(supports[position])
+        }
+
+        override fun getItemCount(): Int = supports.size
+
+        inner class SupportViewHolder(
+            view: android.view.View,
+        ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            fun bind(support: com.gameaday.opentactics.model.SupportRelationship) {
+                val partnerId = support.getOtherCharacter(character.id)
+                val partner = gameState.getAllCharacters().find { it.id == partnerId }
+
+                itemView.findViewById<android.widget.TextView>(R.id.supportPartnerName).text =
+                    partner?.name ?: "Unknown"
+
+                itemView.findViewById<android.widget.TextView>(R.id.supportRank).text =
+                    "Rank ${support.rank.name}"
+
+                val bonuses = support.getBonuses()
+                val bonusText = buildString {
+                    if (bonuses.attack > 0) append("+${bonuses.attack} ATK ")
+                    if (bonuses.defense > 0) append("+${bonuses.defense} DEF ")
+                    if (bonuses.speed > 0) append("+${bonuses.speed} SPD ")
+                    if (bonuses.skill > 0) append("+${bonuses.skill} SKL ")
+                    if (bonuses.luck > 0) append("+${bonuses.luck} LCK ")
+                }
+
+                itemView.findViewById<android.widget.TextView>(R.id.supportBonuses).text =
+                    if (bonusText.isNotEmpty()) bonusText.trim() else "No bonuses yet"
+            }
+        }
+    }
+
     private fun showEnemyRanges() {
         val enemyRanges = mutableSetOf<Position>()
         gameState.getAliveEnemyCharacters().forEach { enemy ->
@@ -546,7 +862,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showGameMenu() {
-        val options = arrayOf("Save Game", "Load Game", "Settings", "Help", "Quit to Menu")
+        val options = arrayOf("Save Game", "Load Game", "Settings", "Supports", "Help", "Quit to Menu")
 
         AlertDialog
             .Builder(this)
@@ -556,10 +872,29 @@ class GameActivity : AppCompatActivity() {
                     0 -> performManualSave()
                     1 -> showLoadGameDialog()
                     2 -> showSettingsDialog()
-                    3 -> showHelpDialog()
-                    4 -> confirmQuitToMenu()
+                    3 -> showSupportsMenu()
+                    4 -> showHelpDialog()
+                    5 -> confirmQuitToMenu()
                 }
             }.show()
+    }
+
+    private fun showSupportsMenu() {
+        val playerCharacters = gameState.getAlivePlayerCharacters()
+        if (playerCharacters.isEmpty()) {
+            Toast.makeText(this, "No units available", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val characterNames = playerCharacters.map { it.name }.toTypedArray()
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("View Support Relationships")
+            .setItems(characterNames) { _, which ->
+                showSupportDialog(playerCharacters[which])
+            }.setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun performManualSave() {
@@ -834,6 +1169,22 @@ class GameActivity : AppCompatActivity() {
                 if (selectedCharacter != null) {
                     val targetCharacter = gameState.board.getCharacterAt(position)
                     if (targetCharacter != null) {
+                        // Check if clicking on an adjacent ally for trading
+                        if (targetCharacter.team == selectedCharacter.team &&
+                            selectedCharacter.position.distanceTo(targetCharacter.position) == 1
+                        ) {
+                            // Offer trade option
+                            AlertDialog
+                                .Builder(this)
+                                .setTitle("${targetCharacter.name}")
+                                .setItems(arrayOf("Trade Items", "Cancel")) { _, which ->
+                                    if (which == 0) {
+                                        showTradeDialog(selectedCharacter, targetCharacter)
+                                    }
+                                }.show()
+                            return
+                        }
+
                         // Check if using a healing staff
                         val weapon = selectedCharacter.equippedWeapon
                         if (weapon != null && weapon.canHeal) {

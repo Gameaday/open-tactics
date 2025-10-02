@@ -46,6 +46,7 @@ class GameState(
     var escapedUnitCount: Int = 0
     private val unitsOnThrone: MutableList<Character> = mutableListOf()
     private var moveBeforeAction: Boolean = false // Tracks if unit moved before attacking
+    private val supportRelationships: MutableList<com.gameaday.opentactics.model.SupportRelationship> = mutableListOf()
 
     // Properties expected by tests
     val currentTeam: Team get() = currentTurn
@@ -84,6 +85,44 @@ class GameState(
 
     fun addEnemyCharacter(character: Character) {
         enemyCharacters.add(character)
+    }
+
+    // Support relationship management
+    fun addSupportRelationship(relationship: com.gameaday.opentactics.model.SupportRelationship) {
+        supportRelationships.add(relationship)
+    }
+
+    fun getSupportRelationship(
+        char1Id: String,
+        char2Id: String,
+    ): com.gameaday.opentactics.model.SupportRelationship? =
+        supportRelationships.find {
+            (it.characterId1 == char1Id && it.characterId2 == char2Id) ||
+                (it.characterId1 == char2Id && it.characterId2 == char1Id)
+        }
+
+    fun getCharacterSupports(characterId: String): List<com.gameaday.opentactics.model.SupportRelationship> =
+        supportRelationships.filter { it.involves(characterId) }
+
+    fun getSupportBonuses(
+        character: Character,
+        targetBoard: GameBoard,
+    ): com.gameaday.opentactics.model.Stats {
+        var totalBonus = com.gameaday.opentactics.model.Stats(0, 0, 0, 0, 0, 0, 0)
+        val characterSupports = getCharacterSupports(character.id)
+
+        // Check for adjacent allied units with support relationships
+        for (support in characterSupports) {
+            val otherId = support.getOtherCharacter(character.id) ?: continue
+            val otherChar = getAllCharacters().find { it.id == otherId && it.team == character.team } ?: continue
+
+            // Check if units are adjacent (within 1 tile)
+            if (character.position.distanceTo(otherChar.position) == 1) {
+                totalBonus += support.getBonuses()
+            }
+        }
+
+        return totalBonus
     }
 
     fun selectCharacter(character: Character?): Boolean {
