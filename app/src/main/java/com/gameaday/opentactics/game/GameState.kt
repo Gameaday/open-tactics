@@ -24,6 +24,7 @@ class GameState(
     var turnCount: Int = 0
     var escapedUnitCount: Int = 0
     private val unitsOnThrone: MutableList<Character> = mutableListOf()
+    private var moveBeforeAction: Boolean = false // Tracks if unit moved before attacking
 
     // Properties expected by tests
     val currentTeam: Team get() = currentTurn
@@ -40,6 +41,8 @@ class GameState(
         UNIT_SELECT,
         MOVEMENT,
         ACTION,
+        CANTO_MOVEMENT, // Post-attack movement for units with Canto
+        CONFIRM_WAIT, // Waiting for player to confirm end of unit's turn
         ENEMY_TURN,
         GAME_OVER,
     }
@@ -65,9 +68,10 @@ class GameState(
     fun selectCharacter(character: Character?): Boolean {
         if (character != null && character.team == currentTurn && character.isAlive) {
             selectedCharacter = character
+            moveBeforeAction = false
             gamePhase =
                 when {
-                    character.canMove -> GamePhase.MOVEMENT
+                    character.canMoveNow() -> GamePhase.MOVEMENT
                     character.canAct -> GamePhase.ACTION
                     else -> GamePhase.UNIT_SELECT
                 }
@@ -81,6 +85,81 @@ class GameState(
 
     fun canSelectCharacter(character: Character): Boolean =
         character.team == currentTurn && (character.canMove || character.canAct)
+
+    /**
+     * Perform a character move
+     * @return true if move was successful
+     */
+    @Suppress("ReturnCount") // Multiple validation points require early returns
+    fun performMove(character: Character, destination: Position): Boolean {
+        if (character != selectedCharacter) return false
+        if (!character.canMoveNow()) return false
+        
+        val possibleMoves = calculatePossibleMoves(character)
+        if (destination !in possibleMoves) return false
+        
+        val previousPos = character.position
+        board.moveCharacter(character, destination)
+        character.commitMove(previousPos)
+        moveBeforeAction = !character.hasActedThisTurn
+        
+        // Update game phase based on what actions are still available
+        gamePhase = when {
+            character.canAct -> GamePhase.ACTION
+            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+            else -> GamePhase.CONFIRM_WAIT
+        }
+        
+        return true
+    }
+
+    /**
+     * Undo the last move for the selected character
+     * @return true if undo was successful
+     */
+    fun undoMove(): Boolean {
+        val character = selectedCharacter ?: return false
+        val previousPos = character.undoMove() ?: return false
+        
+        board.moveCharacter(character, previousPos)
+        gamePhase = GamePhase.MOVEMENT
+        moveBeforeAction = false
+        
+        return true
+    }
+
+    /**
+     * Perform an attack action
+     * @return BattleResult of the attack
+     */
+    @Suppress("ReturnCount") // Multiple validation points require early returns
+    fun performPlayerAttack(target: Character): BattleResult? {
+        val character = selectedCharacter ?: return null
+        if (!character.canAct) return null
+        if (target.team == character.team) return null
+        if (!character.canAttackPosition(target.position)) return null
+        
+        val result = performAttack(character, target)
+        character.commitAction()
+        
+        // Update game phase based on Canto ability
+        gamePhase = when {
+            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+            else -> GamePhase.CONFIRM_WAIT
+        }
+        
+        return result
+    }
+
+    /**
+     * Commit the wait action - ends the character's turn
+     */
+    fun performWait() {
+        val character = selectedCharacter ?: return
+        character.commitWait()
+        selectedCharacter = null
+        gamePhase = GamePhase.UNIT_SELECT
+    }
 
     fun endTurn() {
         when (currentTurn) {
@@ -147,7 +226,7 @@ class GameState(
     }
 
     fun calculatePossibleMoves(character: Character): List<Position> {
-        if (!character.canMove) return emptyList()
+        if (!character.canMoveNow()) return emptyList()
 
         val moves = mutableListOf<Position>()
         val visited = mutableSetOf<Position>()

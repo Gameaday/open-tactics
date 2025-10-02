@@ -33,6 +33,9 @@ data class Character(
     var originalClass: CharacterClass? = null,
     var inventory: MutableList<Weapon> = mutableListOf(),
     var equippedWeaponIndex: Int = -1, // -1 means no weapon equipped
+    // Action history for undo functionality
+    var previousPosition: Position? = null,
+    var canStillMoveAfterAttack: Boolean = false, // Tracks Canto state
 ) : Parcelable {
     val currentStats: Stats
         get() {
@@ -84,6 +87,69 @@ data class Character(
     fun resetTurn() {
         hasActedThisTurn = false
         hasMovedThisTurn = false
+        previousPosition = null
+        canStillMoveAfterAttack = false
+    }
+
+    /**
+     * Mark that the character has moved
+     * Stores previous position for undo functionality
+     */
+    fun commitMove(from: Position) {
+        previousPosition = from
+        hasMovedThisTurn = true
+    }
+
+    /**
+     * Mark that the character has performed an action (attack, item use, etc.)
+     */
+    fun commitAction() {
+        hasActedThisTurn = true
+        
+        // If character has Canto, they can move after attack
+        if (characterClass.hasCanto) {
+            canStillMoveAfterAttack = true
+        } else {
+            // Non-Canto units cannot move after acting
+            canStillMoveAfterAttack = false
+            hasMovedThisTurn = true // Mark as moved to prevent further movement
+        }
+    }
+
+    /**
+     * Undo the last move (returns to previous position)
+     */
+    fun undoMove(): Position? {
+        val prev = previousPosition
+        if (prev != null && hasMovedThisTurn && !hasActedThisTurn) {
+            hasMovedThisTurn = false
+            previousPosition = null
+            canStillMoveAfterAttack = false
+            return prev
+        }
+        return null
+    }
+
+    /**
+     * Check if character can still move (including Canto movement after attack)
+     */
+    fun canMoveNow(): Boolean {
+        return when {
+            !isAlive -> false
+            !hasMovedThisTurn -> true // Haven't moved yet
+            canStillMoveAfterAttack -> true // Has Canto and can move again
+            else -> false
+        }
+    }
+
+    /**
+     * Wait - ends all possible actions for this turn
+     */
+    fun commitWait() {
+        hasActedThisTurn = true
+        hasMovedThisTurn = true
+        canStillMoveAfterAttack = false
+        previousPosition = null
     }
 
     fun takeDamage(damage: Int) {

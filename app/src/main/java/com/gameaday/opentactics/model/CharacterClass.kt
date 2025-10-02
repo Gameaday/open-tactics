@@ -12,6 +12,7 @@ enum class CharacterClass(
     val canFly: Boolean = false,
     val canTransform: Boolean = false,
     val transformsToName: String? = null,
+    val hasCanto: Boolean = false, // Can move again after attacking (mounted units)
 ) {
     KNIGHT(
         "Knight",
@@ -19,6 +20,7 @@ enum class CharacterClass(
         movementRange = 3,
         attackRange = 1,
         canFly = false,
+        hasCanto = true, // Mounted unit
     ),
 
     ARCHER(
@@ -59,6 +61,7 @@ enum class CharacterClass(
         movementRange = 6,
         attackRange = 1,
         canFly = true,
+        hasCanto = true, // Flying mounted unit
     ),
 
     WYVERN_RIDER(
@@ -67,6 +70,7 @@ enum class CharacterClass(
         movementRange = 6,
         attackRange = 1,
         canFly = true,
+        hasCanto = true, // Flying mounted unit
     ),
 
     MANAKETE(

@@ -1,6 +1,7 @@
 package com.gameaday.opentactics.game
 
 import com.gameaday.opentactics.model.Chapter
+import com.gameaday.opentactics.model.ChapterObjective
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
@@ -20,14 +21,28 @@ class GameState(
     var currentTurn: Team = Team.PLAYER
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
-    var turnCount: Int = 1
+    var turnCount: Int = 0
     var escapedUnitCount: Int = 0
     private val unitsOnThrone: MutableList<Character> = mutableListOf()
+    private var moveBeforeAction: Boolean = false // Tracks if unit moved before attacking
+
+    // Properties expected by tests
+    val currentTeam: Team get() = currentTurn
+    val turnCounter: Int get() = turnCount
+    val isGameOver: Boolean
+        get() =
+            gamePhase == GamePhase.GAME_OVER ||
+                (playerCharacters.isNotEmpty() && getAlivePlayerCharacters().isEmpty()) ||
+                (enemyCharacters.isNotEmpty() && getAliveEnemyCharacters().isEmpty())
+    val currentPlayerCharacter: Character?
+        get() = if (currentTurn == Team.PLAYER) selectedCharacter else null
 
     enum class GamePhase {
         UNIT_SELECT,
         MOVEMENT,
         ACTION,
+        CANTO_MOVEMENT, // Post-attack movement for units with Canto
+        CONFIRM_WAIT, // Waiting for player to confirm end of unit's turn
         ENEMY_TURN,
         GAME_OVER,
     }
@@ -38,6 +53,10 @@ class GameState(
 
     fun getEnemyCharacters(): List<Character> = enemyCharacters.toList()
 
+    fun getAlivePlayerCharacters(): List<Character> = playerCharacters.filter { it.isAlive }
+
+    fun getAliveEnemyCharacters(): List<Character> = enemyCharacters.filter { it.isAlive }
+
     fun addPlayerCharacter(character: Character) {
         playerCharacters.add(character)
     }
@@ -46,22 +65,101 @@ class GameState(
         enemyCharacters.add(character)
     }
 
-    fun selectCharacter(character: Character?) {
-        selectedCharacter = character
-        gamePhase =
-            if (character != null && character.team == currentTurn) {
+    fun selectCharacter(character: Character?): Boolean {
+        if (character != null && character.team == currentTurn && character.isAlive) {
+            selectedCharacter = character
+            moveBeforeAction = false
+            gamePhase =
                 when {
-                    character.canMove -> GamePhase.MOVEMENT
+                    character.canMoveNow() -> GamePhase.MOVEMENT
                     character.canAct -> GamePhase.ACTION
                     else -> GamePhase.UNIT_SELECT
                 }
-            } else {
-                GamePhase.UNIT_SELECT
-            }
+            return true
+        } else {
+            selectedCharacter = null
+            gamePhase = GamePhase.UNIT_SELECT
+            return false
+        }
     }
 
     fun canSelectCharacter(character: Character): Boolean =
         character.team == currentTurn && (character.canMove || character.canAct)
+
+    /**
+     * Perform a character move
+     * @return true if move was successful
+     */
+    @Suppress("ReturnCount") // Multiple validation points require early returns
+    fun performMove(character: Character, destination: Position): Boolean {
+        if (character != selectedCharacter) return false
+        if (!character.canMoveNow()) return false
+        
+        val possibleMoves = calculatePossibleMoves(character)
+        if (destination !in possibleMoves) return false
+        
+        val previousPos = character.position
+        board.moveCharacter(character, destination)
+        character.commitMove(previousPos)
+        moveBeforeAction = !character.hasActedThisTurn
+        
+        // Update game phase based on what actions are still available
+        gamePhase = when {
+            character.canAct -> GamePhase.ACTION
+            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+            else -> GamePhase.CONFIRM_WAIT
+        }
+        
+        return true
+    }
+
+    /**
+     * Undo the last move for the selected character
+     * @return true if undo was successful
+     */
+    fun undoMove(): Boolean {
+        val character = selectedCharacter ?: return false
+        val previousPos = character.undoMove() ?: return false
+        
+        board.moveCharacter(character, previousPos)
+        gamePhase = GamePhase.MOVEMENT
+        moveBeforeAction = false
+        
+        return true
+    }
+
+    /**
+     * Perform an attack action
+     * @return BattleResult of the attack
+     */
+    @Suppress("ReturnCount") // Multiple validation points require early returns
+    fun performPlayerAttack(target: Character): BattleResult? {
+        val character = selectedCharacter ?: return null
+        if (!character.canAct) return null
+        if (target.team == character.team) return null
+        if (!character.canAttackPosition(target.position)) return null
+        
+        val result = performAttack(character, target)
+        character.commitAction()
+        
+        // Update game phase based on Canto ability
+        gamePhase = when {
+            character.canStillMoveAfterAttack -> GamePhase.CANTO_MOVEMENT
+            else -> GamePhase.CONFIRM_WAIT
+        }
+        
+        return result
+    }
+
+    /**
+     * Commit the wait action - ends the character's turn
+     */
+    fun performWait() {
+        val character = selectedCharacter ?: return
+        character.commitWait()
+        selectedCharacter = null
+        gamePhase = GamePhase.UNIT_SELECT
+    }
 
     fun endTurn() {
         when (currentTurn) {
@@ -70,6 +168,8 @@ class GameState(
                 playerCharacters.forEach { it.resetTurn() }
                 currentTurn = Team.ENEMY
                 gamePhase = GamePhase.ENEMY_TURN
+                turnCount++
+                spawnReinforcements()  // Spawn reinforcements at start of enemy turn
                 executeEnemyTurn()
             }
             Team.ENEMY -> {
@@ -77,11 +177,11 @@ class GameState(
                 enemyCharacters.forEach { it.resetTurn() }
                 currentTurn = Team.PLAYER
                 gamePhase = GamePhase.UNIT_SELECT
-                turnCount++
             }
             else -> {}
         }
         selectedCharacter = null
+        checkGameEnd()
     }
 
     private fun executeEnemyTurn() {
@@ -126,7 +226,7 @@ class GameState(
     }
 
     fun calculatePossibleMoves(character: Character): List<Position> {
-        if (!character.canMove) return emptyList()
+        if (!character.canMoveNow()) return emptyList()
 
         val moves = mutableListOf<Position>()
         val visited = mutableSetOf<Position>()
@@ -228,7 +328,7 @@ class GameState(
                 attackPower = (attackPower * triangleBonus).toInt()
             }
             
-            // Apply effective damage bonus
+            // Apply effective damage bonus (2x against specific classes)
             if (attackerWeapon.isEffectiveAgainst(target.characterClass)) {
                 attackPower *= 2
             }
@@ -280,6 +380,7 @@ class GameState(
             }
         }
         
+        // Default victory/defeat conditions
         when {
             playerCharacters.none { it.isAlive } -> {
                 gamePhase = GamePhase.GAME_OVER
@@ -300,16 +401,21 @@ class GameState(
                 escapedUnitCount
             )
         }
-        return enemyCharacters.none { it.isAlive }
+        // Default: all enemies defeated
+        return enemyCharacters.isNotEmpty() && enemyCharacters.none { it.isAlive }
     }
 
     fun isGameLost(): Boolean {
         currentChapter?.let { chapter ->
             return chapter.isObjectiveFailed(playerCharacters, turnCount)
         }
-        return playerCharacters.none { it.isAlive }
+        // Default: all players defeated
+        return playerCharacters.isNotEmpty() && playerCharacters.none { it.isAlive }
     }
     
+    /**
+     * Mark a unit as being on the throne (for SEIZE_THRONE objective)
+     */
     fun markUnitOnThrone(character: Character) {
         if (currentChapter?.thronePosition == character.position) {
             if (!unitsOnThrone.contains(character)) {
@@ -318,6 +424,9 @@ class GameState(
         }
     }
     
+    /**
+     * Mark a unit as escaped (for ESCAPE objective)
+     */
     fun markUnitEscaped(character: Character) {
         currentChapter?.let { chapter ->
             if (character.position in chapter.escapePositions) {
@@ -328,10 +437,14 @@ class GameState(
         }
     }
     
+    /**
+     * Spawn reinforcements for the current turn
+     */
     fun spawnReinforcements() {
         currentChapter?.let { chapter ->
             val reinforcements = chapter.getReinforcementsForTurn(turnCount)
             reinforcements.forEach { spawn ->
+                // Create character from spawn data
                 val reinforcement = Character(
                     id = spawn.id,
                     name = spawn.name,
@@ -340,6 +453,10 @@ class GameState(
                     position = spawn.position,
                     level = spawn.level
                 )
+                // Add weapons from equipment list
+                spawn.equipment.forEach { weaponId ->
+                    // Weapon factory would go here
+                }
                 addEnemyCharacter(reinforcement)
                 board.placeCharacter(reinforcement, spawn.position)
             }
