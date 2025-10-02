@@ -36,6 +36,9 @@ data class Character(
     // Action history for undo functionality
     var previousPosition: Position? = null,
     var canStillMoveAfterAttack: Boolean = false, // Tracks Canto state
+    // Enemy AI properties
+    var isBoss: Boolean = false,
+    var aiType: AIBehavior = AIBehavior.AGGRESSIVE,
 ) : Parcelable {
     val currentStats: Stats
         get() {
