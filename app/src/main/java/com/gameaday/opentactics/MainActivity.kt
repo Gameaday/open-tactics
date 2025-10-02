@@ -411,10 +411,11 @@ class MainActivity : AppCompatActivity() {
     ) {
         if (isNewGame && saveId == null) {
             // For new games, show chapter selection
-            val intent = Intent(this, ChapterSelectActivity::class.java).apply {
-                putExtra(ChapterSelectActivity.EXTRA_PLAYER_NAME, playerName)
-                putExtra(ChapterSelectActivity.EXTRA_UNLOCKED_CHAPTER, 1) // Start with chapter 1
-            }
+            val intent =
+                Intent(this, ChapterSelectActivity::class.java).apply {
+                    putExtra(ChapterSelectActivity.EXTRA_PLAYER_NAME, playerName)
+                    putExtra(ChapterSelectActivity.EXTRA_UNLOCKED_CHAPTER, 1) // Start with chapter 1
+                }
             startActivity(intent)
         } else {
             // For loading saved games, go directly to game

@@ -42,9 +42,10 @@ class ChapterSelectActivity : AppCompatActivity() {
             ChapterRepository.getChapter(i)?.let { chapters.add(it) }
         }
 
-        val adapter = ChapterAdapter(chapters, unlockedChapter) { chapter ->
-            startChapter(chapter)
-        }
+        val adapter =
+            ChapterAdapter(chapters, unlockedChapter) { chapter ->
+                startChapter(chapter)
+            }
 
         binding.chapterRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.chapterRecyclerView.adapter = adapter
@@ -57,11 +58,12 @@ class ChapterSelectActivity : AppCompatActivity() {
     }
 
     private fun startChapter(chapter: Chapter) {
-        val intent = Intent(this, GameActivity::class.java).apply {
-            putExtra(GameActivity.EXTRA_PLAYER_NAME, playerName)
-            putExtra(GameActivity.EXTRA_IS_NEW_GAME, true)
-            putExtra(GameActivity.EXTRA_CHAPTER_NUMBER, chapter.number)
-        }
+        val intent =
+            Intent(this, GameActivity::class.java).apply {
+                putExtra(GameActivity.EXTRA_PLAYER_NAME, playerName)
+                putExtra(GameActivity.EXTRA_IS_NEW_GAME, true)
+                putExtra(GameActivity.EXTRA_CHAPTER_NUMBER, chapter.number)
+            }
         startActivity(intent)
         finish()
     }
@@ -71,14 +73,21 @@ class ChapterSelectActivity : AppCompatActivity() {
         private val unlockedChapter: Int,
         private val onChapterClick: (Chapter) -> Unit,
     ) : RecyclerView.Adapter<ChapterAdapter.ChapterViewHolder>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChapterViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_chapter, parent, false)
+        override fun onCreateViewHolder(
+            parent: ViewGroup,
+            viewType: Int,
+        ): ChapterViewHolder {
+            val view =
+                LayoutInflater
+                    .from(parent.context)
+                    .inflate(R.layout.item_chapter, parent, false)
             return ChapterViewHolder(view)
         }
 
-        override fun onBindViewHolder(holder: ChapterViewHolder, position: Int) {
+        override fun onBindViewHolder(
+            holder: ChapterViewHolder,
+            position: Int,
+        ) {
             val chapter = chapters[position]
             val isLocked = chapter.number > unlockedChapter
 
@@ -113,7 +122,9 @@ class ChapterSelectActivity : AppCompatActivity() {
                 ChapterObjective.DEFEND -> "Defend"
             }
 
-        class ChapterViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        class ChapterViewHolder(
+            view: View,
+        ) : RecyclerView.ViewHolder(view) {
             val title: TextView = view.findViewById(R.id.chapterTitle)
             val objective: TextView = view.findViewById(R.id.chapterObjective)
             val description: TextView = view.findViewById(R.id.chapterDescription)
