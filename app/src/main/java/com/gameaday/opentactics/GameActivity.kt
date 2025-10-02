@@ -879,11 +879,24 @@ class GameActivity : AppCompatActivity() {
             GameState.GamePhase.ACTION -> {
                 val selectedCharacter = gameState.selectedCharacter
                 if (selectedCharacter != null) {
-                    val targets = gameState.calculateAttackTargets(selectedCharacter)
                     val targetCharacter = gameState.board.getCharacterAt(position)
-                    if (targetCharacter != null && targetCharacter in targets) {
-                        // Show battle forecast before attacking
-                        showBattleForecast(selectedCharacter, targetCharacter)
+                    if (targetCharacter != null) {
+                        // Check if using a healing staff
+                        val weapon = selectedCharacter.equippedWeapon
+                        if (weapon != null && weapon.canHeal) {
+                            // Handle healing action
+                            val healTargets = gameState.calculateHealTargets(selectedCharacter)
+                            if (targetCharacter in healTargets) {
+                                showHealConfirmation(selectedCharacter, targetCharacter)
+                            }
+                        } else {
+                            // Handle attack action
+                            val attackTargets = gameState.calculateAttackTargets(selectedCharacter)
+                            if (targetCharacter in attackTargets) {
+                                // Show battle forecast before attacking
+                                showBattleForecast(selectedCharacter, targetCharacter)
+                            }
+                        }
                     }
                 }
             }
@@ -904,10 +917,21 @@ class GameActivity : AppCompatActivity() {
     private fun handleAttackAction() {
         val selectedCharacter = gameState.selectedCharacter
         if (selectedCharacter != null && selectedCharacter.canAct) {
-            val targets = gameState.calculateAttackTargets(selectedCharacter)
-            gameBoardView.highlightAttacks(targets.map { it.position })
-            gameState.gamePhase = GameState.GamePhase.ACTION
-            updateUI()
+            // Check if character has a healing staff equipped
+            val weapon = selectedCharacter.equippedWeapon
+            if (weapon != null && weapon.canHeal) {
+                // Show heal targets
+                val targets = gameState.calculateHealTargets(selectedCharacter)
+                gameBoardView.highlightAttacks(targets.map { it.position })
+                gameState.gamePhase = GameState.GamePhase.ACTION
+                updateUI()
+            } else {
+                // Show attack targets
+                val targets = gameState.calculateAttackTargets(selectedCharacter)
+                gameBoardView.highlightAttacks(targets.map { it.position })
+                gameState.gamePhase = GameState.GamePhase.ACTION
+                updateUI()
+            }
         }
     }
 
@@ -1143,29 +1167,81 @@ class GameActivity : AppCompatActivity() {
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
-        // Award EXP if attacker is a player unit
-        if (result.attacker.team == Team.PLAYER) {
-            val expGained =
-                if (result.targetDefeated) {
-                    // More exp for defeating an enemy
-                    val levelDiff = result.target.level - result.attacker.level
-                    val baseExp = 30 + (levelDiff * 5)
-                    baseExp.coerceIn(20, 50)
-                } else {
-                    // Less exp for just hitting
-                    10
-                }
-
-            val previousLevel = result.attacker.level
-            result.attacker.gainExperience(expGained)
+        // Show EXP gain if attacker is a player unit
+        // Note: EXP is already awarded in GameState.performAttack()
+        if (result.attacker.team == Team.PLAYER && result.expGained > 0) {
+            val previousLevel = result.previousLevel
             val newLevel = result.attacker.level
 
             // Show EXP gain effect
-            showExpGainEffect(result.attacker, expGained)
+            showExpGainEffect(result.attacker, result.expGained)
 
             // Check for level up
             if (newLevel > previousLevel) {
                 showLevelUpEffect(result.attacker, previousLevel, newLevel)
+            }
+        }
+    }
+
+    private fun showHealConfirmation(
+        healer: Character,
+        target: Character,
+    ) {
+        val staff = healer.equippedWeapon ?: return
+        val healAmount =
+            when (staff.name) {
+                "Heal" -> 10
+                "Mend" -> 20
+                else -> 10
+            }
+
+        val message =
+            buildString {
+                append("${healer.name} will heal ${target.name}\n\n")
+                append("Staff: ${staff.name}\n")
+                append("Heal Amount: $healAmount HP\n")
+                append("Current HP: ${target.currentHp}/${target.maxHp}\n")
+                append("After: ${minOf(target.currentHp + healAmount, target.maxHp)}/${target.maxHp}")
+            }
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("Use Staff")
+            .setMessage(message)
+            .setPositiveButton("Heal") { _, _ ->
+                // Execute the healing
+                val result = gameState.performHeal(healer, target)
+                showSupportResult(result)
+                healer.hasActedThisTurn = true
+                gameState.selectCharacter(null)
+                gameBoardView.clearHighlights()
+
+                // Disable undo after action
+                canUndoMove = false
+                previousPosition = null
+                binding.btnUndo.visibility = android.view.View.GONE
+
+                checkGameEnd()
+                updateUI()
+            }.setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showSupportResult(result: com.gameaday.opentactics.game.SupportResult) {
+        val message = "${result.user.name} healed ${result.target.name} for ${result.healAmount} HP!"
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+        // Show EXP gain if user is a player unit
+        if (result.user.team == Team.PLAYER && result.expGained > 0) {
+            val previousLevel = result.previousLevel
+            val newLevel = result.user.level
+
+            // Show EXP gain effect
+            showExpGainEffect(result.user, result.expGained)
+
+            // Check for level up
+            if (newLevel > previousLevel) {
+                showLevelUpEffect(result.user, previousLevel, newLevel)
             }
         }
     }

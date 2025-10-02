@@ -10,6 +10,7 @@ import com.gameaday.opentactics.model.Team
 // Battle and experience constants
 private const val EXPERIENCE_PER_KILL_MULTIPLIER = 25
 private const val EXPERIENCE_PER_HIT = 10
+private const val EXPERIENCE_PER_HEAL = 12 // EXP for using healing staff
 private const val DAMAGE_VARIANCE = 0.25
 private const val CRITICAL_HIT_MULTIPLIER = 3
 
@@ -478,10 +479,37 @@ class GameState(
         return targets
     }
 
+    /**
+     * Calculate valid heal targets for a character with a healing staff
+     */
+    fun calculateHealTargets(character: Character): List<Character> {
+        if (!character.canAct) return emptyList()
+
+        val staff = character.equippedWeapon
+        if (staff == null || !staff.canHeal) return emptyList()
+
+        val targets = mutableListOf<Character>()
+        val healRange = staff.range.first // Use weapon range
+
+        for (target in getAllCharacters()) {
+            // Can heal allies (same team) who are wounded
+            if (target.team == character.team && target.isAlive && target.currentHp < target.maxHp) {
+                if (character.position.distanceTo(target.position) <= healRange) {
+                    targets.add(target)
+                }
+            }
+        }
+
+        return targets
+    }
+
     fun performAttack(
         attacker: Character,
         target: Character,
     ): BattleResult {
+        // Track level before EXP gain
+        val previousLevel = attacker.level
+
         // Check for critical hit
         val isCritical = checkCriticalHit(attacker)
         val damage = calculateDamage(attacker, target, isCritical)
@@ -490,6 +518,16 @@ class GameState(
         // Use weapon durability
         attacker.useEquippedWeapon()
 
+        // Award EXP
+        val expGained =
+            if (!target.isAlive) {
+                attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
+                target.level * EXPERIENCE_PER_KILL_MULTIPLIER
+            } else {
+                attacker.gainExperience(EXPERIENCE_PER_HIT)
+                EXPERIENCE_PER_HIT
+            }
+
         val result =
             BattleResult(
                 attacker = attacker,
@@ -497,17 +535,66 @@ class GameState(
                 damage = damage,
                 targetDefeated = !target.isAlive,
                 wasCritical = isCritical,
+                expGained = expGained,
+                previousLevel = previousLevel,
             )
 
         if (result.targetDefeated) {
-            attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
             board.removeCharacter(target)
             removeDefeatedCharacter(target)
-        } else {
-            attacker.gainExperience(EXPERIENCE_PER_HIT)
         }
 
         checkGameEnd()
+        return result
+    }
+
+    /**
+     * Perform a healing action with a staff
+     * @param healer The character using the healing staff
+     * @param target The character being healed
+     * @return SupportResult with healing details and EXP gained
+     */
+    fun performHeal(
+        healer: Character,
+        target: Character,
+    ): SupportResult {
+        // Track level before EXP gain
+        val previousLevel = healer.level
+
+        // Calculate heal amount based on staff
+        val staff = healer.equippedWeapon
+        val healAmount =
+            when {
+                staff == null || !staff.canHeal -> 0
+                staff.name == "Heal" -> 10
+                staff.name == "Mend" -> 20
+                else -> 10
+            }
+
+        // Apply healing
+        target.heal(healAmount)
+
+        // Use staff durability
+        healer.useEquippedWeapon()
+
+        // Award EXP for healing (only if target was actually wounded)
+        val expGained =
+            if (target.currentHp < target.maxHp || healAmount > 0) {
+                healer.gainExperience(EXPERIENCE_PER_HEAL)
+                EXPERIENCE_PER_HEAL
+            } else {
+                0
+            }
+
+        val result =
+            SupportResult(
+                user = healer,
+                target = target,
+                healAmount = healAmount,
+                expGained = expGained,
+                previousLevel = previousLevel,
+            )
+
         return result
     }
 
@@ -798,4 +885,14 @@ data class BattleResult(
     val damage: Int,
     val targetDefeated: Boolean,
     val wasCritical: Boolean = false,
+    val expGained: Int = 0,
+    val previousLevel: Int = 0,
+)
+
+data class SupportResult(
+    val user: Character,
+    val target: Character,
+    val healAmount: Int,
+    val expGained: Int = 0,
+    val previousLevel: Int = 0,
 )
