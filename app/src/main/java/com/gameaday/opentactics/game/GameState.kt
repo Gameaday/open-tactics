@@ -108,13 +108,24 @@ class GameState(
         character: Character,
         targetBoard: GameBoard,
     ): com.gameaday.opentactics.model.Stats {
-        var totalBonus = com.gameaday.opentactics.model.Stats(0, 0, 0, 0, 0, 0, 0)
+        val zeroStats =
+            com.gameaday.opentactics.model.Stats(
+                hp = 0,
+                mp = 0,
+                attack = 0,
+                defense = 0,
+                speed = 0,
+                skill = 0,
+                luck = 0,
+            )
+        var totalBonus = zeroStats
         val characterSupports = getCharacterSupports(character.id)
 
         // Check for adjacent allied units with support relationships
         for (support in characterSupports) {
             val otherId = support.getOtherCharacter(character.id) ?: continue
-            val otherChar = getAllCharacters().find { it.id == otherId && it.team == character.team } ?: continue
+            val allChars = getAllCharacters()
+            val otherChar = allChars.find { it.id == otherId && it.team == character.team } ?: continue
 
             // Check if units are adjacent (within 1 tile)
             if (character.position.distanceTo(otherChar.position) == 1) {

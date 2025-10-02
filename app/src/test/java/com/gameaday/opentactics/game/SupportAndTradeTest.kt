@@ -8,11 +8,9 @@ import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.SupportRank
 import com.gameaday.opentactics.model.SupportRelationship
 import com.gameaday.opentactics.model.Team
-import com.gameaday.opentactics.model.TerrainType
 import com.gameaday.opentactics.model.Weapon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test

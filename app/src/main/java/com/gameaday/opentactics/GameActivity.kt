@@ -838,13 +838,14 @@ class GameActivity : AppCompatActivity() {
                     "Rank ${support.rank.name}"
 
                 val bonuses = support.getBonuses()
-                val bonusText = buildString {
-                    if (bonuses.attack > 0) append("+${bonuses.attack} ATK ")
-                    if (bonuses.defense > 0) append("+${bonuses.defense} DEF ")
-                    if (bonuses.speed > 0) append("+${bonuses.speed} SPD ")
-                    if (bonuses.skill > 0) append("+${bonuses.skill} SKL ")
-                    if (bonuses.luck > 0) append("+${bonuses.luck} LCK ")
-                }
+                val bonusText =
+                    buildString {
+                        if (bonuses.attack > 0) append("+${bonuses.attack} ATK ")
+                        if (bonuses.defense > 0) append("+${bonuses.defense} DEF ")
+                        if (bonuses.speed > 0) append("+${bonuses.speed} SPD ")
+                        if (bonuses.skill > 0) append("+${bonuses.skill} SKL ")
+                        if (bonuses.luck > 0) append("+${bonuses.luck} LCK ")
+                    }
 
                 itemView.findViewById<android.widget.TextView>(R.id.supportBonuses).text =
                     if (bonusText.isNotEmpty()) bonusText.trim() else "No bonuses yet"
