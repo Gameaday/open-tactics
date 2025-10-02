@@ -570,7 +570,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showGameMenu() {
-        val options = arrayOf("Save Game", "Load Game", "Settings", "Quit to Menu")
+        val options = arrayOf("Save Game", "Load Game", "Settings", "Help", "Quit to Menu")
 
         AlertDialog
             .Builder(this)
@@ -580,7 +580,8 @@ class GameActivity : AppCompatActivity() {
                     0 -> performManualSave()
                     1 -> showLoadGameDialog()
                     2 -> showSettingsDialog()
-                    3 -> confirmQuitToMenu()
+                    3 -> showHelpDialog()
+                    4 -> confirmQuitToMenu()
                 }
             }.show()
     }
@@ -817,6 +818,9 @@ class GameActivity : AppCompatActivity() {
                     gameState.selectCharacter(character)
                     showCharacterInfo(character)
                     updateUI()
+                } else {
+                    // Show terrain info when clicking empty tile
+                    showTerrainTooltip(position)
                 }
             }
             GameState.GamePhase.MOVEMENT -> {
@@ -1101,6 +1105,67 @@ class GameActivity : AppCompatActivity() {
                 "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!$criticalText"
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        
+        // Award EXP if attacker is a player unit
+        if (result.attacker.team == Team.PLAYER) {
+            val expGained = if (result.targetDefeated) {
+                // More exp for defeating an enemy
+                val levelDiff = result.target.level - result.attacker.level
+                val baseExp = 30 + (levelDiff * 5)
+                baseExp.coerceIn(20, 50)
+            } else {
+                // Less exp for just hitting
+                10
+            }
+            
+            val previousLevel = result.attacker.level
+            result.attacker.gainExperience(expGained)
+            val newLevel = result.attacker.level
+            
+            // Show EXP gain effect
+            showExpGainEffect(result.attacker, expGained)
+            
+            // Check for level up
+            if (newLevel > previousLevel) {
+                showLevelUpEffect(result.attacker, previousLevel, newLevel)
+            }
+        }
+    }
+    
+    private fun showExpGainEffect(character: Character, expGained: Int) {
+        // Show floating text animation for EXP gain
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            Toast.makeText(
+                this,
+                "${character.name} gained ${expGained} EXP! (${character.experience}/${character.level * 100})",
+                Toast.LENGTH_SHORT
+            ).show()
+        }, 500)
+    }
+    
+    private fun showLevelUpEffect(character: Character, oldLevel: Int, newLevel: Int) {
+        // Show level up dialog with stat increases
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val levelUpMessage = buildString {
+                append("${character.name} reached Level $newLevel!\n\n")
+                append("HP: ${character.maxHp}\n")
+                append("MP: ${character.maxMp}\n")
+                append("ATK: ${character.currentStats.attack}\n")
+                append("DEF: ${character.currentStats.defense}\n")
+                append("SPD: ${character.currentStats.speed}\n")
+                append("SKL: ${character.currentStats.skill}\n")
+                append("LCK: ${character.currentStats.luck}\n")
+            }
+            
+            AlertDialog.Builder(this)
+                .setTitle("⭐ Level Up! ⭐")
+                .setMessage(levelUpMessage)
+                .setPositiveButton("OK") { _, _ ->
+                    updateUI()
+                }
+                .setCancelable(false)
+                .show()
+        }, 1000)
     }
 
     private fun checkGameEnd() {
@@ -1302,5 +1367,85 @@ class GameActivity : AppCompatActivity() {
         binding.turnCounter.text = "Turn: ${gameState.turnCount}"
 
         gameBoardView.invalidate()
+    }
+    
+    private fun showTerrainTooltip(position: Position) {
+        val tile = gameState.board.getTile(position) ?: return
+        val terrain = tile.terrain
+        
+        val terrainInfo = buildString {
+            append("Terrain: ${terrain.displayName}\n\n")
+            append("Movement Cost: ${terrain.movementCost}\n")
+            append("Defense Bonus: +${terrain.defensiveBonus}\n")
+            append("Avoidance Bonus: +${terrain.avoidanceBonus}%\n\n")
+            
+            when (terrain) {
+                com.gameaday.opentactics.model.TerrainType.FOREST -> 
+                    append("Dense forest provides cover and slows movement.")
+                com.gameaday.opentactics.model.TerrainType.MOUNTAIN -> 
+                    append("High ground offers excellent defensive position but is hard to traverse.")
+                com.gameaday.opentactics.model.TerrainType.FORT -> 
+                    append("Fortified position provides strong defensive bonuses.")
+                com.gameaday.opentactics.model.TerrainType.VILLAGE -> 
+                    append("Village tiles offer moderate defensive bonus.")
+                com.gameaday.opentactics.model.TerrainType.WATER -> 
+                    append("Water is impassable for most units. Only flying units can cross.")
+                else -> 
+                    append("Open terrain with no special properties.")
+            }
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Terrain Info")
+            .setMessage(terrainInfo)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+    
+    private fun showHelpDialog() {
+        val helpText = """
+            |Welcome to Open Tactics!
+            |
+            |BASIC CONTROLS:
+            |• Tap a unit to select it
+            |• Tap Move to see movement range
+            |• Tap Attack to see attack range
+            |• Tap Wait to end unit's turn
+            |• Tap End Turn to end your phase
+            |
+            |COMBAT:
+            |• Units attack based on equipped weapon
+            |• Weapon triangle affects damage
+            |• Terrain provides defensive bonuses
+            |• Speed difference enables double attacks
+            |
+            |TERRAIN EFFECTS:
+            |• Plains: No bonuses (1 move cost)
+            |• Forest: +1 Def, +10 Avoid (2 cost)
+            |• Mountain: +2 Def, +20 Avoid (3 cost)
+            |• Fort: +3 Def, +20 Avoid (1 cost)
+            |• Water: Impassable (flying only)
+            |
+            |UI FEATURES:
+            |• Toggle Ranges: Show enemy attack ranges
+            |• Undo: Undo last move (before action)
+            |• Long-press menu: Save/Load/Settings
+            |• Tap terrain: View terrain details
+            |
+            |OBJECTIVES:
+            |Check the top-left panel for chapter objectives and turn count.
+            |
+            |TIPS:
+            |• Use terrain to your advantage
+            |• Keep units together for support
+            |• Watch enemy ranges carefully
+            |• Save often!
+        """.trimMargin()
+        
+        AlertDialog.Builder(this)
+            .setTitle("Game Help")
+            .setMessage(helpText)
+            .setPositiveButton("OK", null)
+            .show()
     }
 }
