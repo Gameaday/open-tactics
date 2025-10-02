@@ -302,6 +302,29 @@ data class Character(
     }
     
     /**
+     * Equip weapon by reference
+     */
+    fun equipWeapon(weapon: Weapon): Boolean {
+        val index = inventory.indexOf(weapon)
+        if (index >= 0) {
+            return equipWeapon(index)
+        }
+        return false
+    }
+    
+    /**
+     * Remove weapon by reference
+     */
+    fun removeWeapon(weapon: Weapon): Boolean {
+        val index = inventory.indexOf(weapon)
+        if (index >= 0) {
+            removeWeapon(index)
+            return true
+        }
+        return false
+    }
+    
+    /**
      * Get effective attack range considering equipped weapon
      */
     fun getAttackRange(): IntRange {

@@ -38,4 +38,10 @@
     
     <!-- Range Display -->
     <string name="show_ranges">Ranges</string>
+    
+    <!-- Inventory -->
+    <string name="equip">Equip</string>
+    <string name="drop">Drop</string>
+    <string name="equipped">[Equipped]</string>
+    <string name="close">Close</string>
 </resources>

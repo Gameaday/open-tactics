@@ -376,6 +376,7 @@ class GameActivity : AppCompatActivity() {
         binding.btnMove.setOnClickListener { handleMoveAction() }
         binding.btnAttack.setOnClickListener { handleAttackAction() }
         binding.btnWait.setOnClickListener { handleWaitAction() }
+        binding.btnInventory.setOnClickListener { handleInventoryAction() }
         binding.btnEndTurn.setOnClickListener { handleEndTurnAction() }
         
         // Range display toggle
@@ -396,6 +397,98 @@ class GameActivity : AppCompatActivity() {
         }
 
         updateUI()
+    }
+    
+    private fun handleInventoryAction() {
+        val selectedCharacter = gameState.selectedCharacter
+        if (selectedCharacter != null) {
+            showInventoryDialog(selectedCharacter)
+        } else {
+            Toast.makeText(this, "Select a unit first", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun showInventoryDialog(character: Character) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_inventory, null)
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.weaponRecyclerView)
+        
+        dialogView.findViewById<android.widget.TextView>(R.id.characterNameInventory).text = 
+            "${character.name} - ${character.characterClass.displayName}"
+        
+        val adapter = WeaponAdapter(character) { weapon, action ->
+            when (action) {
+                "equip" -> {
+                    character.equipWeapon(weapon)
+                    Toast.makeText(this, "${weapon.name} equipped", Toast.LENGTH_SHORT).show()
+                    updateUI()
+                }
+                "drop" -> {
+                    if (character.inventory.size > 1) {
+                        character.removeWeapon(weapon)
+                        Toast.makeText(this, "${weapon.name} dropped", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Cannot drop last weapon", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+        
+        dialogView.findViewById<android.widget.Button>(R.id.btnCloseInventory).setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
+    }
+    
+    private inner class WeaponAdapter(
+        private val character: Character,
+        private val onAction: (Weapon, String) -> Unit
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<WeaponAdapter.WeaponViewHolder>() {
+        
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): WeaponViewHolder {
+            val view = layoutInflater.inflate(R.layout.item_weapon, parent, false)
+            return WeaponViewHolder(view)
+        }
+        
+        override fun onBindViewHolder(holder: WeaponViewHolder, position: Int) {
+            val weapon = character.inventory[position]
+            holder.bind(weapon, character.equippedWeapon == weapon)
+        }
+        
+        override fun getItemCount(): Int = character.inventory.size
+        
+        inner class WeaponViewHolder(view: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            fun bind(weapon: Weapon, isEquipped: Boolean) {
+                itemView.findViewById<android.widget.TextView>(R.id.weaponName).text = weapon.name
+                itemView.findViewById<android.widget.TextView>(R.id.weaponType).text = weapon.type.name
+                itemView.findViewById<android.widget.TextView>(R.id.weaponMight).text = "Mt: ${weapon.might}"
+                itemView.findViewById<android.widget.TextView>(R.id.weaponDurability).text = 
+                    "Uses: ${weapon.currentUses}/${weapon.maxUses}"
+                
+                val equippedLabel = itemView.findViewById<android.widget.TextView>(R.id.weaponEquipped)
+                equippedLabel.visibility = if (isEquipped) android.view.View.VISIBLE else android.view.View.GONE
+                
+                val btnEquip = itemView.findViewById<android.widget.Button>(R.id.btnEquipWeapon)
+                btnEquip.isEnabled = !isEquipped
+                btnEquip.setOnClickListener {
+                    onAction(weapon, "equip")
+                    notifyDataSetChanged()
+                }
+                
+                val btnDrop = itemView.findViewById<android.widget.Button>(R.id.btnDropWeapon)
+                btnDrop.setOnClickListener {
+                    onAction(weapon, "drop")
+                    notifyDataSetChanged()
+                }
+            }
+        }
     }
     
     private fun showEnemyRanges() {

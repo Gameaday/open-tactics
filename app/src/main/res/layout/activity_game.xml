@@ -51,6 +51,15 @@
             android:text="@string/wait" />
 
         <Button
+            android:id="@+id/btnInventory"
+            style="@style/GameButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="@string/inventory" />
+
+        <Button
             android:id="@+id/btnEndTurn"
             style="@style/GameButtonStyle"
             android:layout_width="0dp"
