@@ -338,17 +338,51 @@ class GameActivity : AppCompatActivity() {
     private fun restoreGameFromSave(gameSave: GameSave) {
         val savedState = gameSave.gameState
         val board = GameBoard(savedState.boardWidth, savedState.boardHeight)
-        gameState = GameState(board)
+        
+        // Check if we're loading into a new chapter
+        val chapterNumber = intent.getIntExtra(EXTRA_CHAPTER_NUMBER, gameSave.campaignLevel)
+        val chapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapterNumber)
+        
+        gameState = GameState(board, currentChapter = chapter)
 
-        // Restore characters
-        savedState.playerCharacters.forEach { character ->
+        // Restore player characters (they carry over between chapters)
+        val playerStartPositions = chapter?.playerStartPositions ?: listOf()
+        savedState.playerCharacters.forEachIndexed { index, character ->
+            // Update position to new chapter's start position if available
+            val newPosition = playerStartPositions.getOrNull(index) ?: character.position
+            character.position = newPosition
+            character.hasMovedThisTurn = false
+            character.hasActedThisTurn = false
+            
             gameState.addPlayerCharacter(character)
-            board.placeCharacter(character, character.position)
+            board.placeCharacter(character, newPosition)
         }
 
-        savedState.enemyCharacters.forEach { character ->
-            gameState.addEnemyCharacter(character)
-            board.placeCharacter(character, character.position)
+        // If loading a new chapter (no enemies saved), spawn new enemies from chapter data
+        if (chapter != null && savedState.enemyCharacters.isEmpty()) {
+            chapter.enemyUnits.forEach { enemySpawn ->
+                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
+                val enemy = Character(
+                    id = enemySpawn.id,
+                    name = enemySpawn.name,
+                    characterClass = enemySpawn.characterClass,
+                    team = Team.ENEMY,
+                    level = enemySpawn.level,
+                    position = enemySpawn.position,
+                    isBoss = enemySpawn.isBoss,
+                    aiType = enemySpawn.aiType,
+                ).apply {
+                    weapon?.let { addWeapon(it) }
+                }
+                gameState.addEnemyCharacter(enemy)
+                board.placeCharacter(enemy, enemy.position)
+            }
+        } else {
+            // Restore existing enemies (from saved game mid-chapter)
+            savedState.enemyCharacters.forEach { character ->
+                gameState.addEnemyCharacter(character)
+                board.placeCharacter(character, character.position)
+            }
         }
 
         // Restore game state
@@ -1045,14 +1079,37 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun startNextChapter(nextChapterNumber: Int) {
-        val intent =
-            Intent(this, GameActivity::class.java).apply {
-                putExtra(EXTRA_PLAYER_NAME, currentGameSave?.playerName ?: "Player")
-                putExtra(EXTRA_IS_NEW_GAME, true)
-                putExtra(EXTRA_CHAPTER_NUMBER, nextChapterNumber)
-            }
-        startActivity(intent)
-        finish()
+        // Save current player characters to carry over
+        val carriedCharacters = gameState.getAlivePlayerCharacters()
+        
+        // Create a save that will be loaded in the next chapter
+        val carryOverSave = createGameSave(
+            currentGameSave?.playerName ?: "Player",
+            nextChapterNumber
+        )
+        
+        lifecycleScope.launch {
+            saveGameManager.saveGame(carryOverSave, isAutoSave = false).fold(
+                onSuccess = {
+                    // Start next chapter with the saved game
+                    val intent = Intent(this@GameActivity, GameActivity::class.java).apply {
+                        putExtra(EXTRA_LOAD_SAVE_ID, carryOverSave.saveId)
+                        putExtra(EXTRA_PLAYER_NAME, carryOverSave.playerName)
+                        putExtra(EXTRA_IS_NEW_GAME, false)
+                        putExtra(EXTRA_CHAPTER_NUMBER, nextChapterNumber)
+                    }
+                    startActivity(intent)
+                    finish()
+                },
+                onFailure = { error ->
+                    Toast.makeText(
+                        this@GameActivity,
+                        "Failed to save progress: ${error.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
+        }
     }
 
     private fun showCampaignComplete() {
