@@ -37,7 +37,10 @@ data class Stats(
             luck - other.luck,
         )
 
-    fun toDisplayString(): String = "HP: $hp  MP: $mp  ATK: $attack\nDEF: $defense  SPD: $speed  SKL: $skill\nLCK: $luck"
+    fun toDisplayString(): String =
+        "HP: $hp  MP: $mp  ATK: $attack\n" +
+            "DEF: $defense  SPD: $speed  SKL: $skill\n" +
+            "LCK: $luck"
 }
 
 /**

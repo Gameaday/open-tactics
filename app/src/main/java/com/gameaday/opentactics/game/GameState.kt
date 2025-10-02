@@ -15,6 +15,15 @@ private const val EXPERIENCE_PER_HEAL = 12 // EXP for using healing staff
 private const val DAMAGE_VARIANCE = 0.25
 private const val CRITICAL_HIT_MULTIPLIER = 3
 
+// Healing constants
+private const val HEAL_STAFF_AMOUNT = 10
+private const val MEND_STAFF_AMOUNT = 20
+private const val DEFAULT_HEAL_AMOUNT = 10
+
+// Critical hit constants
+private const val LUCK_CRIT_DIVISOR = 2
+private const val CRIT_ROLL_MAX = 100
+
 // Battle forecast constants
 private const val BASE_HIT_RATE = 90
 private const val HIT_RATE_MIN = 50
@@ -95,7 +104,9 @@ class GameState(
         }
     }
 
-    fun canSelectCharacter(character: Character): Boolean = character.team == currentTurn && (character.canMove || character.canAct)
+    fun canSelectCharacter(character: Character): Boolean =
+        character.team == currentTurn &&
+            (character.canMove || character.canAct)
 
     /**
      * Perform a character move
@@ -568,9 +579,9 @@ class GameState(
         val healAmount =
             when {
                 staff == null || !staff.canHeal -> 0
-                staff.name == "Heal" -> 10
-                staff.name == "Mend" -> 20
-                else -> 10
+                staff.name == "Heal" -> HEAL_STAFF_AMOUNT
+                staff.name == "Mend" -> MEND_STAFF_AMOUNT
+                else -> DEFAULT_HEAL_AMOUNT
             }
 
         // Apply healing
@@ -604,8 +615,8 @@ class GameState(
 
     private fun checkCriticalHit(attacker: Character): Boolean {
         // Critical rate = (Skill + Luck / 2)
-        val critRate = attacker.currentStats.skill + (attacker.currentStats.luck / 2)
-        return (1..100).random() <= critRate
+        val critRate = attacker.currentStats.skill + (attacker.currentStats.luck / LUCK_CRIT_DIVISOR)
+        return (1..CRIT_ROLL_MAX).random() <= critRate
     }
 
     private fun calculateDamage(
