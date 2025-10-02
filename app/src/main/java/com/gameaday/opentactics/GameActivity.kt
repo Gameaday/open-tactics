@@ -38,6 +38,7 @@ class GameActivity : AppCompatActivity() {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_IS_NEW_GAME = "is_new_game"
+        const val EXTRA_CHAPTER_NUMBER = "chapter_number"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,9 +52,10 @@ class GameActivity : AppCompatActivity() {
         val loadSaveId = intent.getStringExtra(EXTRA_LOAD_SAVE_ID)
         val playerName = intent.getStringExtra(EXTRA_PLAYER_NAME) ?: "Player"
         val isNewGame = intent.getBooleanExtra(EXTRA_IS_NEW_GAME, true)
+        val chapterNumber = intent.getIntExtra(EXTRA_CHAPTER_NUMBER, 1)
 
         if (isNewGame || loadSaveId == null) {
-            initializeNewGame(playerName)
+            initializeNewGame(playerName, chapterNumber)
         } else {
             loadGame(loadSaveId)
         }
@@ -79,8 +81,140 @@ class GameActivity : AppCompatActivity() {
         playerProfile?.let { saveGameManager.saveProfile(it) }
     }
 
-    @Suppress("LongMethod") // Game initialization requires many character setups
-    private fun initializeNewGame(playerName: String) {
+    /**
+     * Get weapon by equipment ID string
+     */
+    private fun getWeaponById(equipmentId: String): Weapon? =
+        when (equipmentId) {
+            "iron_sword" -> Weapon.ironSword()
+            "steel_sword" -> Weapon.steelSword()
+            "silver_sword" -> Weapon.silverSword()
+            "iron_lance" -> Weapon.ironLance()
+            "steel_lance" -> Weapon.steelLance()
+            "iron_axe" -> Weapon.ironAxe()
+            "steel_axe" -> Weapon.steelAxe()
+            "iron_bow" -> Weapon.ironBow()
+            "steel_bow" -> Weapon.steelBow()
+            "fire_tome" -> Weapon.fire()
+            "thunder_tome" -> Weapon.thunder()
+            else -> null
+        }
+
+    @Suppress("LongMethod", "ComplexMethod") // Game initialization requires many character setups
+    private fun initializeNewGame(playerName: String, chapterNumber: Int = 1) {
+        // Load chapter data
+        val chapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapterNumber)
+        if (chapter == null) {
+            Toast.makeText(this, "Chapter $chapterNumber not found!", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        // Create game board based on chapter's map layout
+        val board = when (chapter.mapLayout) {
+            com.gameaday.opentactics.model.MapLayout.TEST_MAP -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.FOREST_AMBUSH -> GameBoard.createTestMap() // TODO: Create specific maps
+            com.gameaday.opentactics.model.MapLayout.MOUNTAIN_PASS -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.CASTLE_SIEGE -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.VILLAGE_DEFENSE -> GameBoard.createTestMap()
+            else -> GameBoard.createTestMap()
+        }
+
+        gameState = GameState(board, currentChapter = chapter)
+
+        // Show pre-battle dialogue if present
+        if (chapter.preBattleDialogue.isNotEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(chapter.title)
+                .setMessage(chapter.preBattleDialogue)
+                .setPositiveButton("Begin Battle", null)
+                .show()
+        }
+
+        // Create player characters at starting positions
+        val playerPositions = chapter.playerStartPositions
+        val playerCharacters = listOf(
+            Character(
+                id = "player_knight",
+                name = "Sir Garrett",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(0) { Position(1, 6) },
+            ).apply {
+                addWeapon(Weapon.ironSword())
+                addWeapon(Weapon.steelSword())
+            },
+            Character(
+                id = "player_archer",
+                name = "Lyanna",
+                characterClass = CharacterClass.ARCHER,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(1) { Position(2, 7) },
+            ).apply {
+                addWeapon(Weapon.ironBow())
+                addWeapon(Weapon.steelBow())
+            },
+            Character(
+                id = "player_mage",
+                name = "Aldric",
+                characterClass = CharacterClass.MAGE,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(2) { Position(0, 7) },
+            ).apply {
+                addWeapon(Weapon.fire())
+                addWeapon(Weapon.thunder())
+            },
+        )
+
+        // Add player characters
+        playerCharacters.forEach { char ->
+            gameState.addPlayerCharacter(char)
+            board.placeCharacter(char, char.position)
+        }
+
+        // Create enemy characters from chapter data
+        chapter.enemyUnits.forEach { enemySpawn ->
+            val enemyChar = Character(
+                id = enemySpawn.id,
+                name = enemySpawn.name,
+                characterClass = enemySpawn.characterClass,
+                team = Team.ENEMY,
+                position = enemySpawn.position,
+                level = enemySpawn.level,
+            ).apply {
+                // Add weapons from equipment list
+                enemySpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
+                }
+            }
+            gameState.addEnemyCharacter(enemyChar)
+            board.placeCharacter(enemyChar, enemyChar.position)
+        }
+
+        // Add boss unit if present
+        chapter.bossUnit?.let { bossSpawn ->
+            val bossChar = Character(
+                id = bossSpawn.id,
+                name = bossSpawn.name,
+                characterClass = bossSpawn.characterClass,
+                team = Team.ENEMY,
+                position = bossSpawn.position,
+                level = bossSpawn.level,
+            ).apply {
+                bossSpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
+                }
+            }
+            gameState.addEnemyCharacter(bossChar)
+            board.placeCharacter(bossChar, bossChar.position)
+        }
+
+        // Create initial save data
+        currentGameSave = createGameSave(playerName, chapterNumber)
+    }
+
+    @Suppress("LongMethod") // Game initialization requires many character setups - DEPRECATED
+    private fun initializeNewGameOld(playerName: String) {
         val board = GameBoard.createTestMap()
         gameState = GameState(board)
 

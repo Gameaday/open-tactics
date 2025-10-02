@@ -26,6 +26,10 @@
             android:name=".GameActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
+        <activity
+            android:name=".ChapterSelectActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>
