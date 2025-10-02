@@ -44,4 +44,7 @@
     <string name="drop">Drop</string>
     <string name="equipped">[Equipped]</string>
     <string name="close">Close</string>
+    
+    <!-- Enemy Turn -->
+    <string name="skip_animations">Skip</string>
 </resources>

@@ -38,6 +38,9 @@ class GameActivity : AppCompatActivity() {
     // Undo move state
     private var previousPosition: Position? = null
     private var canUndoMove: Boolean = false
+    
+    // Skip enemy turn state
+    private var skipEnemyAnimations: Boolean = false
 
     companion object {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
@@ -393,6 +396,11 @@ class GameActivity : AppCompatActivity() {
             } else {
                 gameBoardView.clearHighlights()
             }
+        }
+        
+        // Skip enemy turn animations
+        binding.btnSkipEnemyTurn.setOnClickListener {
+            skipEnemyAnimations = true
         }
 
         // Add save/load buttons to the overflow menu
@@ -777,12 +785,17 @@ class GameActivity : AppCompatActivity() {
         // Show enemy turn banner
         Toast.makeText(this, "Enemy Turn", Toast.LENGTH_SHORT).show()
         
+        // Show skip button
+        binding.btnSkipEnemyTurn.visibility = android.view.View.VISIBLE
+        skipEnemyAnimations = false
+        
         // Disable UI during enemy turn
         setUIEnabled(false)
         
         // Process all enemy units with a delay between actions
         val enemies = gameState.getAliveEnemyCharacters()
-        var delayMs = 500L
+        val delayBetweenActions = if (skipEnemyAnimations) 50L else 800L
+        var delayMs = if (skipEnemyAnimations) 100L else 500L
         
         enemies.forEach { enemy ->
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -795,11 +808,13 @@ class GameActivity : AppCompatActivity() {
                     updateUI()
                 }
             }, delayMs)
-            delayMs += 800L // 800ms delay between enemy actions
+            delayMs += delayBetweenActions
         }
         
         // End enemy turn after all actions complete
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            binding.btnSkipEnemyTurn.visibility = android.view.View.GONE
+            skipEnemyAnimations = false
             gameState.endTurn()
             setUIEnabled(true)
             updateUI()

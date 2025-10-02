@@ -121,6 +121,19 @@
             android:text="Turn: 1" />
 
     </LinearLayout>
+    
+    <!-- Skip Enemy Turn Button -->
+    <Button
+        android:id="@+id/btnSkipEnemyTurn"
+        style="@style/GameButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/skip_animations"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp" />
 
     <!-- Range Display Toggle Button -->
     <Button
