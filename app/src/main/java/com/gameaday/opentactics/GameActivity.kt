@@ -554,16 +554,8 @@ class GameActivity : AppCompatActivity() {
                     val targets = gameState.calculateAttackTargets(selectedCharacter)
                     val targetCharacter = gameState.board.getCharacterAt(position)
                     if (targetCharacter != null && targetCharacter in targets) {
-                        // Animate the attack
-                        gameBoardView.animateAttack(selectedCharacter, targetCharacter) {
-                            val result = gameState.performAttack(selectedCharacter, targetCharacter)
-                            showBattleResult(result)
-                            selectedCharacter.hasActedThisTurn = true
-                            gameState.selectCharacter(null)
-                            gameBoardView.clearHighlights()
-                            checkGameEnd()
-                            updateUI()
-                        }
+                        // Show battle forecast before attacking
+                        showBattleForecast(selectedCharacter, targetCharacter)
                     }
                 }
             }
@@ -675,6 +667,67 @@ class GameActivity : AppCompatActivity() {
 
     private fun hideCharacterInfo() {
         binding.characterInfoPanel.visibility = android.view.View.GONE
+    }
+
+    private fun showBattleForecast(attacker: Character, target: Character) {
+        val forecast = gameState.calculateBattleForecast(attacker, target)
+        
+        // Create dialog with battle forecast layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_battle_forecast, null)
+        
+        // Populate attacker info
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerName).text = attacker.name
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerStats).text = 
+            "HP: ${attacker.currentStats.hp}/${attacker.maxHp}"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerDamage).text = 
+            "Damage: ${forecast.attackerDamage}"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerHit).text = 
+            "Hit: ${forecast.attackerHitRate}%"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerDoubles).visibility =
+            if (forecast.attackerDoubles) android.view.View.VISIBLE else android.view.View.GONE
+        
+        // Populate target info
+        dialogView.findViewById<android.widget.TextView>(R.id.targetName).text = target.name
+        dialogView.findViewById<android.widget.TextView>(R.id.targetStats).text = 
+            "HP: ${target.currentStats.hp}/${target.maxHp}"
+        dialogView.findViewById<android.widget.TextView>(R.id.targetDamage).text = 
+            if (forecast.canCounter) "Damage: ${forecast.targetDamage}" else "Cannot Counter"
+        dialogView.findViewById<android.widget.TextView>(R.id.targetHit).text = 
+            if (forecast.canCounter) "Hit: ${forecast.targetHitRate}%" else ""
+        dialogView.findViewById<android.widget.TextView>(R.id.targetDoubles).visibility =
+            if (forecast.targetDoubles) android.view.View.VISIBLE else android.view.View.GONE
+        
+        // Populate result prediction
+        val resultText = "After: ${forecast.predictedAttackerHp} ← → ${forecast.predictedTargetHp} HP"
+        dialogView.findViewById<android.widget.TextView>(R.id.forecastResult).text = resultText
+        
+        // Create and show dialog
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        
+        // Setup buttons
+        dialogView.findViewById<android.widget.Button>(R.id.btnConfirmAttack).setOnClickListener {
+            dialog.dismiss()
+            // Execute the attack
+            gameBoardView.animateAttack(attacker, target) {
+                val result = gameState.performAttack(attacker, target)
+                showBattleResult(result)
+                attacker.hasActedThisTurn = true
+                gameState.selectCharacter(null)
+                gameBoardView.clearHighlights()
+                checkGameEnd()
+                updateUI()
+            }
+        }
+        
+        dialogView.findViewById<android.widget.Button>(R.id.btnCancelAttack).setOnClickListener {
+            dialog.dismiss()
+            // Stay in action phase, allow selecting different target
+        }
+        
+        dialog.show()
     }
 
     private fun showBattleResult(result: com.gameaday.opentactics.game.BattleResult) {
