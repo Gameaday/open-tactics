@@ -852,9 +852,53 @@ class GameActivity : AppCompatActivity() {
             gameState.endTurn()
             setUIEnabled(true)
             updateUI()
+            
+            // Check for reinforcements at start of player turn
+            spawnReinforcements()
+            
             checkGameEnd()
             Toast.makeText(this, "Player Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
         }, delayMs + 500)
+    }
+    
+    private fun spawnReinforcements() {
+        val chapter = gameState.currentChapter ?: return
+        val reinforcements = chapter.getReinforcementsForTurn(gameState.turnCount)
+        
+        if (reinforcements.isNotEmpty()) {
+            Toast.makeText(
+                this,
+                "Enemy reinforcements have arrived!",
+                Toast.LENGTH_LONG
+            ).show()
+            
+            reinforcements.forEach { enemySpawn ->
+                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
+                val reinforcement = Character(
+                    id = "${enemySpawn.id}_turn${gameState.turnCount}",
+                    name = enemySpawn.name,
+                    characterClass = enemySpawn.characterClass,
+                    team = Team.ENEMY,
+                    level = enemySpawn.level,
+                    position = enemySpawn.position,
+                    isBoss = enemySpawn.isBoss,
+                    aiType = enemySpawn.aiType,
+                ).apply {
+                    weapon?.let { addWeapon(it) }
+                }
+                
+                gameState.addEnemyCharacter(reinforcement)
+                gameState.board.placeCharacter(reinforcement, reinforcement.position)
+                
+                // Animate the spawn with a flash effect
+                gameBoardView.invalidate()
+            }
+            
+            // Show visual feedback
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                gameBoardView.invalidate()
+            }, 300)
+        }
     }
     
     private fun setUIEnabled(enabled: Boolean) {
