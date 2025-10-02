@@ -1,5 +1,6 @@
 package com.gameaday.opentactics.game
 
+import com.gameaday.opentactics.model.Chapter
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
@@ -14,11 +15,14 @@ class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
     private val enemyCharacters: MutableList<Character> = mutableListOf(),
+    var currentChapter: Chapter? = null,
 ) {
     var currentTurn: Team = Team.PLAYER
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 1
+    var escapedUnitCount: Int = 0
+    private val unitsOnThrone: MutableList<Character> = mutableListOf()
 
     enum class GamePhase {
         UNIT_SELECT,
@@ -256,6 +260,26 @@ class GameState(
     }
 
     private fun checkGameEnd() {
+        // Check chapter objectives if chapter is set
+        currentChapter?.let { chapter ->
+            if (chapter.isObjectiveComplete(
+                    playerCharacters,
+                    enemyCharacters,
+                    turnCount,
+                    unitsOnThrone,
+                    escapedUnitCount
+                )
+            ) {
+                gamePhase = GamePhase.GAME_OVER
+                return
+            }
+            
+            if (chapter.isObjectiveFailed(playerCharacters, turnCount)) {
+                gamePhase = GamePhase.GAME_OVER
+                return
+            }
+        }
+        
         when {
             playerCharacters.none { it.isAlive } -> {
                 gamePhase = GamePhase.GAME_OVER
@@ -266,9 +290,61 @@ class GameState(
         }
     }
 
-    fun isGameWon(): Boolean = enemyCharacters.none { it.isAlive }
+    fun isGameWon(): Boolean {
+        currentChapter?.let { chapter ->
+            return chapter.isObjectiveComplete(
+                playerCharacters,
+                enemyCharacters,
+                turnCount,
+                unitsOnThrone,
+                escapedUnitCount
+            )
+        }
+        return enemyCharacters.none { it.isAlive }
+    }
 
-    fun isGameLost(): Boolean = playerCharacters.none { it.isAlive }
+    fun isGameLost(): Boolean {
+        currentChapter?.let { chapter ->
+            return chapter.isObjectiveFailed(playerCharacters, turnCount)
+        }
+        return playerCharacters.none { it.isAlive }
+    }
+    
+    fun markUnitOnThrone(character: Character) {
+        if (currentChapter?.thronePosition == character.position) {
+            if (!unitsOnThrone.contains(character)) {
+                unitsOnThrone.add(character)
+            }
+        }
+    }
+    
+    fun markUnitEscaped(character: Character) {
+        currentChapter?.let { chapter ->
+            if (character.position in chapter.escapePositions) {
+                escapedUnitCount++
+                playerCharacters.remove(character)
+                board.removeCharacter(character)
+            }
+        }
+    }
+    
+    fun spawnReinforcements() {
+        currentChapter?.let { chapter ->
+            val reinforcements = chapter.getReinforcementsForTurn(turnCount)
+            reinforcements.forEach { spawn ->
+                val reinforcement = Character(
+                    id = spawn.id,
+                    name = spawn.name,
+                    characterClass = spawn.characterClass,
+                    team = Team.ENEMY,
+                    position = spawn.position,
+                    level = spawn.level
+                )
+                addEnemyCharacter(reinforcement)
+                board.placeCharacter(reinforcement, spawn.position)
+            }
+        }
+    }
 }
 
 data class BattleResult(

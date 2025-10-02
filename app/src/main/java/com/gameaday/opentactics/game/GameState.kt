@@ -1,5 +1,7 @@
 package com.gameaday.opentactics.game
 
+import com.gameaday.opentactics.model.Chapter
+import com.gameaday.opentactics.model.ChapterObjective
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Position
@@ -14,11 +16,14 @@ class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
     private val enemyCharacters: MutableList<Character> = mutableListOf(),
+    var currentChapter: Chapter? = null,
 ) {
     var currentTurn: Team = Team.PLAYER
     var selectedCharacter: Character? = null
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 0
+    var escapedUnitCount: Int = 0
+    private val unitsOnThrone: MutableList<Character> = mutableListOf()
 
     // Properties expected by tests
     val currentTeam: Team get() = currentTurn
@@ -84,6 +89,8 @@ class GameState(
                 playerCharacters.forEach { it.resetTurn() }
                 currentTurn = Team.ENEMY
                 gamePhase = GamePhase.ENEMY_TURN
+                turnCount++
+                spawnReinforcements()  // Spawn reinforcements at start of enemy turn
                 executeEnemyTurn()
             }
             Team.ENEMY -> {
@@ -91,11 +98,11 @@ class GameState(
                 enemyCharacters.forEach { it.resetTurn() }
                 currentTurn = Team.PLAYER
                 gamePhase = GamePhase.UNIT_SELECT
-                turnCount++
             }
             else -> {}
         }
         selectedCharacter = null
+        checkGameEnd()
     }
 
     private fun executeEnemyTurn() {
@@ -274,6 +281,27 @@ class GameState(
     }
 
     private fun checkGameEnd() {
+        // Check chapter objectives if chapter is set
+        currentChapter?.let { chapter ->
+            if (chapter.isObjectiveComplete(
+                    playerCharacters,
+                    enemyCharacters,
+                    turnCount,
+                    unitsOnThrone,
+                    escapedUnitCount
+                )
+            ) {
+                gamePhase = GamePhase.GAME_OVER
+                return
+            }
+            
+            if (chapter.isObjectiveFailed(playerCharacters, turnCount)) {
+                gamePhase = GamePhase.GAME_OVER
+                return
+            }
+        }
+        
+        // Default victory/defeat conditions
         when {
             playerCharacters.none { it.isAlive } -> {
                 gamePhase = GamePhase.GAME_OVER
@@ -284,9 +312,77 @@ class GameState(
         }
     }
 
-    fun isGameWon(): Boolean = enemyCharacters.isNotEmpty() && enemyCharacters.none { it.isAlive }
+    fun isGameWon(): Boolean {
+        currentChapter?.let { chapter ->
+            return chapter.isObjectiveComplete(
+                playerCharacters,
+                enemyCharacters,
+                turnCount,
+                unitsOnThrone,
+                escapedUnitCount
+            )
+        }
+        // Default: all enemies defeated
+        return enemyCharacters.isNotEmpty() && enemyCharacters.none { it.isAlive }
+    }
 
-    fun isGameLost(): Boolean = playerCharacters.isNotEmpty() && playerCharacters.none { it.isAlive }
+    fun isGameLost(): Boolean {
+        currentChapter?.let { chapter ->
+            return chapter.isObjectiveFailed(playerCharacters, turnCount)
+        }
+        // Default: all players defeated
+        return playerCharacters.isNotEmpty() && playerCharacters.none { it.isAlive }
+    }
+    
+    /**
+     * Mark a unit as being on the throne (for SEIZE_THRONE objective)
+     */
+    fun markUnitOnThrone(character: Character) {
+        if (currentChapter?.thronePosition == character.position) {
+            if (!unitsOnThrone.contains(character)) {
+                unitsOnThrone.add(character)
+            }
+        }
+    }
+    
+    /**
+     * Mark a unit as escaped (for ESCAPE objective)
+     */
+    fun markUnitEscaped(character: Character) {
+        currentChapter?.let { chapter ->
+            if (character.position in chapter.escapePositions) {
+                escapedUnitCount++
+                playerCharacters.remove(character)
+                board.removeCharacter(character)
+            }
+        }
+    }
+    
+    /**
+     * Spawn reinforcements for the current turn
+     */
+    fun spawnReinforcements() {
+        currentChapter?.let { chapter ->
+            val reinforcements = chapter.getReinforcementsForTurn(turnCount)
+            reinforcements.forEach { spawn ->
+                // Create character from spawn data
+                val reinforcement = Character(
+                    id = spawn.id,
+                    name = spawn.name,
+                    characterClass = spawn.characterClass,
+                    team = Team.ENEMY,
+                    position = spawn.position,
+                    level = spawn.level
+                )
+                // Add weapons from equipment list
+                spawn.equipment.forEach { weaponId ->
+                    // Weapon factory would go here
+                }
+                addEnemyCharacter(reinforcement)
+                board.placeCharacter(reinforcement, spawn.position)
+            }
+        }
+    }
 }
 
 data class BattleResult(
