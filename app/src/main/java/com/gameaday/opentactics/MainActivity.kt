@@ -409,13 +409,23 @@ class MainActivity : AppCompatActivity() {
         playerName: String,
         isNewGame: Boolean,
     ) {
-        val intent =
-            Intent(this, GameActivity::class.java).apply {
-                putExtra(GameActivity.EXTRA_PLAYER_NAME, playerName)
-                putExtra(GameActivity.EXTRA_IS_NEW_GAME, isNewGame)
-                saveId?.let { putExtra(GameActivity.EXTRA_LOAD_SAVE_ID, it) }
+        if (isNewGame && saveId == null) {
+            // For new games, show chapter selection
+            val intent = Intent(this, ChapterSelectActivity::class.java).apply {
+                putExtra(ChapterSelectActivity.EXTRA_PLAYER_NAME, playerName)
+                putExtra(ChapterSelectActivity.EXTRA_UNLOCKED_CHAPTER, 1) // Start with chapter 1
             }
-        startActivity(intent)
+            startActivity(intent)
+        } else {
+            // For loading saved games, go directly to game
+            val intent =
+                Intent(this, GameActivity::class.java).apply {
+                    putExtra(GameActivity.EXTRA_PLAYER_NAME, playerName)
+                    putExtra(GameActivity.EXTRA_IS_NEW_GAME, isNewGame)
+                    saveId?.let { putExtra(GameActivity.EXTRA_LOAD_SAVE_ID, it) }
+                }
+            startActivity(intent)
+        }
     }
 
     private fun updateContinueButton() {

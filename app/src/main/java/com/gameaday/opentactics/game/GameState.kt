@@ -12,6 +12,7 @@ import com.gameaday.opentactics.model.Team
 private const val EXPERIENCE_PER_KILL_MULTIPLIER = 25
 private const val EXPERIENCE_PER_HIT = 10
 private const val DAMAGE_VARIANCE = 0.25
+private const val CRITICAL_HIT_MULTIPLIER = 3
 
 // Battle forecast constants
 private const val BASE_HIT_RATE = 90
@@ -192,6 +193,15 @@ class GameState(
         }
         selectedCharacter = null
         checkGameEnd()
+    }
+
+    /**
+     * Execute AI action for a single enemy unit (called from UI for animated turns)
+     */
+    fun executeEnemyAction(enemy: Character) {
+        if (!enemy.isAlive || enemy.hasActedThisTurn) return
+        val behavior = getEnemyBehavior(enemy)
+        executeAIBehavior(enemy, behavior)
     }
 
     private fun executeEnemyTurn() {
@@ -460,7 +470,9 @@ class GameState(
         attacker: Character,
         target: Character,
     ): BattleResult {
-        val damage = calculateDamage(attacker, target)
+        // Check for critical hit
+        val isCritical = checkCriticalHit(attacker)
+        val damage = calculateDamage(attacker, target, isCritical)
         target.takeDamage(damage)
         
         // Use weapon durability
@@ -472,6 +484,7 @@ class GameState(
                 target = target,
                 damage = damage,
                 targetDefeated = !target.isAlive,
+                wasCritical = isCritical,
             )
 
         if (result.targetDefeated) {
@@ -485,10 +498,17 @@ class GameState(
         checkGameEnd()
         return result
     }
+    
+    private fun checkCriticalHit(attacker: Character): Boolean {
+        // Critical rate = (Skill + Luck / 2)
+        val critRate = attacker.currentStats.skill + (attacker.currentStats.luck / 2)
+        return (1..100).random() <= critRate
+    }
 
     private fun calculateDamage(
         attacker: Character,
         target: Character,
+        isCritical: Boolean = false,
     ): Int {
         val attackerWeapon = attacker.equippedWeapon
         val targetWeapon = target.equippedWeapon
@@ -523,10 +543,13 @@ class GameState(
         
         // Calculate base damage
         val baseDamage = maxOf(1, attackPower - defensePower / 2)
+        
+        // Apply critical hit multiplier
+        val criticalDamage = if (isCritical) baseDamage * CRITICAL_HIT_MULTIPLIER else baseDamage
 
         // Add some randomness (±25%)
-        val variance = (baseDamage * DAMAGE_VARIANCE).toInt()
-        return maxOf(1, baseDamage + (-variance..variance).random())
+        val variance = (criticalDamage * DAMAGE_VARIANCE).toInt()
+        return maxOf(1, criticalDamage + (-variance..variance).random())
     }
 
     private fun removeDefeatedCharacter(character: Character) {
@@ -748,4 +771,5 @@ data class BattleResult(
     val target: Character,
     val damage: Int,
     val targetDefeated: Boolean,
+    val wasCritical: Boolean = false,
 )

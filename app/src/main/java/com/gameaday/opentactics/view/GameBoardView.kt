@@ -41,6 +41,7 @@ class GameBoardView
 
         private var highlightedMoves: List<Position> = emptyList()
         private var highlightedAttacks: List<Position> = emptyList()
+        private var highlightedEnemyRanges: List<Position> = emptyList()
 
         // Animation properties
         private var shakeOffsetX: Float = 0f
@@ -135,10 +136,16 @@ class GameBoardView
             highlightedAttacks = positions
             invalidate()
         }
+        
+        fun highlightEnemyRanges(positions: List<Position>) {
+            highlightedEnemyRanges = positions
+            invalidate()
+        }
 
         fun clearHighlights() {
             highlightedMoves = emptyList()
             highlightedAttacks = emptyList()
+            highlightedEnemyRanges = emptyList()
             invalidate()
         }
 
@@ -248,6 +255,9 @@ class GameBoardView
 
             // Draw attack highlights
             drawHighlights(canvas, highlightedAttacks, attackHighlightColor)
+            
+            // Draw enemy range highlights (red semi-transparent)
+            drawHighlights(canvas, highlightedEnemyRanges, Color.argb(80, 255, 0, 0))
 
             // Draw selected character highlight
             gameState.selectedCharacter?.let { character ->
@@ -429,6 +439,23 @@ class GameBoardView
                 centerY + tileRadius + 20f,
                 textPaint,
             )
+            
+            // Draw boss indicator (crown)
+            if (isBossUnit(character)) {
+                drawBossIndicator(canvas, centerX, centerY - tileRadius - 30f)
+            }
+        }
+        
+        private fun isBossUnit(character: Character): Boolean {
+            val chapter = gameState?.currentChapter ?: return false
+            return chapter.bossUnit?.id == character.id
+        }
+        
+        private fun drawBossIndicator(canvas: Canvas, x: Float, y: Float) {
+            // Draw a gold star/crown indicator for boss units
+            textPaint.textSize = tileSize * 0.3f
+            textPaint.color = Color.YELLOW
+            canvas.drawText("★", x, y, textPaint)
         }
 
         private fun drawHealthBar(

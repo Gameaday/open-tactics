@@ -2,6 +2,7 @@
 
 package com.gameaday.opentactics
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -33,11 +34,19 @@ class GameActivity : AppCompatActivity() {
     private var playerProfile: PlayerProfile? = null
     private var currentGameSave: GameSave? = null
     private var turnsSinceLastSave = 0
+    
+    // Undo move state
+    private var previousPosition: Position? = null
+    private var canUndoMove: Boolean = false
+    
+    // Skip enemy turn state
+    private var skipEnemyAnimations: Boolean = false
 
     companion object {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_IS_NEW_GAME = "is_new_game"
+        const val EXTRA_CHAPTER_NUMBER = "chapter_number"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,9 +60,10 @@ class GameActivity : AppCompatActivity() {
         val loadSaveId = intent.getStringExtra(EXTRA_LOAD_SAVE_ID)
         val playerName = intent.getStringExtra(EXTRA_PLAYER_NAME) ?: "Player"
         val isNewGame = intent.getBooleanExtra(EXTRA_IS_NEW_GAME, true)
+        val chapterNumber = intent.getIntExtra(EXTRA_CHAPTER_NUMBER, 1)
 
         if (isNewGame || loadSaveId == null) {
-            initializeNewGame(playerName)
+            initializeNewGame(playerName, chapterNumber)
         } else {
             loadGame(loadSaveId)
         }
@@ -79,8 +89,140 @@ class GameActivity : AppCompatActivity() {
         playerProfile?.let { saveGameManager.saveProfile(it) }
     }
 
-    @Suppress("LongMethod") // Game initialization requires many character setups
-    private fun initializeNewGame(playerName: String) {
+    /**
+     * Get weapon by equipment ID string
+     */
+    private fun getWeaponById(equipmentId: String): Weapon? =
+        when (equipmentId) {
+            "iron_sword" -> Weapon.ironSword()
+            "steel_sword" -> Weapon.steelSword()
+            "silver_sword" -> Weapon.silverSword()
+            "iron_lance" -> Weapon.ironLance()
+            "steel_lance" -> Weapon.steelLance()
+            "iron_axe" -> Weapon.ironAxe()
+            "steel_axe" -> Weapon.steelAxe()
+            "iron_bow" -> Weapon.ironBow()
+            "steel_bow" -> Weapon.steelBow()
+            "fire_tome" -> Weapon.fire()
+            "thunder_tome" -> Weapon.thunder()
+            else -> null
+        }
+
+    @Suppress("LongMethod", "ComplexMethod") // Game initialization requires many character setups
+    private fun initializeNewGame(playerName: String, chapterNumber: Int = 1) {
+        // Load chapter data
+        val chapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapterNumber)
+        if (chapter == null) {
+            Toast.makeText(this, "Chapter $chapterNumber not found!", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+
+        // Create game board based on chapter's map layout
+        val board = when (chapter.mapLayout) {
+            com.gameaday.opentactics.model.MapLayout.TEST_MAP -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.FOREST_AMBUSH -> GameBoard.createTestMap() // TODO: Create specific maps
+            com.gameaday.opentactics.model.MapLayout.MOUNTAIN_PASS -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.CASTLE_SIEGE -> GameBoard.createTestMap()
+            com.gameaday.opentactics.model.MapLayout.VILLAGE_DEFENSE -> GameBoard.createTestMap()
+            else -> GameBoard.createTestMap()
+        }
+
+        gameState = GameState(board, currentChapter = chapter)
+
+        // Show pre-battle dialogue if present
+        if (chapter.preBattleDialogue.isNotEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(chapter.title)
+                .setMessage(chapter.preBattleDialogue)
+                .setPositiveButton("Begin Battle", null)
+                .show()
+        }
+
+        // Create player characters at starting positions
+        val playerPositions = chapter.playerStartPositions
+        val playerCharacters = listOf(
+            Character(
+                id = "player_knight",
+                name = "Sir Garrett",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(0) { Position(1, 6) },
+            ).apply {
+                addWeapon(Weapon.ironSword())
+                addWeapon(Weapon.steelSword())
+            },
+            Character(
+                id = "player_archer",
+                name = "Lyanna",
+                characterClass = CharacterClass.ARCHER,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(1) { Position(2, 7) },
+            ).apply {
+                addWeapon(Weapon.ironBow())
+                addWeapon(Weapon.steelBow())
+            },
+            Character(
+                id = "player_mage",
+                name = "Aldric",
+                characterClass = CharacterClass.MAGE,
+                team = Team.PLAYER,
+                position = playerPositions.getOrElse(2) { Position(0, 7) },
+            ).apply {
+                addWeapon(Weapon.fire())
+                addWeapon(Weapon.thunder())
+            },
+        )
+
+        // Add player characters
+        playerCharacters.forEach { char ->
+            gameState.addPlayerCharacter(char)
+            board.placeCharacter(char, char.position)
+        }
+
+        // Create enemy characters from chapter data
+        chapter.enemyUnits.forEach { enemySpawn ->
+            val enemyChar = Character(
+                id = enemySpawn.id,
+                name = enemySpawn.name,
+                characterClass = enemySpawn.characterClass,
+                team = Team.ENEMY,
+                position = enemySpawn.position,
+                level = enemySpawn.level,
+            ).apply {
+                // Add weapons from equipment list
+                enemySpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
+                }
+            }
+            gameState.addEnemyCharacter(enemyChar)
+            board.placeCharacter(enemyChar, enemyChar.position)
+        }
+
+        // Add boss unit if present
+        chapter.bossUnit?.let { bossSpawn ->
+            val bossChar = Character(
+                id = bossSpawn.id,
+                name = bossSpawn.name,
+                characterClass = bossSpawn.characterClass,
+                team = Team.ENEMY,
+                position = bossSpawn.position,
+                level = bossSpawn.level,
+            ).apply {
+                bossSpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
+                }
+            }
+            gameState.addEnemyCharacter(bossChar)
+            board.placeCharacter(bossChar, bossChar.position)
+        }
+
+        // Create initial save data
+        currentGameSave = createGameSave(playerName, chapterNumber)
+    }
+
+    @Suppress("LongMethod") // Game initialization requires many character setups - DEPRECATED
+    private fun initializeNewGameOld(playerName: String) {
         val board = GameBoard.createTestMap()
         gameState = GameState(board)
 
@@ -196,17 +338,51 @@ class GameActivity : AppCompatActivity() {
     private fun restoreGameFromSave(gameSave: GameSave) {
         val savedState = gameSave.gameState
         val board = GameBoard(savedState.boardWidth, savedState.boardHeight)
-        gameState = GameState(board)
+        
+        // Check if we're loading into a new chapter
+        val chapterNumber = intent.getIntExtra(EXTRA_CHAPTER_NUMBER, gameSave.campaignLevel)
+        val chapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapterNumber)
+        
+        gameState = GameState(board, currentChapter = chapter)
 
-        // Restore characters
-        savedState.playerCharacters.forEach { character ->
+        // Restore player characters (they carry over between chapters)
+        val playerStartPositions = chapter?.playerStartPositions ?: listOf()
+        savedState.playerCharacters.forEachIndexed { index, character ->
+            // Update position to new chapter's start position if available
+            val newPosition = playerStartPositions.getOrNull(index) ?: character.position
+            character.position = newPosition
+            character.hasMovedThisTurn = false
+            character.hasActedThisTurn = false
+            
             gameState.addPlayerCharacter(character)
-            board.placeCharacter(character, character.position)
+            board.placeCharacter(character, newPosition)
         }
 
-        savedState.enemyCharacters.forEach { character ->
-            gameState.addEnemyCharacter(character)
-            board.placeCharacter(character, character.position)
+        // If loading a new chapter (no enemies saved), spawn new enemies from chapter data
+        if (chapter != null && savedState.enemyCharacters.isEmpty()) {
+            chapter.enemyUnits.forEach { enemySpawn ->
+                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
+                val enemy = Character(
+                    id = enemySpawn.id,
+                    name = enemySpawn.name,
+                    characterClass = enemySpawn.characterClass,
+                    team = Team.ENEMY,
+                    level = enemySpawn.level,
+                    position = enemySpawn.position,
+                    isBoss = enemySpawn.isBoss,
+                    aiType = enemySpawn.aiType,
+                ).apply {
+                    weapon?.let { addWeapon(it) }
+                }
+                gameState.addEnemyCharacter(enemy)
+                board.placeCharacter(enemy, enemy.position)
+            }
+        } else {
+            // Restore existing enemies (from saved game mid-chapter)
+            savedState.enemyCharacters.forEach { character ->
+                gameState.addEnemyCharacter(character)
+                board.placeCharacter(character, character.position)
+            }
         }
 
         // Restore game state
@@ -220,13 +396,46 @@ class GameActivity : AppCompatActivity() {
         gameBoardView.onTileClicked = { position -> handleTileClick(position) }
 
         binding.gameContainer.addView(gameBoardView)
+
+        // Setup chapter objective HUD
+        updateChapterObjectiveHUD()
+    }
+
+    private fun updateChapterObjectiveHUD() {
+        val chapter = gameState.currentChapter
+        if (chapter != null) {
+            binding.chapterTitle.text = "Ch${chapter.number}: ${chapter.title}"
+            binding.chapterObjective.text = chapter.objectiveDetails
+            binding.chapterObjectivePanel.visibility = android.view.View.VISIBLE
+        } else {
+            binding.chapterObjectivePanel.visibility = android.view.View.GONE
+        }
+        binding.turnCounter.text = "Turn: ${gameState.turnCount}"
     }
 
     private fun setupControls() {
         binding.btnMove.setOnClickListener { handleMoveAction() }
         binding.btnAttack.setOnClickListener { handleAttackAction() }
         binding.btnWait.setOnClickListener { handleWaitAction() }
+        binding.btnInventory.setOnClickListener { handleInventoryAction() }
+        binding.btnUndo.setOnClickListener { handleUndoAction() }
         binding.btnEndTurn.setOnClickListener { handleEndTurnAction() }
+        
+        // Range display toggle
+        var showingRanges = false
+        binding.btnToggleRanges.setOnClickListener {
+            showingRanges = !showingRanges
+            if (showingRanges) {
+                showEnemyRanges()
+            } else {
+                gameBoardView.clearHighlights()
+            }
+        }
+        
+        // Skip enemy turn animations
+        binding.btnSkipEnemyTurn.setOnClickListener {
+            skipEnemyAnimations = true
+        }
 
         // Add save/load buttons to the overflow menu
         binding.root.setOnLongClickListener {
@@ -235,6 +444,129 @@ class GameActivity : AppCompatActivity() {
         }
 
         updateUI()
+    }
+    
+    private fun handleUndoAction() {
+        val selectedCharacter = gameState.selectedCharacter
+        val prevPos = previousPosition
+        
+        if (selectedCharacter != null && prevPos != null && canUndoMove) {
+            // Undo the move
+            gameState.board.removeCharacter(selectedCharacter)
+            gameState.board.placeCharacter(selectedCharacter, prevPos)
+            selectedCharacter.position = prevPos
+            selectedCharacter.hasMovedThisTurn = false
+            
+            canUndoMove = false
+            previousPosition = null
+            binding.btnUndo.visibility = android.view.View.GONE
+            
+            gameBoardView.invalidate()
+            updateUI()
+            
+            Toast.makeText(this, "Move undone", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun handleInventoryAction() {
+        val selectedCharacter = gameState.selectedCharacter
+        if (selectedCharacter != null) {
+            showInventoryDialog(selectedCharacter)
+        } else {
+            Toast.makeText(this, "Select a unit first", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun showInventoryDialog(character: Character) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_inventory, null)
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.weaponRecyclerView)
+        
+        dialogView.findViewById<android.widget.TextView>(R.id.characterNameInventory).text = 
+            "${character.name} - ${character.characterClass.displayName}"
+        
+        val adapter = WeaponAdapter(character) { weapon, action ->
+            when (action) {
+                "equip" -> {
+                    character.equipWeapon(weapon)
+                    Toast.makeText(this, "${weapon.name} equipped", Toast.LENGTH_SHORT).show()
+                    updateUI()
+                }
+                "drop" -> {
+                    if (character.inventory.size > 1) {
+                        character.removeWeapon(weapon)
+                        Toast.makeText(this, "${weapon.name} dropped", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Cannot drop last weapon", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+        
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+        
+        dialogView.findViewById<android.widget.Button>(R.id.btnCloseInventory).setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
+    }
+    
+    private inner class WeaponAdapter(
+        private val character: Character,
+        private val onAction: (Weapon, String) -> Unit
+    ) : androidx.recyclerview.widget.RecyclerView.Adapter<WeaponAdapter.WeaponViewHolder>() {
+        
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): WeaponViewHolder {
+            val view = layoutInflater.inflate(R.layout.item_weapon, parent, false)
+            return WeaponViewHolder(view)
+        }
+        
+        override fun onBindViewHolder(holder: WeaponViewHolder, position: Int) {
+            val weapon = character.inventory[position]
+            holder.bind(weapon, character.equippedWeapon == weapon)
+        }
+        
+        override fun getItemCount(): Int = character.inventory.size
+        
+        inner class WeaponViewHolder(view: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
+            fun bind(weapon: Weapon, isEquipped: Boolean) {
+                itemView.findViewById<android.widget.TextView>(R.id.weaponName).text = weapon.name
+                itemView.findViewById<android.widget.TextView>(R.id.weaponType).text = weapon.type.name
+                itemView.findViewById<android.widget.TextView>(R.id.weaponMight).text = "Mt: ${weapon.might}"
+                itemView.findViewById<android.widget.TextView>(R.id.weaponDurability).text = 
+                    "Uses: ${weapon.currentUses}/${weapon.maxUses}"
+                
+                val equippedLabel = itemView.findViewById<android.widget.TextView>(R.id.weaponEquipped)
+                equippedLabel.visibility = if (isEquipped) android.view.View.VISIBLE else android.view.View.GONE
+                
+                val btnEquip = itemView.findViewById<android.widget.Button>(R.id.btnEquipWeapon)
+                btnEquip.isEnabled = !isEquipped
+                btnEquip.setOnClickListener {
+                    onAction(weapon, "equip")
+                    notifyDataSetChanged()
+                }
+                
+                val btnDrop = itemView.findViewById<android.widget.Button>(R.id.btnDropWeapon)
+                btnDrop.setOnClickListener {
+                    onAction(weapon, "drop")
+                    notifyDataSetChanged()
+                }
+            }
+        }
+    }
+    
+    private fun showEnemyRanges() {
+        val enemyRanges = mutableSetOf<Position>()
+        gameState.getAliveEnemyCharacters().forEach { enemy ->
+            val targets = gameState.calculateAttackTargets(enemy)
+            enemyRanges.addAll(targets.map { it.position })
+        }
+        gameBoardView.highlightEnemyRanges(enemyRanges.toList())
     }
 
     private fun showGameMenu() {
@@ -344,16 +676,123 @@ class GameActivity : AppCompatActivity() {
                 "Sound Effects: ${if (preferences.soundEffectsEnabled) "On" else "Off"}",
                 "Auto-save: ${if (preferences.autoSaveEnabled) "On" else "Off"}",
                 "Animation Speed: ${preferences.animationSpeed}x",
+                "Auto-save Frequency: Every ${preferences.autoSaveFrequency} turns",
             )
 
         AlertDialog
             .Builder(this)
             .setTitle("Settings")
             .setItems(items) { _, which ->
-                // Settings implementation would go here
-                Toast.makeText(this, "Settings feature coming soon!", Toast.LENGTH_SHORT).show()
+                when (which) {
+                    0 -> toggleMusicSetting()
+                    1 -> toggleSoundEffectsSetting()
+                    2 -> toggleAutoSave()
+                    3 -> changeAnimationSpeed()
+                    4 -> changeAutoSaveFrequency()
+                }
             }.setNegativeButton("Close", null)
             .show()
+    }
+    
+    private fun toggleMusicSetting() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(musicEnabled = !currentPrefs.musicEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Music ${if (newPrefs.musicEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog() // Refresh dialog
+    }
+    
+    private fun toggleSoundEffectsSetting() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(soundEffectsEnabled = !currentPrefs.soundEffectsEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Sound effects ${if (newPrefs.soundEffectsEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog()
+    }
+    
+    private fun changeAnimationSpeed() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val speeds = arrayOf("0.5x", "1.0x", "1.5x", "2.0x")
+        val currentIndex = when (currentPrefs.animationSpeed) {
+            0.5f -> 0
+            1.0f -> 1
+            1.5f -> 2
+            2.0f -> 3
+            else -> 1
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Animation Speed")
+            .setSingleChoiceItems(speeds, currentIndex) { dialog, which ->
+                val newSpeed = when (which) {
+                    0 -> 0.5f
+                    1 -> 1.0f
+                    2 -> 1.5f
+                    3 -> 2.0f
+                    else -> 1.0f
+                }
+                val newPrefs = currentPrefs.copy(animationSpeed = newSpeed)
+                updatePreferences(newPrefs)
+                Toast.makeText(this, "Animation speed set to ${newSpeed}x", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                showSettingsDialog()
+            }
+            .setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            .show()
+    }
+    
+    private fun toggleAutoSave() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val newPrefs = currentPrefs.copy(autoSaveEnabled = !currentPrefs.autoSaveEnabled)
+        updatePreferences(newPrefs)
+        Toast.makeText(
+            this,
+            "Auto-save ${if (newPrefs.autoSaveEnabled) "enabled" else "disabled"}",
+            Toast.LENGTH_SHORT
+        ).show()
+        showSettingsDialog()
+    }
+    
+    private fun changeAutoSaveFrequency() {
+        val currentPrefs = playerProfile?.preferences ?: GamePreferences()
+        val frequencies = arrayOf("Every 3 turns", "Every 5 turns", "Every 10 turns")
+        val currentIndex = when (currentPrefs.autoSaveFrequency) {
+            3 -> 0
+            5 -> 1
+            10 -> 2
+            else -> 1
+        }
+        
+        AlertDialog.Builder(this)
+            .setTitle("Auto-save Frequency")
+            .setSingleChoiceItems(frequencies, currentIndex) { dialog, which ->
+                val newFrequency = when (which) {
+                    0 -> 3
+                    1 -> 5
+                    2 -> 10
+                    else -> 5
+                }
+                val newPrefs = currentPrefs.copy(autoSaveFrequency = newFrequency)
+                updatePreferences(newPrefs)
+                Toast.makeText(this, "Auto-save every $newFrequency turns", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                showSettingsDialog()
+            }
+            .setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            .show()
+    }
+    
+    private fun updatePreferences(newPrefs: GamePreferences) {
+        playerProfile = playerProfile?.copy(preferences = newPrefs)
+        savePlayerProfile()
     }
 
     private fun confirmQuitToMenu() {
@@ -385,6 +824,11 @@ class GameActivity : AppCompatActivity() {
                 if (selectedCharacter != null) {
                     val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
                     if (position in possibleMoves) {
+                        // Store previous position for undo
+                        previousPosition = selectedCharacter.position
+                        canUndoMove = true
+                        binding.btnUndo.visibility = android.view.View.VISIBLE
+                        
                         gameState.board.moveCharacter(selectedCharacter, position)
                         selectedCharacter.hasMovedThisTurn = true
                         gameState.gamePhase =
@@ -404,16 +848,8 @@ class GameActivity : AppCompatActivity() {
                     val targets = gameState.calculateAttackTargets(selectedCharacter)
                     val targetCharacter = gameState.board.getCharacterAt(position)
                     if (targetCharacter != null && targetCharacter in targets) {
-                        // Animate the attack
-                        gameBoardView.animateAttack(selectedCharacter, targetCharacter) {
-                            val result = gameState.performAttack(selectedCharacter, targetCharacter)
-                            showBattleResult(result)
-                            selectedCharacter.hasActedThisTurn = true
-                            gameState.selectCharacter(null)
-                            gameBoardView.clearHighlights()
-                            checkGameEnd()
-                            updateUI()
-                        }
+                        // Show battle forecast before attacking
+                        showBattleForecast(selectedCharacter, targetCharacter)
                     }
                 }
             }
@@ -448,11 +884,22 @@ class GameActivity : AppCompatActivity() {
             selectedCharacter.hasMovedThisTurn = true
             gameState.selectCharacter(null)
             gameBoardView.clearHighlights()
+            
+            // Disable undo after action
+            canUndoMove = false
+            previousPosition = null
+            binding.btnUndo.visibility = android.view.View.GONE
+            
             updateUI()
         }
     }
 
     private fun handleEndTurnAction() {
+        // Disable undo when ending turn
+        canUndoMove = false
+        previousPosition = null
+        binding.btnUndo.visibility = android.view.View.GONE
+        
         gameState.endTurn()
         gameBoardView.clearHighlights()
         turnsSinceLastSave++
@@ -460,6 +907,12 @@ class GameActivity : AppCompatActivity() {
 
         if (gameState.currentTurn == Team.PLAYER) {
             Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+            
+            // Check game end conditions at start of player turn
+            checkGameEnd()
+        } else if (gameState.currentTurn == Team.ENEMY) {
+            // Start enemy turn automation
+            executeEnemyTurn()
         }
 
         // Check for auto-save
@@ -467,6 +920,99 @@ class GameActivity : AppCompatActivity() {
         if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
             performAutoSave()
         }
+    }
+
+    private fun executeEnemyTurn() {
+        // Show enemy turn banner
+        Toast.makeText(this, "Enemy Turn", Toast.LENGTH_SHORT).show()
+        
+        // Show skip button
+        binding.btnSkipEnemyTurn.visibility = android.view.View.VISIBLE
+        skipEnemyAnimations = false
+        
+        // Disable UI during enemy turn
+        setUIEnabled(false)
+        
+        // Process all enemy units with a delay between actions
+        val enemies = gameState.getAliveEnemyCharacters()
+        val delayBetweenActions = if (skipEnemyAnimations) 50L else 800L
+        var delayMs = if (skipEnemyAnimations) 100L else 500L
+        
+        enemies.forEach { enemy ->
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                if (enemy.isAlive && !enemy.hasActedThisTurn) {
+                    // Execute AI behavior
+                    gameState.executeEnemyAction(enemy)
+                    
+                    // Refresh UI
+                    gameBoardView.invalidate()
+                    updateUI()
+                }
+            }, delayMs)
+            delayMs += delayBetweenActions
+        }
+        
+        // End enemy turn after all actions complete
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            binding.btnSkipEnemyTurn.visibility = android.view.View.GONE
+            skipEnemyAnimations = false
+            gameState.endTurn()
+            setUIEnabled(true)
+            updateUI()
+            
+            // Check for reinforcements at start of player turn
+            spawnReinforcements()
+            
+            checkGameEnd()
+            Toast.makeText(this, "Player Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+        }, delayMs + 500)
+    }
+    
+    private fun spawnReinforcements() {
+        val chapter = gameState.currentChapter ?: return
+        val reinforcements = chapter.getReinforcementsForTurn(gameState.turnCount)
+        
+        if (reinforcements.isNotEmpty()) {
+            Toast.makeText(
+                this,
+                "Enemy reinforcements have arrived!",
+                Toast.LENGTH_LONG
+            ).show()
+            
+            reinforcements.forEach { enemySpawn ->
+                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
+                val reinforcement = Character(
+                    id = "${enemySpawn.id}_turn${gameState.turnCount}",
+                    name = enemySpawn.name,
+                    characterClass = enemySpawn.characterClass,
+                    team = Team.ENEMY,
+                    level = enemySpawn.level,
+                    position = enemySpawn.position,
+                    isBoss = enemySpawn.isBoss,
+                    aiType = enemySpawn.aiType,
+                ).apply {
+                    weapon?.let { addWeapon(it) }
+                }
+                
+                gameState.addEnemyCharacter(reinforcement)
+                gameState.board.placeCharacter(reinforcement, reinforcement.position)
+                
+                // Animate the spawn with a flash effect
+                gameBoardView.invalidate()
+            }
+            
+            // Show visual feedback
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                gameBoardView.invalidate()
+            }, 300)
+        }
+    }
+    
+    private fun setUIEnabled(enabled: Boolean) {
+        binding.btnMove.isEnabled = enabled
+        binding.btnAttack.isEnabled = enabled
+        binding.btnWait.isEnabled = enabled
+        binding.btnEndTurn.isEnabled = enabled
     }
 
     private fun showCharacterInfo(character: Character) {
@@ -479,47 +1025,260 @@ class GameActivity : AppCompatActivity() {
         binding.characterInfoPanel.visibility = android.view.View.GONE
     }
 
+    private fun showBattleForecast(attacker: Character, target: Character) {
+        val forecast = gameState.calculateBattleForecast(attacker, target)
+        
+        // Create dialog with battle forecast layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_battle_forecast, null)
+        
+        // Populate attacker info
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerName).text = attacker.name
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerStats).text = 
+            "HP: ${attacker.currentStats.hp}/${attacker.maxHp}"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerDamage).text = 
+            "Damage: ${forecast.attackerDamage}"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerHit).text = 
+            "Hit: ${forecast.attackerHitRate}%"
+        dialogView.findViewById<android.widget.TextView>(R.id.attackerDoubles).visibility =
+            if (forecast.attackerDoubles) android.view.View.VISIBLE else android.view.View.GONE
+        
+        // Populate target info
+        dialogView.findViewById<android.widget.TextView>(R.id.targetName).text = target.name
+        dialogView.findViewById<android.widget.TextView>(R.id.targetStats).text = 
+            "HP: ${target.currentStats.hp}/${target.maxHp}"
+        dialogView.findViewById<android.widget.TextView>(R.id.targetDamage).text = 
+            if (forecast.canCounter) "Damage: ${forecast.targetDamage}" else "Cannot Counter"
+        dialogView.findViewById<android.widget.TextView>(R.id.targetHit).text = 
+            if (forecast.canCounter) "Hit: ${forecast.targetHitRate}%" else ""
+        dialogView.findViewById<android.widget.TextView>(R.id.targetDoubles).visibility =
+            if (forecast.targetDoubles) android.view.View.VISIBLE else android.view.View.GONE
+        
+        // Populate result prediction
+        val resultText = "After: ${forecast.predictedAttackerHp} ← → ${forecast.predictedTargetHp} HP"
+        dialogView.findViewById<android.widget.TextView>(R.id.forecastResult).text = resultText
+        
+        // Create and show dialog
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        
+        // Setup buttons
+        dialogView.findViewById<android.widget.Button>(R.id.btnConfirmAttack).setOnClickListener {
+            dialog.dismiss()
+            // Execute the attack
+            gameBoardView.animateAttack(attacker, target) {
+                val result = gameState.performAttack(attacker, target)
+                showBattleResult(result)
+                attacker.hasActedThisTurn = true
+                gameState.selectCharacter(null)
+                gameBoardView.clearHighlights()
+                
+                // Disable undo after attacking
+                canUndoMove = false
+                previousPosition = null
+                binding.btnUndo.visibility = android.view.View.GONE
+                
+                checkGameEnd()
+                updateUI()
+            }
+        }
+        
+        dialogView.findViewById<android.widget.Button>(R.id.btnCancelAttack).setOnClickListener {
+            dialog.dismiss()
+            // Stay in action phase, allow selecting different target
+        }
+        
+        dialog.show()
+    }
+
     private fun showBattleResult(result: com.gameaday.opentactics.game.BattleResult) {
+        val criticalText = if (result.wasCritical) " CRITICAL HIT! ⚡" else ""
         val message =
             if (result.targetDefeated) {
-                "${result.attacker.name} defeated ${result.target.name}! (${result.damage} damage)"
+                "${result.attacker.name} defeated ${result.target.name}!$criticalText (${result.damage} damage)"
             } else {
-                "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!"
+                "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!$criticalText"
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun checkGameEnd() {
-        when {
-            gameState.isGameWon() -> {
-                // Update profile statistics
-                playerProfile =
-                    playerProfile?.copy(
-                        totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
-                        campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
-                    )
-                savePlayerProfile()
+        val chapter = gameState.currentChapter
 
-                AlertDialog
-                    .Builder(this)
-                    .setTitle("Victory!")
-                    .setMessage("All enemies have been defeated! Your progress has been saved.")
-                    .setPositiveButton("Continue") { _, _ ->
-                        performManualSave()
-                        finish()
-                    }.show()
+        // Check chapter objectives if chapter is set
+        if (chapter != null) {
+            val isVictory = chapter.isObjectiveComplete(
+                gameState.getPlayerCharacters(),
+                gameState.getEnemyCharacters(),
+                gameState.turnCount,
+                emptyList(), // TODO: Track throne units
+                gameState.escapedUnitCount
+            )
+
+            val isDefeat = chapter.isObjectiveFailed(
+                gameState.getPlayerCharacters(),
+                gameState.turnCount
+            )
+
+            when {
+                isVictory -> showVictoryScreen(chapter)
+                isDefeat -> showDefeatScreen(chapter)
             }
-            gameState.isGameLost() -> {
-                AlertDialog
-                    .Builder(this)
-                    .setTitle("Defeat")
-                    .setMessage("All your units have fallen... Your progress has been saved.")
-                    .setPositiveButton("Retry") { _, _ ->
-                        // Could reload from save here
-                        finish()
-                    }.show()
+        } else {
+            // Fallback to old victory/defeat logic
+            when {
+                gameState.isGameWon() -> {
+                    playerProfile =
+                        playerProfile?.copy(
+                            totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
+                            campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
+                        )
+                    savePlayerProfile()
+
+                    AlertDialog
+                        .Builder(this)
+                        .setTitle("Victory!")
+                        .setMessage("All enemies have been defeated! Your progress has been saved.")
+                        .setPositiveButton("Continue") { _, _ ->
+                            performManualSave()
+                            finish()
+                        }.show()
+                }
+                gameState.isGameLost() -> {
+                    AlertDialog
+                        .Builder(this)
+                        .setTitle("Defeat")
+                        .setMessage("All your units have fallen... Your progress has been saved.")
+                        .setPositiveButton("Retry") { _, _ ->
+                            finish()
+                        }.show()
+                }
             }
         }
+    }
+
+    private fun showVictoryScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        // Update profile statistics
+        playerProfile =
+            playerProfile?.copy(
+                totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
+            )
+        savePlayerProfile()
+
+        // Build victory message
+        val message = buildString {
+            append("Chapter ${chapter.number} Complete!\n\n")
+            if (chapter.postVictoryDialogue.isNotEmpty()) {
+                append(chapter.postVictoryDialogue)
+                append("\n\n")
+            }
+            append("Objective: ${chapter.objectiveDetails}\n")
+            append("Turns: ${gameState.turnCount}\n")
+            append("Units: ${gameState.getAlivePlayerCharacters().size}/${gameState.getPlayerCharacters().size} survived")
+        }
+
+        val hasNextChapter = com.gameaday.opentactics.model.ChapterRepository.getChapter(chapter.number + 1) != null
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("⭐ Victory! ⭐")
+            .setMessage(message)
+            .setPositiveButton(if (hasNextChapter) "Next Chapter" else "Finish") { _, _ ->
+                performManualSave()
+                if (hasNextChapter) {
+                    // Start next chapter
+                    startNextChapter(chapter.number + 1)
+                } else {
+                    // Campaign complete
+                    showCampaignComplete()
+                }
+            }
+            .setNegativeButton("Return to Menu") { _, _ ->
+                performManualSave()
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showDefeatScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        val message = buildString {
+            append("Chapter ${chapter.number} Failed\n\n")
+            if (chapter.postDefeatDialogue.isNotEmpty()) {
+                append(chapter.postDefeatDialogue)
+                append("\n\n")
+            } else {
+                append("All your units have fallen...\n\n")
+            }
+            append("Would you like to retry?")
+        }
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("💀 Defeat 💀")
+            .setMessage(message)
+            .setPositiveButton("Retry Chapter") { _, _ ->
+                // Restart current chapter
+                recreate()
+            }
+            .setNegativeButton("Return to Menu") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun startNextChapter(nextChapterNumber: Int) {
+        // Save current player characters to carry over
+        val carriedCharacters = gameState.getAlivePlayerCharacters()
+        
+        // Create a save that will be loaded in the next chapter
+        val carryOverSave = createGameSave(
+            currentGameSave?.playerName ?: "Player",
+            nextChapterNumber
+        )
+        
+        lifecycleScope.launch {
+            saveGameManager.saveGame(carryOverSave, isAutoSave = false).fold(
+                onSuccess = {
+                    // Start next chapter with the saved game
+                    val intent = Intent(this@GameActivity, GameActivity::class.java).apply {
+                        putExtra(EXTRA_LOAD_SAVE_ID, carryOverSave.saveId)
+                        putExtra(EXTRA_PLAYER_NAME, carryOverSave.playerName)
+                        putExtra(EXTRA_IS_NEW_GAME, false)
+                        putExtra(EXTRA_CHAPTER_NUMBER, nextChapterNumber)
+                    }
+                    startActivity(intent)
+                    finish()
+                },
+                onFailure = { error ->
+                    Toast.makeText(
+                        this@GameActivity,
+                        "Failed to save progress: ${error.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
+        }
+    }
+
+    private fun showCampaignComplete() {
+        playerProfile =
+            playerProfile?.copy(
+                campaignsCompleted = (playerProfile?.campaignsCompleted ?: 0) + 1,
+            )
+        savePlayerProfile()
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("🎉 Campaign Complete! 🎉")
+            .setMessage("Congratulations! You have completed all chapters!\n\nThank you for playing Open Tactics!")
+            .setPositiveButton("Return to Menu") { _, _ ->
+                finish()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun updateUI() {
@@ -538,6 +1297,9 @@ class GameActivity : AppCompatActivity() {
         } else {
             hideCharacterInfo()
         }
+
+        // Update turn counter
+        binding.turnCounter.text = "Turn: ${gameState.turnCount}"
 
         gameBoardView.invalidate()
     }

@@ -36,6 +36,9 @@ data class Character(
     // Action history for undo functionality
     var previousPosition: Position? = null,
     var canStillMoveAfterAttack: Boolean = false, // Tracks Canto state
+    // Enemy AI properties
+    var isBoss: Boolean = false,
+    var aiType: AIBehavior = AIBehavior.AGGRESSIVE,
 ) : Parcelable {
     val currentStats: Stats
         get() {
@@ -299,6 +302,29 @@ data class Character(
         
         equippedWeaponIndex = index
         return true
+    }
+    
+    /**
+     * Equip weapon by reference
+     */
+    fun equipWeapon(weapon: Weapon): Boolean {
+        val index = inventory.indexOf(weapon)
+        if (index >= 0) {
+            return equipWeapon(index)
+        }
+        return false
+    }
+    
+    /**
+     * Remove weapon by reference
+     */
+    fun removeWeapon(weapon: Weapon): Boolean {
+        val index = inventory.indexOf(weapon)
+        if (index >= 0) {
+            removeWeapon(index)
+            return true
+        }
+        return false
     }
     
     /**
