@@ -439,6 +439,23 @@ class GameBoardView
                 centerY + tileRadius + 20f,
                 textPaint,
             )
+            
+            // Draw boss indicator (crown)
+            if (isBossUnit(character)) {
+                drawBossIndicator(canvas, centerX, centerY - tileRadius - 30f)
+            }
+        }
+        
+        private fun isBossUnit(character: Character): Boolean {
+            val chapter = gameState?.currentChapter ?: return false
+            return chapter.bossUnit?.id == character.id
+        }
+        
+        private fun drawBossIndicator(canvas: Canvas, x: Float, y: Float) {
+            // Draw a gold star/crown indicator for boss units
+            textPaint.textSize = tileSize * 0.3f
+            textPaint.color = Color.YELLOW
+            canvas.drawText("★", x, y, textPaint)
         }
 
         private fun drawHealthBar(

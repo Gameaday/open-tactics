@@ -751,11 +751,12 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showBattleResult(result: com.gameaday.opentactics.game.BattleResult) {
+        val criticalText = if (result.wasCritical) " CRITICAL HIT! ⚡" else ""
         val message =
             if (result.targetDefeated) {
-                "${result.attacker.name} defeated ${result.target.name}! (${result.damage} damage)"
+                "${result.attacker.name} defeated ${result.target.name}!$criticalText (${result.damage} damage)"
             } else {
-                "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!"
+                "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!$criticalText"
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
