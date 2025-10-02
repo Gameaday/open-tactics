@@ -34,6 +34,10 @@ class GameActivity : AppCompatActivity() {
     private var playerProfile: PlayerProfile? = null
     private var currentGameSave: GameSave? = null
     private var turnsSinceLastSave = 0
+    
+    // Undo move state
+    private var previousPosition: Position? = null
+    private var canUndoMove: Boolean = false
 
     companion object {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
@@ -377,6 +381,7 @@ class GameActivity : AppCompatActivity() {
         binding.btnAttack.setOnClickListener { handleAttackAction() }
         binding.btnWait.setOnClickListener { handleWaitAction() }
         binding.btnInventory.setOnClickListener { handleInventoryAction() }
+        binding.btnUndo.setOnClickListener { handleUndoAction() }
         binding.btnEndTurn.setOnClickListener { handleEndTurnAction() }
         
         // Range display toggle
@@ -397,6 +402,28 @@ class GameActivity : AppCompatActivity() {
         }
 
         updateUI()
+    }
+    
+    private fun handleUndoAction() {
+        val selectedCharacter = gameState.selectedCharacter
+        val prevPos = previousPosition
+        
+        if (selectedCharacter != null && prevPos != null && canUndoMove) {
+            // Undo the move
+            gameState.board.removeCharacter(selectedCharacter)
+            gameState.board.placeCharacter(selectedCharacter, prevPos)
+            selectedCharacter.position = prevPos
+            selectedCharacter.hasMovedThisTurn = false
+            
+            canUndoMove = false
+            previousPosition = null
+            binding.btnUndo.visibility = android.view.View.GONE
+            
+            gameBoardView.invalidate()
+            updateUI()
+            
+            Toast.makeText(this, "Move undone", Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun handleInventoryAction() {
@@ -648,6 +675,11 @@ class GameActivity : AppCompatActivity() {
                 if (selectedCharacter != null) {
                     val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
                     if (position in possibleMoves) {
+                        // Store previous position for undo
+                        previousPosition = selectedCharacter.position
+                        canUndoMove = true
+                        binding.btnUndo.visibility = android.view.View.VISIBLE
+                        
                         gameState.board.moveCharacter(selectedCharacter, position)
                         selectedCharacter.hasMovedThisTurn = true
                         gameState.gamePhase =
@@ -703,11 +735,22 @@ class GameActivity : AppCompatActivity() {
             selectedCharacter.hasMovedThisTurn = true
             gameState.selectCharacter(null)
             gameBoardView.clearHighlights()
+            
+            // Disable undo after action
+            canUndoMove = false
+            previousPosition = null
+            binding.btnUndo.visibility = android.view.View.GONE
+            
             updateUI()
         }
     }
 
     private fun handleEndTurnAction() {
+        // Disable undo when ending turn
+        canUndoMove = false
+        previousPosition = null
+        binding.btnUndo.visibility = android.view.View.GONE
+        
         gameState.endTurn()
         gameBoardView.clearHighlights()
         turnsSinceLastSave++
@@ -830,6 +873,12 @@ class GameActivity : AppCompatActivity() {
                 attacker.hasActedThisTurn = true
                 gameState.selectCharacter(null)
                 gameBoardView.clearHighlights()
+                
+                // Disable undo after attacking
+                canUndoMove = false
+                previousPosition = null
+                binding.btnUndo.visibility = android.view.View.GONE
+                
                 checkGameEnd()
                 updateUI()
             }

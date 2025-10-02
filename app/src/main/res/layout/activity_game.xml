@@ -33,6 +33,16 @@
             android:text="@string/move" />
 
         <Button
+            android:id="@+id/btnUndo"
+            style="@style/GameButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="Undo"
+            android:visibility="gone" />
+
+        <Button
             android:id="@+id/btnAttack"
             style="@style/GameButtonStyle"
             android:layout_width="0dp"
