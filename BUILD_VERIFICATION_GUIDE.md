@@ -277,6 +277,19 @@ To simulate CI locally before pushing:
 ./gradlew test --no-daemon
 ```
 
+### Gradle Wrapper Download Timeout
+If Gradle wrapper download times out in CI or slow networks:
+```bash
+# Error: "Downloading from https://services.gradle.org/distributions/gradle-X.X.X-bin.zip failed: timeout (10000ms)"
+```
+
+**Solution**: The `networkTimeout` in `gradle/wrapper/gradle-wrapper.properties` has been increased from 10s to 60s to accommodate slower network conditions in CI environments.
+
+If you still experience timeouts:
+- Check network connectivity
+- Verify proxy settings if behind a corporate firewall
+- Consider using a Gradle distribution cache/mirror
+
 ### Test Failures
 ```bash
 # Run tests with stack traces
