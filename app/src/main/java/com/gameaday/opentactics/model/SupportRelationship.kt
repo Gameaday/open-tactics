@@ -4,6 +4,27 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
+// Support bonus constants for different ranks
+private const val RANK_C_ATK_BONUS = 1
+private const val RANK_C_SKL_BONUS = 1
+
+private const val RANK_B_ATK_BONUS = 2
+private const val RANK_B_DEF_BONUS = 1
+private const val RANK_B_SKL_BONUS = 2
+private const val RANK_B_LCK_BONUS = 1
+
+private const val RANK_A_ATK_BONUS = 3
+private const val RANK_A_DEF_BONUS = 2
+private const val RANK_A_SPD_BONUS = 1
+private const val RANK_A_SKL_BONUS = 3
+private const val RANK_A_LCK_BONUS = 2
+
+private const val RANK_S_ATK_BONUS = 5
+private const val RANK_S_DEF_BONUS = 3
+private const val RANK_S_SPD_BONUS = 2
+private const val RANK_S_SKL_BONUS = 5
+private const val RANK_S_LCK_BONUS = 3
+
 /**
  * Support rank between two characters
  */
@@ -34,10 +55,37 @@ data class SupportRelationship(
     fun getBonuses(): Stats =
         when (rank) {
             SupportRank.NONE -> Stats(0, 0, 0, 0, 0, 0, 0)
-            SupportRank.C -> Stats(0, 0, 1, 0, 0, 1, 0) // +1 ATK, +1 SKL
-            SupportRank.B -> Stats(0, 0, 2, 1, 0, 2, 1) // +2 ATK, +1 DEF, +2 SKL, +1 LCK
-            SupportRank.A -> Stats(0, 0, 3, 2, 1, 3, 2) // +3 ATK, +2 DEF, +1 SPD, +3 SKL, +2 LCK
-            SupportRank.S -> Stats(0, 0, 5, 3, 2, 5, 3) // +5 ATK, +3 DEF, +2 SPD, +5 SKL, +3 LCK
+            SupportRank.C -> Stats(0, 0, RANK_C_ATK_BONUS, 0, 0, RANK_C_SKL_BONUS, 0)
+            SupportRank.B ->
+                Stats(
+                    0,
+                    0,
+                    RANK_B_ATK_BONUS,
+                    RANK_B_DEF_BONUS,
+                    0,
+                    RANK_B_SKL_BONUS,
+                    RANK_B_LCK_BONUS,
+                )
+            SupportRank.A ->
+                Stats(
+                    0,
+                    0,
+                    RANK_A_ATK_BONUS,
+                    RANK_A_DEF_BONUS,
+                    RANK_A_SPD_BONUS,
+                    RANK_A_SKL_BONUS,
+                    RANK_A_LCK_BONUS,
+                )
+            SupportRank.S ->
+                Stats(
+                    0,
+                    0,
+                    RANK_S_ATK_BONUS,
+                    RANK_S_DEF_BONUS,
+                    RANK_S_SPD_BONUS,
+                    RANK_S_SKL_BONUS,
+                    RANK_S_LCK_BONUS,
+                )
         }
 
     /**

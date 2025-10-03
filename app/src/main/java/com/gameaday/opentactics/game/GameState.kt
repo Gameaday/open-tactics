@@ -32,7 +32,7 @@ private const val SPEED_HIT_RATE_MODIFIER = 2
 private const val DOUBLE_ATTACK_SPEED_THRESHOLD = 5
 private const val FORECAST_HIT_ASSUMPTION = 75
 
-@Suppress("TooManyFunctions") // GameState requires many functions for game logic
+@Suppress("TooManyFunctions", "LargeClass") // GameState requires many functions for game logic
 class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
@@ -104,10 +104,7 @@ class GameState(
     fun getCharacterSupports(characterId: String): List<com.gameaday.opentactics.model.SupportRelationship> =
         supportRelationships.filter { it.involves(characterId) }
 
-    fun getSupportBonuses(
-        character: Character,
-        targetBoard: GameBoard,
-    ): com.gameaday.opentactics.model.Stats {
+    fun getSupportBonuses(character: Character): com.gameaday.opentactics.model.Stats {
         val zeroStats =
             com.gameaday.opentactics.model.Stats(
                 hp = 0,
@@ -122,14 +119,14 @@ class GameState(
         val characterSupports = getCharacterSupports(character.id)
 
         // Check for adjacent allied units with support relationships
-        for (support in characterSupports) {
-            val otherId = support.getOtherCharacter(character.id) ?: continue
-            val allChars = getAllCharacters()
-            val otherChar = allChars.find { it.id == otherId && it.team == character.team } ?: continue
-
-            // Check if units are adjacent (within 1 tile)
-            if (character.position.distanceTo(otherChar.position) == 1) {
-                totalBonus += support.getBonuses()
+        characterSupports.forEach { support ->
+            val otherId = support.getOtherCharacter(character.id)
+            if (otherId != null) {
+                val allChars = getAllCharacters()
+                val otherChar = allChars.find { it.id == otherId && it.team == character.team }
+                if (otherChar != null && character.position.distanceTo(otherChar.position) == 1) {
+                    totalBonus += support.getBonuses()
+                }
             }
         }
 
