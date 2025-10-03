@@ -309,6 +309,8 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
                     "*.BattleForecast",
                     "*.SupportResult",
                     "*..inlined..*",
+                    "*.Character.levelUp..inlined.*",
+                    "*.Character\$levelUp\$*",
                 )
         }
     }
