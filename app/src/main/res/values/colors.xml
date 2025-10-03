@@ -15,4 +15,5 @@
     <color name="movement_highlight">#66FFD700</color>
     <color name="attack_highlight">#66FF5722</color>
     <color name="selected_highlight">#FF00BCD4</color>
+    <color name="dark_gray">#FF212121</color>
 </resources>

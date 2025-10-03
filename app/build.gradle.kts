@@ -242,7 +242,7 @@ jacoco {
 tasks.register<JacocoReport>("jacocoTestReport") {
     val devDebugTest = tasks.named("testDevDebugUnitTest")
     val prodDebugTest = tasks.named("testProdDebugUnitTest")
-    
+
     dependsOn(devDebugTest, prodDebugTest)
 
     reports {
@@ -269,13 +269,13 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 
     classDirectories.setFrom(devDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    
+
     // Get execution data from both test tasks (they test the same source code with different configurations)
     executionData.setFrom(
         files(
             "${layout.buildDirectory.asFile.get()}/jacoco/testDevDebugUnitTest.exec",
-            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec"
-        ).filter { it.exists() }
+            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec",
+        ).filter { it.exists() },
     )
 }
 
@@ -324,12 +324,12 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
 
     classDirectories.setFrom(devDebugTree)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin"))
-    
+
     // Get execution data from both test tasks (they test the same source code with different configurations)
     executionData.setFrom(
         files(
             "${layout.buildDirectory.asFile.get()}/jacoco/testDevDebugUnitTest.exec",
-            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec"
-        ).filter { it.exists() }
+            "${layout.buildDirectory.asFile.get()}/jacoco/testProdDebugUnitTest.exec",
+        ).filter { it.exists() },
     )
 }
