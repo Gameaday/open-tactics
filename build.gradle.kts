@@ -113,8 +113,8 @@ tasks.register("ciVerification") {
         "detekt",
         "lint",
         "testAllUnitTests",
-        "jacocoTestReport",
-        "jacocoTestCoverageVerification",
+        ":app:jacocoTestReport",
+        ":app:jacocoTestCoverageVerification",
         "assembleAllDebug",
     )
     group = "verification"

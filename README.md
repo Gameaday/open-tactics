@@ -84,12 +84,30 @@ cd open-tactics
 # Generate coverage report
 ./gradlew jacocoTestReport
 
-# Verify coverage meets minimum requirements (80%)
+# Verify coverage meets minimum requirements
 ./gradlew jacocoTestCoverageVerification
 
 # View HTML coverage report
 open app/build/reports/jacoco/jacocoTestReport/html/index.html
 ```
+
+#### Instrumented Tests
+```bash
+# Run all instrumented tests (requires device/emulator)
+./gradlew connectedAllDebugAndroidTest
+
+# Run specific flavor tests
+./gradlew connectedDevDebugAndroidTest
+./gradlew connectedProdDebugAndroidTest
+```
+
+#### Comprehensive CI Verification
+```bash
+# Run all CI checks locally (recommended before pushing)
+./gradlew ciVerification
+```
+
+For detailed testing and build verification guide, see [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md).
 
 ### Code Quality
 
@@ -119,9 +137,16 @@ open app/build/reports/jacoco/jacocoTestReport/html/index.html
 
 #### Continuous Integration
 - **Code Quality**: ktlint, detekt, Android Lint
-- **Testing**: Unit tests, instrumented tests across multiple API levels
-- **Security**: OWASP dependency check, secret scanning
+- **Testing**: Unit tests, instrumented tests across multiple API levels (24, 29, 34)
+- **Security**: OWASP dependency check (optimized), secret scanning
 - **Performance**: Build size analysis, performance tests
+- **Coverage**: JaCoCo test coverage verification (25% bundle, 38% per class)
+
+#### Test Coverage
+- **Unit Tests**: 14 test files covering models and game logic
+- **Instrumented Tests**: 11 tests for Activities and UI components
+- **Total Coverage**: Models 67%, Game Logic 38%, Overall 26%
+- See [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md) for detailed testing guide
 
 #### Continuous Deployment
 - **Automated Versioning**: Based on git commits and tags
@@ -175,14 +200,15 @@ Store signing credentials as GitHub Secrets:
 ```
 ├── app/                          # Android app module
 │   ├── src/main/java/           # Main source code
-│   ├── src/test/java/           # Unit tests
-│   └── src/androidTest/java/    # Instrumented tests
+│   ├── src/test/java/           # Unit tests (14 test files)
+│   └── src/androidTest/java/    # Instrumented tests (11 tests)
 ├── standalone/                   # Console demo module
 ├── config/                      # Quality tools configuration
 │   ├── detekt/                  # Detekt configuration
 │   └── owasp/                   # OWASP dependency check
 ├── fastlane/                    # Play Store metadata
 ├── .github/workflows/           # CI/CD workflows
+├── BUILD_VERIFICATION_GUIDE.md  # Testing and build guide
 └── gradle/libs.versions.toml    # Version catalog
 ```
 
@@ -226,17 +252,18 @@ The core tactical mechanics are complete. Future Android development would inclu
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Run quality checks (`./gradlew qualityCheck`)
+3. Run comprehensive CI checks (`./gradlew ciVerification`)
 4. Commit your changes (`git commit -m 'Add amazing feature'`)
 5. Push to the branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
 ### Code Standards
 - Follow Kotlin coding conventions
-- Maintain test coverage above 80%
+- Maintain test coverage above 25% (unit tests), add instrumented tests for UI
 - All code must pass ktlint and detekt checks
-- Include tests for new functionality
+- Include tests for new functionality (unit and/or instrumented)
 - Update documentation for public APIs
+- See [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md) for testing guidelines
 
 ## License
 
