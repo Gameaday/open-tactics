@@ -223,6 +223,10 @@ Runs on every push/PR:
 3. **Build Debug**: Dev debug APK
 4. **Build Staging**: Dev staging APK
 5. **Instrumented Tests**: On API 24, 29, 34 (main/develop branches only)
+   - Emulator boot timeout: 600 seconds (10 minutes)
+   - Memory: 4GB RAM, 4GB partition size
+   - Hardware acceleration: GPU swiftshader_indirect
+   - Optimized for CI reliability
 
 #### QA Workflow (`qa.yml`)
 Additional quality checks:
@@ -295,6 +299,26 @@ adb logcat
 
 # Clear app data before testing
 adb shell pm clear com.gameaday.opentactics.dev
+```
+
+#### CI Emulator Timeout Issues
+If emulator fails to boot in CI (GitHub Actions):
+- **Timeout increased to 600s** (10 minutes) in workflow
+- **Memory allocation**: 4GB RAM + 4GB partition size
+- **Check workflow logs** for specific boot errors
+- **Verify API level compatibility** - some levels boot slower
+- **Cache issues**: Clear AVD cache if persistent failures occur
+
+For local emulator issues:
+```bash
+# Check emulator status
+adb devices
+
+# Restart ADB
+adb kill-server && adb start-server
+
+# Cold boot emulator (bypass snapshots)
+emulator -avd <avd_name> -no-snapshot-load
 ```
 
 ## Performance Optimization

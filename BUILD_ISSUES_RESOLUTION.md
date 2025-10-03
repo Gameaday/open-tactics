@@ -209,12 +209,16 @@ The `ci.yml` workflow already includes instrumented tests:
 - Runs on API 24, 29, 34
 - Only on main/develop branches (to save CI resources)
 - Properly integrated with our new test infrastructure
+- **Emulator boot timeout increased to 600s** (from default 300s)
+- **Memory optimizations**: 4GB RAM and partition size for stable emulator performance
+- **Reliable emulator startup** with explicit timeout configuration
 
 ### What's New
 - Local CI simulation with `ciVerification` task
 - Faster development feedback loop
 - Android-specific issue detection before CI runs
 - Comprehensive test coverage across all layers
+- Improved emulator boot reliability in CI environment
 
 ## Conclusion ✅
 
