@@ -581,7 +581,10 @@ class GameActivity : AppCompatActivity() {
         dialogView.findViewById<android.widget.TextView>(R.id.sourceCharacterName).text = sourceCharacter.name
         dialogView.findViewById<android.widget.TextView>(R.id.targetCharacterName).text = targetCharacter.name
 
-        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.tradeItemsRecyclerView)
+        val recyclerView =
+            dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(
+                R.id.tradeItemsRecyclerView,
+            )
         val adapter = TradeAdapter(sourceCharacter, targetCharacter)
         recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         recyclerView.adapter = adapter
@@ -705,12 +708,11 @@ class GameActivity : AppCompatActivity() {
                 val btnTrade = itemView.findViewById<android.widget.Button>(R.id.btnTradeItem)
                 btnTrade.isEnabled = sourceItem != null || targetItem != null
                 btnTrade.setOnClickListener {
-                    performTrade(position, sourceItem, targetItem)
+                    performTrade(sourceItem, targetItem)
                 }
             }
 
             private fun performTrade(
-                position: Int,
                 sourceItem: Any?,
                 targetItem: Any?,
             ) {

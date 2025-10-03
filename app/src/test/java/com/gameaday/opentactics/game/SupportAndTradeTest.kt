@@ -133,7 +133,7 @@ class SupportSystemTest {
         )
 
         // Units are adjacent (positions 0,0 and 1,0)
-        val bonuses = gameState.getSupportBonuses(knight, board)
+        val bonuses = gameState.getSupportBonuses(knight)
 
         // C rank provides +1 ATK, +1 SKL
         assertEquals(1, bonuses.attack)
@@ -151,7 +151,7 @@ class SupportSystemTest {
         )
 
         // Units are not adjacent (positions 0,0 and 5,5)
-        val bonuses = gameState.getSupportBonuses(knight, board)
+        val bonuses = gameState.getSupportBonuses(knight)
 
         // No bonuses should apply
         assertEquals(0, bonuses.attack)
@@ -181,7 +181,7 @@ class SupportSystemTest {
             ),
         )
 
-        val bonuses = gameState.getSupportBonuses(knight, board)
+        val bonuses = gameState.getSupportBonuses(knight)
 
         // Two C rank supports: 2x(+1 ATK, +1 SKL) = +2 ATK, +2 SKL
         assertEquals(2, bonuses.attack)
