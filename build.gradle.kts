@@ -57,6 +57,16 @@ allprojects {
             nugetconfEnabled = false
             nodeEnabled = false
         }
+
+        // NVD API configuration - prevent timeout issues
+        nvd.apply {
+            // Use cached data for 7 days to minimize slow NVD updates
+            // Without an API key, NVD updates can take 30+ minutes
+            validForHours = 168 // 7 days
+
+            // Increase delay between API calls to avoid rate limiting without API key
+            delay = 8000
+        }
     }
 }
 
