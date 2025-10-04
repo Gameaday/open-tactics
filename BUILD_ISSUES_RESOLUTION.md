@@ -81,7 +81,7 @@ tasks.register("connectedAllDebugAndroidTest") {
 
 ### 3. OWASP Optimization
 
-Optimized OWASP Dependency Check configuration:
+Optimized OWASP Dependency Check configuration to prevent timeout issues:
 
 ```kotlin
 configure<DependencyCheckExtension> {
@@ -104,8 +104,25 @@ configure<DependencyCheckExtension> {
         nugetconfEnabled = false
         nodeEnabled = false
     }
+    
+    // NVD API configuration - prevent timeout issues
+    nvd.apply {
+        // Use cached data for 7 days to minimize slow NVD updates
+        // Without an API key, NVD updates can take 30+ minutes
+        validForHours = 168 // 7 days
+        
+        // Increase delay between API calls to avoid rate limiting
+        delay = 8000
+    }
 }
 ```
+
+**Key improvements:**
+- Caches NVD data for 7 days to avoid repeated slow downloads
+- Increases API call delay to prevent rate limiting
+- CI workflow now caches OWASP data between runs
+- Security analysis job has extended timeout (30 minutes)
+- Continues on error to prevent blocking entire CI pipeline
 
 ### 4. JaCoCo Coverage Improvements
 

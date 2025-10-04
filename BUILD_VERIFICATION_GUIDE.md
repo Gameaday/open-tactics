@@ -47,11 +47,13 @@ This runs:
 
 #### 4. Security Analysis
 ```bash
-# Run OWASP dependency check (optimized for speed)
+# Run OWASP dependency check (optimized for speed with 7-day cache)
 ./gradlew dependencyCheckAnalyze
 
 # View report at: app/build/reports/dependency-check/dependency-check-report.html
 ```
+
+**Note:** The first run may take 20-30 minutes to download NVD data. Subsequent runs within 7 days use cached data and complete in seconds. An NVD API key can be configured to speed up the first run by setting `nvd.apiKey` in the OWASP configuration.
 
 ## Testing
 

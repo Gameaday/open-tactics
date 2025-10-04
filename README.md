@@ -138,7 +138,7 @@ For detailed testing and build verification guide, see [BUILD_VERIFICATION_GUIDE
 #### Continuous Integration
 - **Code Quality**: ktlint, detekt, Android Lint
 - **Testing**: Unit tests, instrumented tests across multiple API levels (24, 29, 34)
-- **Security**: OWASP dependency check (optimized), secret scanning
+- **Security**: OWASP dependency check (7-day cache, optimized for CI), secret scanning
 - **Performance**: Build size analysis, performance tests
 - **Coverage**: JaCoCo test coverage verification (25% bundle, 38% per class)
 
