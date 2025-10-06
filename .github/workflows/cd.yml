@@ -21,6 +21,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Allow GITHUB_TOKEN to push to repository (used by actions that push to gh-pages)
+permissions:
+  contents: write
+
 jobs:
   build-release:
     name: Build Release
