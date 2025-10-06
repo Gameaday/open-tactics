@@ -132,6 +132,23 @@ jobs:
           name: debug-apk
           path: app/build/outputs/apk/dev/debug/*.apk
 
+      - name: Prepare debug APK for publish
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          mkdir -p gh-pages-publish/dev/${{ github.sha }}
+          # copy APKs if present
+          cp app/build/outputs/apk/dev/debug/*.apk gh-pages-publish/dev/${{ github.sha }}/ || true
+
+      - name: Publish debug APK to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages-publish/dev/${{ github.sha }}
+          destination_dir: artifacts/dev/${{ github.sha }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+
   build-staging:
     name: Build Staging  
     runs-on: ubuntu-latest
@@ -164,6 +181,22 @@ jobs:
         with:
           name: staging-apk
           path: app/build/outputs/apk/dev/staging/*.apk
+
+      - name: Prepare staging APK for publish
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: |
+          mkdir -p gh-pages-publish/staging/${{ github.sha }}
+          cp app/build/outputs/apk/dev/staging/*.apk gh-pages-publish/staging/${{ github.sha }}/ || true
+
+      - name: Publish staging APK to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages-publish/staging/${{ github.sha }}
+          destination_dir: artifacts/staging/${{ github.sha }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
   instrumented-tests:
     name: Instrumented Tests
