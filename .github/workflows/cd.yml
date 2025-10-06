@@ -56,7 +56,7 @@ jobs:
       - name: Generate version info
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             VERSION_NAME=${GITHUB_REF#refs/tags/v}
           else
             VERSION_NAME=$(git describe --tags --abbrev=7 --dirty --always)
@@ -64,8 +64,10 @@ jobs:
           
           VERSION_CODE=$(git rev-list --count HEAD)
           
-          echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          {
+            echo "version-name=$VERSION_NAME"
+            echo "version-code=$VERSION_CODE"
+          } >> "$GITHUB_OUTPUT"
           echo "Version Name: $VERSION_NAME"
           echo "Version Code: $VERSION_CODE"
 
@@ -93,7 +95,7 @@ jobs:
           ./gradlew bundleProdRelease \
             -PversionName="$VERSION_NAME" \
             -PversionCode="$VERSION_CODE" \
-            -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
+            -Pandroid.injected.signing.store.file="$(pwd)/keystore.jks" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
@@ -109,7 +111,7 @@ jobs:
           ./gradlew assembleProdRelease \
             -PversionName="$VERSION_NAME" \
             -PversionCode="$VERSION_CODE" \
-            -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
+            -Pandroid.injected.signing.store.file="$(pwd)/keystore.jks" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
@@ -172,16 +174,16 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TRACK="${{ github.event.inputs.release_type }}"
-          elif [[ "${{ github.ref }}" == refs/tags/*-beta* ]]; then
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/.*-beta ]]; then
             TRACK="beta"
-          elif [[ "${{ github.ref }}" == refs/tags/*-alpha* ]]; then
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/.*-alpha ]]; then
             TRACK="alpha"  
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             TRACK="internal"
           else
             TRACK="internal"
           fi
-          echo "track=$TRACK" >> $GITHUB_OUTPUT
+          echo "track=$TRACK" >> "$GITHUB_OUTPUT"
           echo "Deploying to track: $TRACK"
 
       - name: Deploy to Play Store
@@ -225,9 +227,11 @@ jobs:
           fi
           
           # Save multiline changelog to output
-          echo 'changelog<<EOF' >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          {
+            echo 'changelog<<EOF'
+            echo "$CHANGELOG"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
