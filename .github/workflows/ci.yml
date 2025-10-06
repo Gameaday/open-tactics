@@ -269,12 +269,15 @@ jobs:
           arch: x86_64
           # Allow runner to use the cached snapshot; avoid forcing creation which can be slow
           force-avd-creation: false
-          # Prefer resuming from snapshot when available, but disable saving at the end to keep cache stable
-          emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -memory 4096 -partition-size 4096
+          # Resume from snapshot when available, but disable saving at the end to keep cache stable
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -memory 4096 -partition-size 4096
           disable-animations: true
           # Increase boot timeout to allow slow runners to finish
           emulator-boot-timeout: 1200
-          script: ./gradlew connectedDevDebugAndroidTest
+          script: |
+            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+            adb devices -l
+            ./gradlew connectedDevDebugAndroidTest
 
       - name: Upload instrumented test reports
         if: always()
