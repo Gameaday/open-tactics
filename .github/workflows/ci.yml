@@ -1,4 +1,4 @@
-name: CI
+resname: CI
 
 on:
   push:
@@ -275,9 +275,29 @@ jobs:
           # Increase boot timeout to allow slow runners to finish
           emulator-boot-timeout: 1200
           script: |
-            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+            set -x
+            echo "Waiting for device to be ready..."
+            adb wait-for-device
+            
+            echo "Waiting for boot to complete..."
+            adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done; input keyevent 82'
+            
+            echo "Waiting for package manager..."
+            adb shell 'while [[ -z $(getprop init.svc.bootanim) ]]; do sleep 1; done'
+            adb shell 'pm list packages' > /dev/null 2>&1 || sleep 5
+            
+            echo "Verifying device properties..."
+            adb shell getprop ro.build.version.sdk
+            adb shell getprop ro.build.version.release
             adb devices -l
-            ./gradlew connectedDevDebugAndroidTest
+            
+            echo "Killing and restarting ADB server to ensure clean state..."
+            adb kill-server
+            adb start-server
+            adb devices
+            
+            echo "Running connected tests..."
+            ./gradlew connectedDevDebugAndroidTest --info --stacktrace
 
       - name: Upload instrumented test reports
         if: always()
