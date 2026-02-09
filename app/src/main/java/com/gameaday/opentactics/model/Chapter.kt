@@ -117,6 +117,7 @@ data class Chapter(
 
 /**
  * Defines enemy unit spawn configuration
+ * Can reference a named unit from EnemyRepository or use generic stats
  */
 @Parcelize
 @Serializable
@@ -129,7 +130,48 @@ data class EnemyUnitSpawn(
     val equipment: List<String>, // Weapon IDs
     val isBoss: Boolean = false,
     val aiType: AIBehavior = AIBehavior.AGGRESSIVE,
-) : Parcelable
+    val namedUnitId: String? = null, // Reference to NamedUnit for custom growth rates
+) : Parcelable {
+    /**
+     * Create a character from this spawn definition
+     * If namedUnitId is specified, uses that named unit's growth rates
+     */
+    fun toCharacter(team: Team = Team.ENEMY): Character {
+        val namedUnit = namedUnitId?.let { EnemyRepository.getEnemy(it) }
+
+        return if (namedUnit != null) {
+            // Use named unit with custom growth rates
+            Character.fromNamedUnit(
+                namedUnit = namedUnit,
+                team = team,
+                position = position,
+                targetLevel = level,
+                isBoss = isBoss,
+                aiType = aiType,
+            )
+        } else {
+            // Create generic character with class default growth rates
+            val targetLevel = this.level // Save the target level
+            Character(
+                id = id,
+                name = name,
+                characterClass = characterClass,
+                team = team,
+                position = position,
+                level = 1,
+                isBoss = isBoss,
+                aiType = aiType,
+            ).apply {
+                // Level up to target level
+                if (targetLevel > 1) {
+                    val expNeeded = (targetLevel - 1) * 100 // EXPERIENCE_PER_LEVEL
+                    gainExperience(expNeeded)
+                }
+            }
+        }
+    }
+}
+
 
 /**
  * Enemy AI behavior patterns
