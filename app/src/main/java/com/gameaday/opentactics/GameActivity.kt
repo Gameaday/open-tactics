@@ -17,7 +17,6 @@ import com.gameaday.opentactics.data.SavedGameState
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.game.GameState
 import com.gameaday.opentactics.model.Character
-import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Item
 import com.gameaday.opentactics.model.NamedUnitRepository
@@ -152,41 +151,44 @@ class GameActivity : AppCompatActivity() {
         val playerCharacters =
             listOf(
                 NamedUnitRepository.getProtagonist("player_knight")?.let { namedUnit ->
-                    Character.fromNamedUnit(
-                        namedUnit = namedUnit,
-                        team = Team.PLAYER,
-                        position = playerPositions.getOrElse(0) { Position(1, 6) },
-                        targetLevel = 1,
-                    ).apply {
-                        addWeapon(Weapon.ironSword())
-                        addWeapon(Weapon.steelSword())
-                        addItem(Item.vulnerary())
-                        addItem(Item.vulnerary())
-                    }
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(0) { Position(1, 6) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.ironSword())
+                            addWeapon(Weapon.steelSword())
+                            addItem(Item.vulnerary())
+                            addItem(Item.vulnerary())
+                        }
                 },
                 NamedUnitRepository.getProtagonist("player_archer")?.let { namedUnit ->
-                    Character.fromNamedUnit(
-                        namedUnit = namedUnit,
-                        team = Team.PLAYER,
-                        position = playerPositions.getOrElse(1) { Position(2, 7) },
-                        targetLevel = 1,
-                    ).apply {
-                        addWeapon(Weapon.ironBow())
-                        addWeapon(Weapon.steelBow())
-                        addItem(Item.vulnerary())
-                    }
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(1) { Position(2, 7) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.ironBow())
+                            addWeapon(Weapon.steelBow())
+                            addItem(Item.vulnerary())
+                        }
                 },
                 NamedUnitRepository.getProtagonist("player_mage")?.let { namedUnit ->
-                    Character.fromNamedUnit(
-                        namedUnit = namedUnit,
-                        team = Team.PLAYER,
-                        position = playerPositions.getOrElse(2) { Position(0, 7) },
-                        targetLevel = 1,
-                    ).apply {
-                        addWeapon(Weapon.fire())
-                        addWeapon(Weapon.thunder())
-                        addItem(Item.tonic())
-                    }
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(2) { Position(0, 7) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.fire())
+                            addWeapon(Weapon.thunder())
+                            addItem(Item.tonic())
+                        }
                 },
             ).filterNotNull()
 
@@ -1333,11 +1335,12 @@ class GameActivity : AppCompatActivity() {
 
             reinforcements.forEach { enemySpawn ->
                 // Use toCharacter to handle named units properly
-                val reinforcement = enemySpawn.toCharacter(Team.ENEMY).apply {
-                    // Update ID to be unique per turn
-                    val uniqueId = "${enemySpawn.id}_turn${gameState.turnCount}"
-                    // Note: We can't directly modify the id since it's a val, so we'll need to create a new Character
-                }
+                val reinforcement =
+                    enemySpawn.toCharacter(Team.ENEMY).apply {
+                        // Update ID to be unique per turn
+                        val uniqueId = "${enemySpawn.id}_turn${gameState.turnCount}"
+                        // Note: We can't directly modify the id since it's a val, so we'll need to create a new Character
+                    }
                 // Create a new character with unique ID but same properties
                 val uniqueReinforcement =
                     Character(
@@ -1355,7 +1358,7 @@ class GameActivity : AppCompatActivity() {
                         statBonuses = reinforcement.statBonuses,
                         customGrowthRates = reinforcement.customGrowthRates,
                     )
-                
+
                 // Add weapons from equipment list
                 enemySpawn.equipment.forEach { equipId ->
                     getWeaponById(equipId)?.let { weapon -> uniqueReinforcement.addWeapon(weapon) }

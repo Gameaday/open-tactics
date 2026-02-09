@@ -172,7 +172,6 @@ data class EnemyUnitSpawn(
     }
 }
 
-
 /**
  * Enemy AI behavior patterns
  */
@@ -242,6 +241,7 @@ object ChapterRepository {
                             level = 1,
                             position = Position(10, 1),
                             equipment = listOf("iron_sword"),
+                            namedUnitId = "generic_bandit",
                         ),
                         EnemyUnitSpawn(
                             id = "enemy_archer_1",
@@ -250,6 +250,7 @@ object ChapterRepository {
                             level = 1,
                             position = Position(9, 2),
                             equipment = listOf("iron_bow"),
+                            namedUnitId = "generic_brigand",
                         ),
                     ),
                 preBattleDialogue = "Commander: Welcome to the battlefield! Show me what you've learned.",
@@ -279,6 +280,7 @@ object ChapterRepository {
                             level = 2,
                             position = Position(11, 0),
                             equipment = listOf("iron_sword"),
+                            namedUnitId = "generic_rogue",
                         ),
                         EnemyUnitSpawn(
                             id = "enemy_archer_2",
@@ -287,6 +289,7 @@ object ChapterRepository {
                             level = 2,
                             position = Position(9, 2),
                             equipment = listOf("iron_bow"),
+                            namedUnitId = "generic_brigand",
                         ),
                     ),
                 bossUnit =
@@ -299,6 +302,7 @@ object ChapterRepository {
                         equipment = listOf("steel_sword"),
                         isBoss = true,
                         aiType = AIBehavior.AGGRESSIVE,
+                        namedUnitId = "boss_bandit_leader",
                     ),
                 preBattleDialogue = "Scout: Bandits ahead! Their leader looks tough.",
                 postVictoryDialogue = "Commander: The roads are safer now. Good work!",
@@ -447,6 +451,7 @@ object ChapterRepository {
                         equipment = listOf("silver_sword"),
                         isBoss = true,
                         aiType = AIBehavior.DEFENSIVE,
+                        namedUnitId = "boss_general",
                     ),
                 preBattleDialogue = "Commander: The throne room lies ahead. Breach the defenses and claim victory!",
                 postVictoryDialogue = "Commander: Castle Ironhold is ours! The enemy's stronghold has fallen!",
