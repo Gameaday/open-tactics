@@ -15,6 +15,7 @@ import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.data.SavedGameState
 import com.gameaday.opentactics.databinding.ActivityGameBinding
+import com.gameaday.opentactics.factory.MapFactory
 import com.gameaday.opentactics.game.GameState
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.GameBoard
@@ -123,16 +124,7 @@ class GameActivity : AppCompatActivity() {
         }
 
         // Create game board based on chapter's map layout
-        val board =
-            when (chapter.mapLayout) {
-                com.gameaday.opentactics.model.MapLayout.TEST_MAP -> GameBoard.createTestMap()
-                // TODO: Create specific maps
-                com.gameaday.opentactics.model.MapLayout.FOREST_AMBUSH -> GameBoard.createTestMap()
-                com.gameaday.opentactics.model.MapLayout.MOUNTAIN_PASS -> GameBoard.createTestMap()
-                com.gameaday.opentactics.model.MapLayout.CASTLE_SIEGE -> GameBoard.createTestMap()
-                com.gameaday.opentactics.model.MapLayout.VILLAGE_DEFENSE -> GameBoard.createTestMap()
-                else -> GameBoard.createTestMap()
-            }
+        val board = MapFactory.createMap(chapter.mapLayout)
 
         gameState = GameState(board, currentChapter = chapter)
 
