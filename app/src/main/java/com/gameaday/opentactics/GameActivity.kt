@@ -17,9 +17,9 @@ import com.gameaday.opentactics.data.SavedGameState
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.game.GameState
 import com.gameaday.opentactics.model.Character
-import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
 import com.gameaday.opentactics.model.Item
+import com.gameaday.opentactics.model.NamedUnitRepository
 import com.gameaday.opentactics.model.Position
 import com.gameaday.opentactics.model.Stats
 import com.gameaday.opentactics.model.Team
@@ -146,45 +146,51 @@ class GameActivity : AppCompatActivity() {
                 .show()
         }
 
-        // Create player characters at starting positions
+        // Create player characters at starting positions from named unit repository
         val playerPositions = chapter.playerStartPositions
         val playerCharacters =
             listOf(
-                Character(
-                    id = "player_knight",
-                    name = "Sir Garrett",
-                    characterClass = CharacterClass.KNIGHT,
-                    team = Team.PLAYER,
-                    position = playerPositions.getOrElse(0) { Position(1, 6) },
-                ).apply {
-                    addWeapon(Weapon.ironSword())
-                    addWeapon(Weapon.steelSword())
-                    addItem(Item.vulnerary())
-                    addItem(Item.vulnerary())
+                NamedUnitRepository.getProtagonist("player_knight")?.let { namedUnit ->
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(0) { Position(1, 6) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.ironSword())
+                            addWeapon(Weapon.steelSword())
+                            addItem(Item.vulnerary())
+                            addItem(Item.vulnerary())
+                        }
                 },
-                Character(
-                    id = "player_archer",
-                    name = "Lyanna",
-                    characterClass = CharacterClass.ARCHER,
-                    team = Team.PLAYER,
-                    position = playerPositions.getOrElse(1) { Position(2, 7) },
-                ).apply {
-                    addWeapon(Weapon.ironBow())
-                    addWeapon(Weapon.steelBow())
-                    addItem(Item.vulnerary())
+                NamedUnitRepository.getProtagonist("player_archer")?.let { namedUnit ->
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(1) { Position(2, 7) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.ironBow())
+                            addWeapon(Weapon.steelBow())
+                            addItem(Item.vulnerary())
+                        }
                 },
-                Character(
-                    id = "player_mage",
-                    name = "Aldric",
-                    characterClass = CharacterClass.MAGE,
-                    team = Team.PLAYER,
-                    position = playerPositions.getOrElse(2) { Position(0, 7) },
-                ).apply {
-                    addWeapon(Weapon.fire())
-                    addWeapon(Weapon.thunder())
-                    addItem(Item.tonic())
+                NamedUnitRepository.getProtagonist("player_mage")?.let { namedUnit ->
+                    Character
+                        .fromNamedUnit(
+                            namedUnit = namedUnit,
+                            team = Team.PLAYER,
+                            position = playerPositions.getOrElse(2) { Position(0, 7) },
+                            targetLevel = 1,
+                        ).apply {
+                            addWeapon(Weapon.fire())
+                            addWeapon(Weapon.thunder())
+                            addItem(Item.tonic())
+                        }
                 },
-            )
+            ).filterNotNull()
 
         // Add player characters
         playerCharacters.forEach { char ->
@@ -195,41 +201,23 @@ class GameActivity : AppCompatActivity() {
         // Initialize support relationships between player characters
         initializeSupportRelationships()
 
-        // Create enemy characters from chapter data
+        // Create enemy characters from chapter data using toCharacter
         chapter.enemyUnits.forEach { enemySpawn ->
-            val enemyChar =
-                Character(
-                    id = enemySpawn.id,
-                    name = enemySpawn.name,
-                    characterClass = enemySpawn.characterClass,
-                    team = Team.ENEMY,
-                    position = enemySpawn.position,
-                    level = enemySpawn.level,
-                ).apply {
-                    // Add weapons from equipment list
-                    enemySpawn.equipment.forEach { equipId ->
-                        getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
-                    }
-                }
+            val enemyChar = enemySpawn.toCharacter(Team.ENEMY)
+            // Add weapons from equipment list
+            enemySpawn.equipment.forEach { equipId ->
+                getWeaponById(equipId)?.let { weapon -> enemyChar.addWeapon(weapon) }
+            }
             gameState.addEnemyCharacter(enemyChar)
             board.placeCharacter(enemyChar, enemyChar.position)
         }
 
-        // Add boss unit if present
+        // Add boss unit if present using toCharacter
         chapter.bossUnit?.let { bossSpawn ->
-            val bossChar =
-                Character(
-                    id = bossSpawn.id,
-                    name = bossSpawn.name,
-                    characterClass = bossSpawn.characterClass,
-                    team = Team.ENEMY,
-                    position = bossSpawn.position,
-                    level = bossSpawn.level,
-                ).apply {
-                    bossSpawn.equipment.forEach { equipId ->
-                        getWeaponById(equipId)?.let { weapon -> addWeapon(weapon) }
-                    }
-                }
+            val bossChar = bossSpawn.toCharacter(Team.ENEMY)
+            bossSpawn.equipment.forEach { equipId ->
+                getWeaponById(equipId)?.let { weapon -> bossChar.addWeapon(weapon) }
+            }
             gameState.addEnemyCharacter(bossChar)
             board.placeCharacter(bossChar, bossChar.position)
         }
@@ -1346,23 +1334,34 @@ class GameActivity : AppCompatActivity() {
                 ).show()
 
             reinforcements.forEach { enemySpawn ->
-                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
-                val reinforcement =
+                // Use toCharacter to handle named units properly
+                val reinforcement = enemySpawn.toCharacter(Team.ENEMY)
+
+                // Create a new character with unique ID but same properties
+                val uniqueReinforcement =
                     Character(
                         id = "${enemySpawn.id}_turn${gameState.turnCount}",
-                        name = enemySpawn.name,
-                        characterClass = enemySpawn.characterClass,
-                        team = Team.ENEMY,
-                        level = enemySpawn.level,
-                        position = enemySpawn.position,
-                        isBoss = enemySpawn.isBoss,
-                        aiType = enemySpawn.aiType,
-                    ).apply {
-                        weapon?.let { addWeapon(it) }
-                    }
+                        name = reinforcement.name,
+                        characterClass = reinforcement.characterClass,
+                        team = reinforcement.team,
+                        level = reinforcement.level,
+                        position = reinforcement.position,
+                        experience = reinforcement.experience,
+                        currentHp = reinforcement.currentHp,
+                        currentMp = reinforcement.currentMp,
+                        isBoss = reinforcement.isBoss,
+                        aiType = reinforcement.aiType,
+                        statBonuses = reinforcement.statBonuses,
+                        customGrowthRates = reinforcement.customGrowthRates,
+                    )
 
-                gameState.addEnemyCharacter(reinforcement)
-                gameState.board.placeCharacter(reinforcement, reinforcement.position)
+                // Add weapons from equipment list
+                enemySpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> uniqueReinforcement.addWeapon(weapon) }
+                }
+
+                gameState.addEnemyCharacter(uniqueReinforcement)
+                gameState.board.placeCharacter(uniqueReinforcement, uniqueReinforcement.position)
 
                 // Animate the spawn with a flash effect
                 gameBoardView.invalidate()

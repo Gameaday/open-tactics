@@ -117,6 +117,7 @@ data class Chapter(
 
 /**
  * Defines enemy unit spawn configuration
+ * Can reference a named unit from EnemyRepository or use generic stats
  */
 @Parcelize
 @Serializable
@@ -129,7 +130,47 @@ data class EnemyUnitSpawn(
     val equipment: List<String>, // Weapon IDs
     val isBoss: Boolean = false,
     val aiType: AIBehavior = AIBehavior.AGGRESSIVE,
-) : Parcelable
+    val namedUnitId: String? = null, // Reference to NamedUnit for custom growth rates
+) : Parcelable {
+    /**
+     * Create a character from this spawn definition
+     * If namedUnitId is specified, uses that named unit's growth rates
+     */
+    fun toCharacter(team: Team = Team.ENEMY): Character {
+        val namedUnit = namedUnitId?.let { EnemyRepository.getEnemy(it) }
+
+        return if (namedUnit != null) {
+            // Use named unit with custom growth rates
+            Character.fromNamedUnit(
+                namedUnit = namedUnit,
+                team = team,
+                position = position,
+                targetLevel = level,
+                isBoss = isBoss,
+                aiType = aiType,
+            )
+        } else {
+            // Create generic character with class default growth rates
+            val targetLevel = this.level // Save the target level
+            Character(
+                id = id,
+                name = name,
+                characterClass = characterClass,
+                team = team,
+                position = position,
+                level = 1,
+                isBoss = isBoss,
+                aiType = aiType,
+            ).apply {
+                // Level up to target level
+                if (targetLevel > 1) {
+                    val expNeeded = (targetLevel - 1) * 100 // EXPERIENCE_PER_LEVEL
+                    gainExperience(expNeeded)
+                }
+            }
+        }
+    }
+}
 
 /**
  * Enemy AI behavior patterns
@@ -200,6 +241,7 @@ object ChapterRepository {
                             level = 1,
                             position = Position(10, 1),
                             equipment = listOf("iron_sword"),
+                            namedUnitId = "generic_bandit",
                         ),
                         EnemyUnitSpawn(
                             id = "enemy_archer_1",
@@ -208,6 +250,7 @@ object ChapterRepository {
                             level = 1,
                             position = Position(9, 2),
                             equipment = listOf("iron_bow"),
+                            namedUnitId = "generic_brigand",
                         ),
                     ),
                 preBattleDialogue = "Commander: Welcome to the battlefield! Show me what you've learned.",
@@ -237,6 +280,7 @@ object ChapterRepository {
                             level = 2,
                             position = Position(11, 0),
                             equipment = listOf("iron_sword"),
+                            namedUnitId = "generic_rogue",
                         ),
                         EnemyUnitSpawn(
                             id = "enemy_archer_2",
@@ -245,6 +289,7 @@ object ChapterRepository {
                             level = 2,
                             position = Position(9, 2),
                             equipment = listOf("iron_bow"),
+                            namedUnitId = "generic_brigand",
                         ),
                     ),
                 bossUnit =
@@ -257,6 +302,7 @@ object ChapterRepository {
                         equipment = listOf("steel_sword"),
                         isBoss = true,
                         aiType = AIBehavior.AGGRESSIVE,
+                        namedUnitId = "boss_bandit_leader",
                     ),
                 preBattleDialogue = "Scout: Bandits ahead! Their leader looks tough.",
                 postVictoryDialogue = "Commander: The roads are safer now. Good work!",
@@ -405,6 +451,7 @@ object ChapterRepository {
                         equipment = listOf("silver_sword"),
                         isBoss = true,
                         aiType = AIBehavior.DEFENSIVE,
+                        namedUnitId = "boss_general",
                     ),
                 preBattleDialogue = "Commander: The throne room lies ahead. Breach the defenses and claim victory!",
                 postVictoryDialogue = "Commander: Castle Ironhold is ours! The enemy's stronghold has fallen!",

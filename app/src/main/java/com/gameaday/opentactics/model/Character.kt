@@ -43,6 +43,8 @@ data class Character(
     var aiType: AIBehavior = AIBehavior.AGGRESSIVE,
     // Stat bonuses from level ups (accumulated random growths)
     var statBonuses: Stats = Stats(0, 0, 0, 0, 0, 0, 0),
+    // Custom growth rates for named units (overrides class defaults)
+    var customGrowthRates: GrowthRates? = null,
 ) : Parcelable {
     val currentStats: Stats
         get() = characterClass.baseStats + statBonuses
@@ -184,7 +186,8 @@ data class Character(
         val oldMaxMp = maxMp
 
         // Roll for stat increases based on growth rates
-        val growthRates = characterClass.growthRates
+        // Use custom growth rates if available, otherwise use class defaults
+        val growthRates = customGrowthRates ?: characterClass.growthRates
         var statGains =
             Stats(
                 hp = if ((1..100).random() <= growthRates.hp) 1 else 0,
@@ -473,5 +476,47 @@ data class Character(
 
     companion object {
         const val MAX_INVENTORY_SIZE = 5
+
+        /**
+         * Create a character from a named unit definition at a specific level
+         * This simulates level-ups from level 1 to targetLevel to generate appropriate stats
+         * @param namedUnit The named unit definition
+         * @param team The team this character belongs to
+         * @param position The starting position on the board
+         * @param targetLevel The level to create the character at (default 1)
+         * @param isBoss Whether this character is a boss (default false)
+         * @param aiType The AI behavior for this character (default AGGRESSIVE)
+         * @return A character instance with stats appropriate for the target level
+         */
+        fun fromNamedUnit(
+            namedUnit: NamedUnit,
+            team: Team,
+            position: Position,
+            targetLevel: Int = 1,
+            isBoss: Boolean = false,
+            aiType: AIBehavior = AIBehavior.AGGRESSIVE,
+        ): Character {
+            val character =
+                Character(
+                    id = namedUnit.id,
+                    name = namedUnit.name,
+                    characterClass = namedUnit.characterClass,
+                    team = team,
+                    position = position,
+                    level = 1,
+                    isBoss = isBoss,
+                    aiType = aiType,
+                    customGrowthRates = namedUnit.customGrowthRates,
+                )
+
+            // Simulate level-ups to reach target level
+            // This generates stat bonuses based on growth rates
+            if (targetLevel > 1) {
+                val expNeeded = EXPERIENCE_PER_LEVEL * (targetLevel - 1)
+                character.gainExperience(expNeeded)
+            }
+
+            return character
+        }
     }
 }
