@@ -1335,12 +1335,8 @@ class GameActivity : AppCompatActivity() {
 
             reinforcements.forEach { enemySpawn ->
                 // Use toCharacter to handle named units properly
-                val reinforcement =
-                    enemySpawn.toCharacter(Team.ENEMY).apply {
-                        // Update ID to be unique per turn
-                        val uniqueId = "${enemySpawn.id}_turn${gameState.turnCount}"
-                        // Note: We can't directly modify the id since it's a val, so we'll need to create a new Character
-                    }
+                val reinforcement = enemySpawn.toCharacter(Team.ENEMY)
+
                 // Create a new character with unique ID but same properties
                 val uniqueReinforcement =
                     Character(
