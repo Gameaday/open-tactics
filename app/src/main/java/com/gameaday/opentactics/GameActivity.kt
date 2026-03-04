@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gameaday.opentactics.data.AchievementRepository
 import com.gameaday.opentactics.data.CampaignProgress
 import com.gameaday.opentactics.data.GamePreferences
 import com.gameaday.opentactics.data.GameSave
@@ -282,6 +283,17 @@ class GameActivity : AppCompatActivity() {
             gameState.addEnemyCharacter(bossChar)
             board.placeCharacter(bossChar, bossChar.position)
         }
+
+        // Apply difficulty scaling to all enemy units
+        val difficultyMultiplier = playerProfile?.preferences?.difficulty?.enemyStatMultiplier ?: 1.0f
+        if (difficultyMultiplier != 1.0f) {
+            gameState.getAliveEnemyCharacters().forEach { enemy ->
+                enemy.applyDifficultyScaling(difficultyMultiplier)
+            }
+        }
+
+        // Apply EXP multiplier from difficulty
+        gameState.expMultiplier = playerProfile?.preferences?.difficulty?.expMultiplier ?: 1.0f
 
         // Create initial save data
         currentGameSave = createGameSave(playerName, chapterNumber)
@@ -1764,6 +1776,16 @@ class GameActivity : AppCompatActivity() {
             )
         savePlayerProfile()
 
+        // Check and unlock achievements
+        val newAchievements = playerProfile?.let { AchievementRepository.checkNewAchievements(it) } ?: emptyList()
+        if (newAchievements.isNotEmpty()) {
+            playerProfile =
+                playerProfile?.copy(
+                    achievementsUnlocked = (playerProfile?.achievementsUnlocked ?: emptyList()) + newAchievements,
+                )
+            savePlayerProfile()
+        }
+
         // Build victory message
         val message =
             buildString {
@@ -1777,6 +1799,16 @@ class GameActivity : AppCompatActivity() {
                 val aliveCount = gameState.getAlivePlayerCharacters().size
                 val totalCount = gameState.getPlayerCharacters().size
                 append("Units: $aliveCount/$totalCount survived")
+
+                // Show newly unlocked achievements
+                if (newAchievements.isNotEmpty()) {
+                    append("\n\n🏆 Achievements Unlocked:\n")
+                    newAchievements.forEach { achievementId ->
+                        AchievementRepository.getAchievement(achievementId)?.let {
+                            append("• ${it.name}: ${it.description}\n")
+                        }
+                    }
+                }
             }
 
         val hasNextChapter =
@@ -1870,11 +1902,33 @@ class GameActivity : AppCompatActivity() {
             )
         savePlayerProfile()
 
+        // Check for campaign completion achievements
+        val newAchievements = playerProfile?.let { AchievementRepository.checkNewAchievements(it) } ?: emptyList()
+        if (newAchievements.isNotEmpty()) {
+            playerProfile =
+                playerProfile?.copy(
+                    achievementsUnlocked = (playerProfile?.achievementsUnlocked ?: emptyList()) + newAchievements,
+                )
+            savePlayerProfile()
+        }
+
+        val achievementText =
+            if (newAchievements.isNotEmpty()) {
+                "\n\n🏆 Achievements Unlocked:\n" +
+                    newAchievements
+                        .mapNotNull { AchievementRepository.getAchievement(it) }
+                        .joinToString("\n") { "• ${it.name}: ${it.description}" }
+            } else {
+                ""
+            }
+
         AlertDialog
             .Builder(this)
             .setTitle("🎉 Campaign Complete! 🎉")
-            .setMessage("Congratulations! You have completed all chapters!\n\nThank you for playing Open Tactics!")
-            .setPositiveButton("Return to Menu") { _, _ ->
+            .setMessage(
+                "Congratulations! You have completed all chapters!" +
+                    "\n\nThank you for playing Open Tactics!$achievementText",
+            ).setPositiveButton("Return to Menu") { _, _ ->
                 finish()
             }.setCancelable(false)
             .show()

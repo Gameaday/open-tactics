@@ -83,3 +83,112 @@ enum class DifficultyMode(
     NORMAL("Normal", 1.0f, 1.0f),
     HARD("Hard", 1.2f, 0.8f),
 }
+
+/**
+ * Achievement definitions for tracking player milestones.
+ * Each achievement has an id, display name, description, and check condition category.
+ */
+@Serializable
+data class Achievement(
+    val id: String,
+    val name: String,
+    val description: String,
+)
+
+/**
+ * Repository of all available achievements
+ */
+object AchievementRepository {
+    fun getAchievement(id: String): Achievement? = achievements[id]
+
+    fun getAllAchievements(): List<Achievement> = achievements.values.toList()
+
+    /**
+     * Check which achievements a player has newly earned based on their profile.
+     * Returns list of achievement IDs that are newly unlocked.
+     */
+    fun checkNewAchievements(profile: PlayerProfile): List<String> {
+        val already = profile.achievementsUnlocked.toSet()
+        val earned = mutableListOf<String>()
+        if ("first_victory" !in already && profile.totalBattlesWon >= 1) earned.add("first_victory")
+        if ("veteran" !in already && profile.totalBattlesWon >= 10) earned.add("veteran")
+        if ("campaign_complete" !in already && profile.campaignsCompleted >= 1) earned.add("campaign_complete")
+        if ("max_level" !in already && profile.highestLevel >= 20) earned.add("max_level")
+        if ("hard_mode" !in already &&
+            profile.campaignsCompleted >= 1 &&
+            profile.preferences.difficulty == DifficultyMode.HARD
+        ) {
+            earned.add("hard_mode")
+        }
+        if ("pacifist_turn" !in already && profile.totalBattlesWon >= 5) earned.add("pacifist_turn")
+        if ("chapter_5" !in already && profile.totalBattlesWon >= 5) earned.add("chapter_5")
+        if ("chapter_10" !in already && profile.totalBattlesWon >= 10) earned.add("chapter_10")
+        if ("chapter_15" !in already && profile.totalBattlesWon >= 15) earned.add("chapter_15")
+        if ("chapter_20" !in already && profile.totalBattlesWon >= 20) earned.add("chapter_20")
+        return earned
+    }
+
+    private val achievements =
+        mapOf(
+            "first_victory" to
+                Achievement(
+                    id = "first_victory",
+                    name = "First Victory",
+                    description = "Win your first battle",
+                ),
+            "veteran" to
+                Achievement(
+                    id = "veteran",
+                    name = "Veteran Commander",
+                    description = "Win 10 battles",
+                ),
+            "campaign_complete" to
+                Achievement(
+                    id = "campaign_complete",
+                    name = "Liberator",
+                    description = "Complete the full campaign",
+                ),
+            "max_level" to
+                Achievement(
+                    id = "max_level",
+                    name = "Legendary Hero",
+                    description = "Reach level 20 with any unit",
+                ),
+            "hard_mode" to
+                Achievement(
+                    id = "hard_mode",
+                    name = "True Tactician",
+                    description = "Complete the campaign on Hard difficulty",
+                ),
+            "chapter_5" to
+                Achievement(
+                    id = "chapter_5",
+                    name = "Act I Complete",
+                    description = "Complete Act 1: Defense",
+                ),
+            "chapter_10" to
+                Achievement(
+                    id = "chapter_10",
+                    name = "Act II Complete",
+                    description = "Complete Act 2: Counterattack",
+                ),
+            "chapter_15" to
+                Achievement(
+                    id = "chapter_15",
+                    name = "Act III Complete",
+                    description = "Complete Act 3: Invasion",
+                ),
+            "chapter_20" to
+                Achievement(
+                    id = "chapter_20",
+                    name = "Dawn of Victory",
+                    description = "Complete the Finale",
+                ),
+            "pacifist_turn" to
+                Achievement(
+                    id = "pacifist_turn",
+                    name = "Seasoned Warrior",
+                    description = "Win 5 battles",
+                ),
+        )
+}

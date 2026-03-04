@@ -44,6 +44,7 @@ class GameState(
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 0
     var escapedUnitCount: Int = 0
+    var expMultiplier: Float = 1.0f // Difficulty-based EXP scaling
     private val unitsOnThrone: MutableList<Character> = mutableListOf()
     private var moveBeforeAction: Boolean = false // Tracks if unit moved before attacking
     private val supportRelationships: MutableList<com.gameaday.opentactics.model.SupportRelationship> = mutableListOf()
@@ -583,13 +584,14 @@ class GameState(
         // Use weapon durability
         attacker.useEquippedWeapon()
 
-        // Award EXP and track stat gains
-        val expGained =
+        // Award EXP and track stat gains (scaled by difficulty)
+        val baseExp =
             if (!target.isAlive) {
                 target.level * EXPERIENCE_PER_KILL_MULTIPLIER
             } else {
                 EXPERIENCE_PER_HIT
             }
+        val expGained = maxOf(1, (baseExp * expMultiplier).toInt())
 
         val statGains = attacker.gainExperienceWithTracking(expGained)
 
@@ -643,13 +645,14 @@ class GameState(
         // Use staff durability
         healer.useEquippedWeapon()
 
-        // Award EXP for healing (only if target was actually wounded)
-        val expGained =
+        // Award EXP for healing (only if target was actually wounded), scaled by difficulty
+        val baseHealExp =
             if (target.currentHp < target.maxHp || healAmount > 0) {
                 EXPERIENCE_PER_HEAL
             } else {
                 0
             }
+        val expGained = if (baseHealExp > 0) maxOf(1, (baseHealExp * expMultiplier).toInt()) else 0
 
         val statGains = healer.gainExperienceWithTracking(expGained)
 

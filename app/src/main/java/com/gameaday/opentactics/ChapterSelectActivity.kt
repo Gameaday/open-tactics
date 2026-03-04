@@ -101,8 +101,14 @@ class ChapterSelectActivity : AppCompatActivity() {
                 holder.status.text = "🔒 Locked"
                 holder.itemView.alpha = LOCKED_CHAPTER_ALPHA
                 holder.itemView.isEnabled = false
+                holder.itemView.setOnClickListener(null)
             } else {
-                holder.status.visibility = View.GONE
+                holder.status.visibility = View.VISIBLE
+                if (chapter.number < unlockedChapter) {
+                    holder.status.text = "✅ Completed — tap to replay"
+                } else {
+                    holder.status.text = "▶ Current chapter"
+                }
                 holder.itemView.alpha = 1.0f
                 holder.itemView.isEnabled = true
                 holder.itemView.setOnClickListener {

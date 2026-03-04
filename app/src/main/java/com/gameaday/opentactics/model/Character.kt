@@ -476,6 +476,19 @@ data class Character(
         return broke
     }
 
+    /**
+     * Apply difficulty scaling to this character's stats.
+     * Only applies to enemy units — scales stat bonuses by the given multiplier.
+     */
+    fun applyDifficultyScaling(multiplier: Float) {
+        if (team != Team.ENEMY) return
+        if (multiplier == 1.0f) return
+        statBonuses = statBonuses.scale(multiplier)
+        // Recalculate HP to match new max
+        currentHp = maxHp
+        currentMp = maxMp
+    }
+
     companion object {
         const val MAX_INVENTORY_SIZE = 5
 
