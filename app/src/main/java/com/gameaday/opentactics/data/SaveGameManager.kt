@@ -23,12 +23,14 @@ class SaveGameManager(
             ignoreUnknownKeys = true
         }
 
+    @Suppress("DEPRECATION")
     private val masterKey =
         MasterKey
             .Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
 
+    @Suppress("DEPRECATION")
     private val profilePrefs: SharedPreferences by lazy {
         EncryptedSharedPreferences.create(
             context,
@@ -37,6 +39,7 @@ class SaveGameManager(
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
         )
+        // TODO: Migrate to new androidx.security API when it reaches stable
     }
 
     private val saveDirectory by lazy {

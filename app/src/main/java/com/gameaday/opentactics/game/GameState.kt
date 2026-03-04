@@ -294,8 +294,8 @@ class GameState(
             }
         }
 
-        // Default behavior
-        return AIBehavior.AGGRESSIVE
+        // Default to the character's configured AI type
+        return enemy.aiType
     }
 
     /**
@@ -427,35 +427,41 @@ class GameState(
      * Support AI: Prioritizes healing allies (future: buffing)
      */
     private fun executeSupportBehavior(enemy: Character) {
-        // If this is a healer, try to heal wounded allies
-        if (enemy.characterClass == com.gameaday.opentactics.model.CharacterClass.HEALER) {
+        // Try to heal wounded allies using equipped staff
+        val healTargetsInRange = calculateHealTargets(enemy).filter { it.team == enemy.team }
+
+        if (healTargetsInRange.isNotEmpty() && enemy.canAct) {
+            // Heal the most wounded ally in range (lowest HP ratio)
+            val target = healTargetsInRange.minByOrNull { it.currentHp.toFloat() / it.maxHp } ?: return
+            performHeal(enemy, target)
+            enemy.commitAction()
+            enemy.commitWait()
+            return
+        }
+
+        if (enemy.canMove) {
+            // Move toward the most wounded ally to get in healing range
             val woundedAllies =
                 enemyCharacters.filter { ally ->
                     ally.isAlive &&
                         ally != enemy &&
-                        ally.currentHp < ally.maxHp &&
-                        enemy.position.distanceTo(ally.position) <= enemy.characterClass.attackRange
+                        ally.currentHp < ally.maxHp
                 }
 
-            if (woundedAllies.isNotEmpty()) {
-                // Heal the most wounded ally
-                val target = woundedAllies.minByOrNull { it.currentStats.hp } ?: return
-                // TODO: Implement healing when staff weapons are added
-                // For now, just move towards them
-                if (enemy.canMove) {
-                    val moveTarget = findBestMovePosition(enemy, target)
-                    moveTarget?.let {
-                        board.moveCharacter(enemy, it)
-                        enemy.commitMove(enemy.position)
-                    }
+            val closestWounded = woundedAllies.minByOrNull { enemy.position.distanceTo(it.position) }
+            if (closestWounded != null) {
+                val moveTarget = findBestMovePosition(enemy, closestWounded)
+                moveTarget?.let {
+                    board.moveCharacter(enemy, it)
+                    enemy.commitMove(enemy.position)
                 }
+                enemy.commitWait()
+                return
             }
-        } else {
-            // Fall back to defensive behavior
-            executeDefensiveBehavior(enemy)
         }
 
-        enemy.commitWait()
+        // No allies to heal and no wounded allies to move toward - fall back to defensive
+        executeDefensiveBehavior(enemy)
     }
 
     /**

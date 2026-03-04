@@ -4,9 +4,9 @@ package com.gameaday.opentactics.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -16,7 +16,7 @@ import kotlinx.serialization.encoding.Encoder
 /**
  * Custom serializer for IntRange
  */
-@Serializer(forClass = IntRange::class)
+@OptIn(ExperimentalSerializationApi::class)
 object IntRangeSerializer : KSerializer<IntRange> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("IntRange", PrimitiveKind.STRING)

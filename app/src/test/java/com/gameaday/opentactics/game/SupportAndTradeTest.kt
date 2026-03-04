@@ -1,5 +1,6 @@
 package com.gameaday.opentactics.game
 
+import com.gameaday.opentactics.model.AIBehavior
 import com.gameaday.opentactics.model.Character
 import com.gameaday.opentactics.model.CharacterClass
 import com.gameaday.opentactics.model.GameBoard
@@ -282,5 +283,93 @@ class TradingSystemTest {
         val result = knight.addWeapon(Weapon.steelSword())
         assertEquals(false, result)
         assertEquals(Character.MAX_INVENTORY_SIZE, knight.inventory.size)
+    }
+}
+
+class AiHealingTest {
+    private lateinit var gameState: GameState
+    private lateinit var board: GameBoard
+    private lateinit var healer: Character
+    private lateinit var woundedAlly: Character
+    private lateinit var playerUnit: Character
+
+    @Before
+    fun setup() {
+        board = GameBoard(10, 10)
+
+        healer =
+            Character(
+                id = "healer",
+                name = "Healer",
+                characterClass = CharacterClass.HEALER,
+                team = Team.ENEMY,
+                position = Position(2, 0),
+                aiType = AIBehavior.SUPPORT,
+            )
+        healer.addWeapon(Weapon.heal())
+        healer.equipWeapon(0)
+
+        woundedAlly =
+            Character(
+                id = "warrior",
+                name = "Warrior",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.ENEMY,
+                position = Position(3, 0),
+            )
+        // Wound the ally
+        woundedAlly.takeDamage(10)
+
+        playerUnit =
+            Character(
+                id = "player",
+                name = "Hero",
+                characterClass = CharacterClass.KNIGHT,
+                team = Team.PLAYER,
+                position = Position(9, 9),
+            )
+
+        gameState = GameState(board)
+        gameState.addEnemyCharacter(healer)
+        gameState.addEnemyCharacter(woundedAlly)
+        gameState.addPlayerCharacter(playerUnit)
+
+        board.placeCharacter(healer, healer.position)
+        board.placeCharacter(woundedAlly, woundedAlly.position)
+        board.placeCharacter(playerUnit, playerUnit.position)
+    }
+
+    @Test
+    fun `AI healer heals wounded ally when in range`() {
+        val hpBefore = woundedAlly.currentHp
+
+        // Trigger enemy turn (healer should act with SUPPORT behavior)
+        gameState.executeEnemyAction(healer)
+
+        // The wounded ally should have been healed
+        assertTrue(woundedAlly.currentHp > hpBefore)
+    }
+
+    @Test
+    fun `AI healer targets most wounded ally`() {
+        // Add a second wounded ally who is more wounded
+        val criticalAlly =
+            Character(
+                id = "critical",
+                name = "Critical",
+                characterClass = CharacterClass.ARCHER,
+                team = Team.ENEMY,
+                position = Position(2, 1),
+            )
+        criticalAlly.takeDamage(criticalAlly.maxHp - 1) // Almost dead
+        gameState.addEnemyCharacter(criticalAlly)
+        board.placeCharacter(criticalAlly, criticalAlly.position)
+
+        val criticalHpBefore = criticalAlly.currentHp
+
+        gameState.executeEnemyAction(healer)
+
+        // The critical ally (lower HP ratio) should have been healed
+        assertTrue(criticalAlly.currentHp > criticalHpBefore)
     }
 }

@@ -1,6 +1,7 @@
 package com.gameaday.opentactics.model
 
 import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
@@ -246,6 +247,7 @@ data class Character(
      * Get the stat gains from the last level up
      * This should be called right after gainExperience to get the gains
      */
+    @IgnoredOnParcel
     var lastLevelUpGains: Stats? = null
 
     fun gainExperienceWithTracking(exp: Int): Stats? {
