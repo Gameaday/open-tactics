@@ -55,6 +55,8 @@ class GameActivity : AppCompatActivity() {
         private const val HEALER_JOIN_CHAPTER = 6
         private const val THIEF_JOIN_CHAPTER = 7
         private const val PEGASUS_JOIN_CHAPTER = 9
+
+        private val DEFAULT_SPAWN_POSITION = Position(0, 7)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -156,7 +158,7 @@ class GameActivity : AppCompatActivity() {
                             .fromNamedUnit(
                                 namedUnit = namedUnit,
                                 team = Team.PLAYER,
-                                position = playerPositions.getOrElse(0) { Position(1, 6) },
+                                position = playerPositions.getOrElse(0) { DEFAULT_SPAWN_POSITION },
                                 targetLevel = 1,
                             ).apply {
                                 addWeapon(Weapon.ironSword())
@@ -172,7 +174,7 @@ class GameActivity : AppCompatActivity() {
                             .fromNamedUnit(
                                 namedUnit = namedUnit,
                                 team = Team.PLAYER,
-                                position = playerPositions.getOrElse(1) { Position(2, 7) },
+                                position = playerPositions.getOrElse(1) { DEFAULT_SPAWN_POSITION },
                                 targetLevel = 1,
                             ).apply {
                                 addWeapon(Weapon.ironBow())
@@ -187,7 +189,7 @@ class GameActivity : AppCompatActivity() {
                             .fromNamedUnit(
                                 namedUnit = namedUnit,
                                 team = Team.PLAYER,
-                                position = playerPositions.getOrElse(2) { Position(0, 7) },
+                                position = playerPositions.getOrElse(2) { DEFAULT_SPAWN_POSITION },
                                 targetLevel = 1,
                             ).apply {
                                 addWeapon(Weapon.fire())
@@ -204,7 +206,7 @@ class GameActivity : AppCompatActivity() {
                                 .fromNamedUnit(
                                     namedUnit = namedUnit,
                                     team = Team.PLAYER,
-                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
                                     targetLevel = 1,
                                 ).apply {
                                     addWeapon(Weapon.heal())
@@ -222,7 +224,7 @@ class GameActivity : AppCompatActivity() {
                                 .fromNamedUnit(
                                     namedUnit = namedUnit,
                                     team = Team.PLAYER,
-                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
                                     targetLevel = 1,
                                 ).apply {
                                     addWeapon(Weapon.ironSword())
@@ -239,7 +241,7 @@ class GameActivity : AppCompatActivity() {
                                 .fromNamedUnit(
                                     namedUnit = namedUnit,
                                     team = Team.PLAYER,
-                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
                                     targetLevel = 1,
                                 ).apply {
                                     addWeapon(Weapon.ironLance())
