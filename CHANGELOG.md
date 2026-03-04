@@ -29,16 +29,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Play Store deployment automation
 
 ### Fixed
+- Resolved all 16 detekt static analysis issues (magic numbers, parameter lists, class size, line length)
+- Extracted achievement threshold constants in AchievementRepository
 - Suppressed EncryptedSharedPreferences deprecation warnings with migration plan
 - Fixed serialization annotations in Weapon.kt (`@OptIn(ExperimentalSerializationApi::class)`)
 - Added `@IgnoredOnParcel` annotation to Character.kt computed properties
+- Fixed heal EXP condition (no longer awards EXP when healing already-full HP units)
 - AI behavior fallback now correctly uses `aiType` field
 
 ### Changed
 - Standalone module synced with app (healing, critical hits, 20 chapters, EXP scaling)
+- Updated TECHNICAL_DEBT.md with current resolution status
+- Updated README.md with accurate feature list and project status
 - Enhanced build configuration with signing support
 - Improved testing infrastructure
-- Better error handling and logging
 
 ## [1.0.0] - 2024-09-26
 

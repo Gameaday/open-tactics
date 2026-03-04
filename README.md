@@ -6,36 +6,79 @@ A Fire Emblem-style tactical RPG for Android, built with modern Kotlin architect
 [![CD](https://github.com/Gameaday/open-tactics/actions/workflows/cd.yml/badge.svg)](https://github.com/Gameaday/open-tactics/actions/workflows/cd.yml)
 [![QA](https://github.com/Gameaday/open-tactics/actions/workflows/qa.yml/badge.svg)](https://github.com/Gameaday/open-tactics/actions/workflows/qa.yml)
 
-## 📋 Project Status & Strategic Plans
+## 📋 Project Status
 
-**Status:** Pre-Alpha / Functional Prototype  
-**Target Launch:** February 2027 (12 months)
+**Status:** Pre-Alpha / Functional Prototype (March 2026)  
+**Target Launch:** February 2027
 
-- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Quick overview, key decisions, next steps
-- **[PROJECT_ANALYSIS.md](PROJECT_ANALYSIS.md)** - Comprehensive analysis of current state
-- **[STRATEGIC_PLAN.md](STRATEGIC_PLAN.md)** - 12-month roadmap to launch
-- **[TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)** - Immediate technical tasks
+| Area | Status |
+|------|--------|
+| Core game engine | ✅ Complete |
+| 20-chapter campaign | ✅ Content defined |
+| Character & combat systems | ✅ Complete |
+| AI with healing behavior | ✅ Complete |
+| Difficulty modes (Easy/Normal/Hard) | ✅ Complete |
+| Achievement system (10 achievements) | ✅ Complete |
+| Support conversations (7 pairs) | ✅ Complete |
+| Battle quotes | ✅ Complete |
+| Save/load system | ✅ Complete |
+| Static analysis (detekt) | ✅ 0 issues |
+| Code formatting (ktlint) | ✅ Clean |
+| Sprite graphics | ❌ Not started |
+| Audio/music | ❌ Not started |
+| Tutorial chapter | ❌ Not started |
+
+See also:
+- **[TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)** — Current tech debt status
+- **[STRATEGIC_PLAN.md](STRATEGIC_PLAN.md)** — 12-month roadmap to launch
+- **[CHANGELOG.md](CHANGELOG.md)** — Version history
 
 ## Features
 
 ### Core Gameplay
 - **Grid-based tactical combat** with positioning and movement strategy
-- **5 character classes** with unique stats and abilities:
-  - Knight: High HP/defense, short-range melee combat
-  - Archer: Long-range attacks with moderate mobility  
-  - Mage: Magical damage with medium range
-  - Healer: Support role with healing abilities
-  - Thief: High mobility and speed
+- **7 character classes** with unique stats and abilities:
+  - Knight — High HP/defense, melee combat
+  - Archer — Long-range attacks with moderate mobility  
+  - Mage — Magical damage with medium range
+  - Healer — Support role with healing staves
+  - Thief — High mobility and speed
+  - Pegasus Knight — Flying unit, high mobility
+  - Wyvern Rider — Flying unit, high defense
 - **Turn-based combat system** with player and AI phases
-- **Terrain variety** affecting movement and combat (plains, forests, mountains, forts)
-- **Experience and leveling** with stat progression
-- **Strategic AI** opponents that move tactically
+- **Weapon triangle** (Sword > Axe > Lance > Sword)
+- **Critical hits** based on skill/luck stats
+- **Terrain effects** (plains, forests, mountains, forts — affect movement and combat)
+- **Experience and leveling** with stat growth rates
+- **Difficulty scaling** (Easy/Normal/Hard)
 
-### Technical Implementation
-- Modern Kotlin codebase with clean architecture
-- Comprehensive unit test coverage
-- Modular design ready for Android UI
-- Console demonstration of core mechanics
+### Campaign & Story
+- **20-chapter campaign** across 4 acts:
+  - Act 1 (Ch 1-5): Defense — Tutorial and early battles
+  - Act 2 (Ch 6-10): Counterattack — New allies join
+  - Act 3 (Ch 11-15): Invasion — Challenging encounters
+  - Finale (Ch 16-20): Victory — Epic conclusion
+- **6 named protagonist characters** with custom growth rates and battle quotes
+- **Support conversations** between 7 character pairs (C/B/A ranks)
+- **Chapter objectives**: Defeat All, Defeat Boss, Seize Throne, Survive, Escape, Defend
+- **Reinforcement spawns** on specific turns
+
+### Save System & Progression
+- **Encrypted save/load** with auto-save
+- **Player profiles** with statistics tracking
+- **10 achievements** (First Victory, Veteran, Campaign Complete, etc.)
+- **Chapter replay** support
+
+### AI System
+- **4 AI behavior patterns**: Aggressive, Defensive, Stationary, Support
+- **AI healing** — enemy healers use staves on wounded allies
+- **Boss behavior** — defensive positioning with powerful attacks
+
+### Technical
+- Modern Kotlin codebase (JDK 17, Android SDK 35)
+- Comprehensive unit test coverage (22+ test files)
+- Both Android app and standalone console modules
+- Clean architecture with model/game/view/factory separation
 
 ## Development
 
@@ -117,7 +160,7 @@ open app/build/reports/jacoco/jacocoTestReport/html/index.html
 ./gradlew ciVerification
 ```
 
-For detailed testing and build verification guide, see [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md).
+For testing details, see the **Run Tests** section above.
 
 ### Code Quality
 
@@ -153,10 +196,10 @@ For detailed testing and build verification guide, see [BUILD_VERIFICATION_GUIDE
 - **Coverage**: JaCoCo test coverage verification (25% bundle, 38% per class)
 
 #### Test Coverage
-- **Unit Tests**: 14 test files covering models and game logic
-- **Instrumented Tests**: 11 tests for Activities and UI components
-- **Total Coverage**: Models 67%, Game Logic 38%, Overall 26%
-- See [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md) for detailed testing guide
+- **Unit Tests**: 22+ test files covering models, factories, game logic, achievements
+- **Instrumented Tests**: 4 test files for Activities and UI components
+- **Standalone Tests**: 3 test files for console module
+- **Total Coverage**: Models ~67%, Game Logic ~38%, Overall ≥25%
 
 #### Continuous Deployment
 - **Automated Versioning**: Based on git commits and tags
@@ -210,15 +253,21 @@ Store signing credentials as GitHub Secrets:
 ```
 ├── app/                          # Android app module
 │   ├── src/main/java/           # Main source code
-│   ├── src/test/java/           # Unit tests (14 test files)
-│   └── src/androidTest/java/    # Instrumented tests (11 tests)
+│   │   ├── data/                # Save system, game data, achievements
+│   │   ├── factory/             # Character, weapon, map, item factories
+│   │   ├── game/                # Game state and battle logic
+│   │   ├── model/               # Core models (Character, Weapon, Chapter, etc.)
+│   │   └── view/                # Game board rendering
+│   ├── src/test/java/           # Unit tests (22+ test files)
+│   └── src/androidTest/java/    # Instrumented tests (4 test files)
 ├── standalone/                   # Console demo module
+│   ├── src/main/kotlin/         # Standalone game logic (no Android deps)
+│   └── src/test/kotlin/         # Standalone tests
 ├── config/                      # Quality tools configuration
-│   ├── detekt/                  # Detekt configuration
-│   └── owasp/                   # OWASP dependency check
+│   ├── detekt/                  # Detekt static analysis rules
+│   └── owasp/                   # OWASP dependency check suppressions
 ├── fastlane/                    # Play Store metadata
 ├── .github/workflows/           # CI/CD workflows
-├── BUILD_VERIFICATION_GUIDE.md  # Testing and build guide
 └── gradle/libs.versions.toml    # Version catalog
 ```
 
@@ -247,16 +296,16 @@ The game follows classic Fire Emblem mechanics:
 - Experience gained from combat and defeating enemies
 - Permadeath - fallen units are removed from battle
 
-## Future Development
+## Next Milestones
 
-The core tactical mechanics are complete. Future Android development would include:
+The core tactical engine and campaign content are complete. Remaining work for launch:
 
-- Native Android UI with touch controls
-- Sprite-based 2D pixel art graphics
-- Campaign mode with story progression
-- Additional character classes and abilities
-- Sound effects and music
-- Advanced AI and difficulty modes
+1. **Phase 1 — Foundation Polish** (in progress): Tutorial chapter, settings UI, accessibility
+2. **Phase 2 — Visual Transformation**: Pixel art sprites, terrain tileset, animations
+3. **Phase 3 — Audio**: Sound effects, background music
+4. **Phase 4 — Content Polish**: Balance testing, difficulty tuning, story polish
+5. **Phase 5 — Beta Testing**: Closed beta with feedback cycle
+6. **Phase 6 — Marketing & Launch**: Play Store optimization, press kit
 
 ## Contributing
 
@@ -273,7 +322,6 @@ The core tactical mechanics are complete. Future Android development would inclu
 - All code must pass ktlint and detekt checks
 - Include tests for new functionality (unit and/or instrumented)
 - Update documentation for public APIs
-- See [BUILD_VERIFICATION_GUIDE.md](BUILD_VERIFICATION_GUIDE.md) for testing guidelines
 
 ## License
 
