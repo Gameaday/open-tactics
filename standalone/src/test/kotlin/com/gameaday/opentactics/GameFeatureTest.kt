@@ -10,6 +10,7 @@ import com.gameaday.opentactics.model.Team
 import com.gameaday.opentactics.model.Weapon
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -134,7 +135,7 @@ class GameFeatureTest {
 
         val targets = gameState.calculateHealTargets(healer)
         assertTrue(targets.contains(woundedAlly), "Wounded ally should be a heal target")
-        assertTrue(!targets.contains(healthyAlly), "Healthy ally should not be a heal target")
+        assertFalse(targets.contains(healthyAlly), "Healthy ally should not be a heal target")
     }
 
     @Test

@@ -577,9 +577,9 @@ class GameState(
         // Use staff durability
         healer.useEquippedWeapon()
 
-        // Award EXP for healing (scaled by difficulty)
+        // Award EXP for healing (only if target was actually wounded)
         val baseHealExp =
-            if (target.currentHp < target.maxHp || healAmount > 0) {
+            if (target.currentHp < target.maxHp) {
                 EXPERIENCE_PER_HEAL
             } else {
                 0

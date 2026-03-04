@@ -647,7 +647,7 @@ class GameState(
 
         // Award EXP for healing (only if target was actually wounded), scaled by difficulty
         val baseHealExp =
-            if (target.currentHp < target.maxHp || healAmount > 0) {
+            if (target.currentHp < target.maxHp) {
                 EXPERIENCE_PER_HEAL
             } else {
                 0
