@@ -377,22 +377,23 @@ class GameActivity : AppCompatActivity() {
         // If loading a new chapter (no enemies saved), spawn new enemies from chapter data
         if (chapter != null && savedState.enemyCharacters.isEmpty()) {
             chapter.enemyUnits.forEach { enemySpawn ->
-                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
-                val enemy =
-                    Character(
-                        id = enemySpawn.id,
-                        name = enemySpawn.name,
-                        characterClass = enemySpawn.characterClass,
-                        team = Team.ENEMY,
-                        level = enemySpawn.level,
-                        position = enemySpawn.position,
-                        isBoss = enemySpawn.isBoss,
-                        aiType = enemySpawn.aiType,
-                    ).apply {
-                        weapon?.let { addWeapon(it) }
-                    }
+                val enemy = enemySpawn.toCharacter(Team.ENEMY)
+                // Add ALL weapons from equipment list (not just the first)
+                enemySpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> enemy.addWeapon(weapon) }
+                }
                 gameState.addEnemyCharacter(enemy)
                 board.placeCharacter(enemy, enemy.position)
+            }
+
+            // Also load boss unit for new chapters
+            chapter.bossUnit?.let { bossSpawn ->
+                val bossChar = bossSpawn.toCharacter(Team.ENEMY)
+                bossSpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> bossChar.addWeapon(weapon) }
+                }
+                gameState.addEnemyCharacter(bossChar)
+                board.placeCharacter(bossChar, bossChar.position)
             }
         } else {
             // Restore existing enemies (from saved game mid-chapter)
@@ -1359,10 +1360,9 @@ class GameActivity : AppCompatActivity() {
         // Disable UI during enemy turn
         setUIEnabled(false)
 
-        // Process all enemy units with a delay between actions
+        // Process all enemy units sequentially with delays
         val enemies = gameState.getAliveEnemyCharacters()
-        val delayBetweenActions = if (skipEnemyAnimations) 50L else 800L
-        var delayMs = if (skipEnemyAnimations) 100L else 500L
+        var delayMs = 500L
 
         enemies.forEach { enemy ->
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -1375,7 +1375,8 @@ class GameActivity : AppCompatActivity() {
                     updateUI()
                 }
             }, delayMs)
-            delayMs += delayBetweenActions
+            // Recheck skip state dynamically so mid-turn skip is responsive
+            delayMs += if (skipEnemyAnimations) 50L else 800L
         }
 
         // End enemy turn after all actions complete
@@ -1457,7 +1458,14 @@ class GameActivity : AppCompatActivity() {
     private fun showCharacterInfo(character: Character) {
         binding.characterInfoPanel.visibility = android.view.View.VISIBLE
         binding.characterName.text = "${character.name} (${character.characterClass.displayName})"
-        binding.characterStats.text = character.currentStats.toDisplayString()
+        val statsText =
+            buildString {
+                append("HP: ${character.currentHp}/${character.maxHp}")
+                append(" | ATK: ${character.currentStats.attack}")
+                append(" | DEF: ${character.currentStats.defense}")
+                append(" | SPD: ${character.currentStats.speed}")
+            }
+        binding.characterStats.text = statsText
     }
 
     private fun hideCharacterInfo() {
@@ -1961,35 +1969,15 @@ class GameActivity : AppCompatActivity() {
         val tile = gameState.board.getTile(position) ?: return
         val terrain = tile.terrain
 
-        val terrainInfo =
+        // Show terrain info in the character info panel for non-blocking UX
+        binding.characterInfoPanel.visibility = android.view.View.VISIBLE
+        binding.characterName.text = "${terrain.displayName} Terrain"
+        val statsText =
             buildString {
-                append("Terrain: ${terrain.displayName}\n\n")
-                append("Movement Cost: ${terrain.movementCost}\n")
-                append("Defense Bonus: +${terrain.defensiveBonus}\n")
-                append("Avoidance Bonus: +${terrain.avoidanceBonus}%\n\n")
-
-                when (terrain) {
-                    com.gameaday.opentactics.model.TerrainType.FOREST ->
-                        append("Dense forest provides cover and slows movement.")
-                    com.gameaday.opentactics.model.TerrainType.MOUNTAIN ->
-                        append("High ground offers excellent defensive position but is hard to traverse.")
-                    com.gameaday.opentactics.model.TerrainType.FORT ->
-                        append("Fortified position provides strong defensive bonuses.")
-                    com.gameaday.opentactics.model.TerrainType.VILLAGE ->
-                        append("Village tiles offer moderate defensive bonus.")
-                    com.gameaday.opentactics.model.TerrainType.WATER ->
-                        append("Water is impassable for most units. Only flying units can cross.")
-                    else ->
-                        append("Open terrain with no special properties.")
-                }
+                append("Move: ${terrain.movementCost} | Def: +${terrain.defensiveBonus}")
+                append(" | Avoid: +${terrain.avoidanceBonus}%")
             }
-
-        AlertDialog
-            .Builder(this)
-            .setTitle("Terrain Info")
-            .setMessage(terrainInfo)
-            .setPositiveButton("OK", null)
-            .show()
+        binding.characterStats.text = statsText
     }
 
     private fun showHelpDialog() {

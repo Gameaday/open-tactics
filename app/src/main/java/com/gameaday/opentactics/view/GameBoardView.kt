@@ -43,6 +43,9 @@ class GameBoardView
         private var highlightedAttacks: List<Position> = emptyList()
         private var highlightedEnemyRanges: List<Position> = emptyList()
 
+        // DPI density for consistent sizing across devices
+        private val density = context.resources.displayMetrics.density
+
         // Animation properties
         private var shakeOffsetX: Float = 0f
         private var shakeOffsetY: Float = 0f
@@ -96,7 +99,6 @@ class GameBoardView
 
         // Icon resources
         // Character class icons mapping
-        // New classes (Pegasus Knight, Wyvern Rider, Manakete, Dragon) will use fallback text rendering
         private val iconMap =
             mapOf(
                 CharacterClass.KNIGHT to R.drawable.ic_knight,
@@ -104,6 +106,8 @@ class GameBoardView
                 CharacterClass.MAGE to R.drawable.ic_mage,
                 CharacterClass.HEALER to R.drawable.ic_healer,
                 CharacterClass.THIEF to R.drawable.ic_thief,
+                CharacterClass.PEGASUS_KNIGHT to R.drawable.ic_pegasus_knight,
+                CharacterClass.WYVERN_RIDER to R.drawable.ic_wyvern_rider,
             )
 
         // Gesture handling
@@ -389,6 +393,12 @@ class GameBoardView
 
             val tileRadius = tileSize * 0.4f
 
+            // Determine if unit has acted (dim if so, player units only)
+            val hasActed =
+                character.team == Team.PLAYER &&
+                    (character.hasActedThisTurn || (character.hasMovedThisTurn && !character.canAct))
+            val alphaValue = if (hasActed) 120 else 255
+
             // Draw character background circle
             val (primaryColor, secondaryColor) =
                 when (character.team) {
@@ -399,10 +409,12 @@ class GameBoardView
 
             // Draw outer circle (primary color)
             tilePaint.color = primaryColor
+            tilePaint.alpha = alphaValue
             canvas.drawCircle(centerX, centerY, tileRadius, tilePaint)
 
             // Draw inner circle (secondary color)
             tilePaint.color = secondaryColor
+            tilePaint.alpha = alphaValue
             canvas.drawCircle(centerX, centerY, tileRadius * 0.8f, tilePaint)
 
             // Draw character class icon
@@ -411,6 +423,7 @@ class GameBoardView
                 val drawable = ContextCompat.getDrawable(context, iconResId) as? VectorDrawable
                 drawable?.let { icon ->
                     icon.setTint(primaryColor)
+                    icon.alpha = alphaValue
                     val iconSize = (tileRadius * 1.2f).toInt()
                     val iconLeft = (centerX - iconSize / 2f).toInt()
                     val iconTop = (centerY - iconSize / 2f).toInt()
@@ -421,6 +434,7 @@ class GameBoardView
                 // Fallback: draw class initial using iconPaint
                 iconPaint.textSize = tileRadius
                 iconPaint.color = primaryColor
+                iconPaint.alpha = alphaValue
                 val classInitial =
                     character.characterClass.displayName
                         .first()
@@ -428,24 +442,28 @@ class GameBoardView
                 canvas.drawText(classInitial, centerX, centerY + tileRadius / 3f, iconPaint)
             }
 
-            // Draw HP bar if damaged
+            // Reset alpha for non-dimmed elements
+            tilePaint.alpha = 255
+            iconPaint.alpha = 255
+
+            // Draw HP bar if damaged (DPI-aware positioning)
             if (character.currentHp < character.maxHp) {
-                drawHealthBar(canvas, character, centerX, centerY - tileRadius - 15f)
+                drawHealthBar(canvas, character, centerX, centerY - tileRadius - 4f * density)
             }
 
-            // Draw level indicator
+            // Draw level indicator (DPI-aware positioning)
             textPaint.textSize = tileSize * 0.2f
             textPaint.color = Color.WHITE
             canvas.drawText(
                 "L${character.level}",
                 centerX,
-                centerY + tileRadius + 20f,
+                centerY + tileRadius + 5f * density,
                 textPaint,
             )
 
-            // Draw boss indicator (crown)
+            // Draw boss indicator (crown) with DPI-aware offset
             if (isBossUnit(character)) {
-                drawBossIndicator(canvas, centerX, centerY - tileRadius - 30f)
+                drawBossIndicator(canvas, centerX, centerY - tileRadius - 8f * density)
             }
         }
 
@@ -472,7 +490,7 @@ class GameBoardView
             y: Float,
         ) {
             val barWidth = tileSize * 0.8f
-            val barHeight = 8f
+            val barHeight = 3f * density
             val healthRatio = character.currentHp.toFloat() / character.maxHp
 
             // Background (damaged portion)
@@ -518,18 +536,20 @@ class GameBoardView
             gestureDetector.onTouchEvent(event) ||
                 super.onTouchEvent(event)
 
+        @Suppress("ReturnCount") // Guard clauses validate touch coordinates before board lookup
         private fun screenToBoard(
             screenX: Float,
             screenY: Float,
         ): Position? {
-            val boardX = ((screenX - boardOffsetX) / tileSize).toInt()
-            val boardY = ((screenY - boardOffsetY) / tileSize).toInt()
+            val board = gameState?.board ?: return null
+            if (tileSize <= 0f) return null
 
-            val gameState = this.gameState ?: return null
-            return if (gameState.board.isValidPosition(Position(boardX, boardY))) {
-                Position(boardX, boardY)
-            } else {
-                null
-            }
+            val rawX = (screenX - boardOffsetX) / tileSize
+            val rawY = (screenY - boardOffsetY) / tileSize
+
+            // Reject touches outside the board area and validate position
+            if (rawX < 0f || rawY < 0f) return null
+            val boardPos = Position(rawX.toInt(), rawY.toInt())
+            return boardPos.takeIf { board.isValidPosition(it) }
         }
     }
