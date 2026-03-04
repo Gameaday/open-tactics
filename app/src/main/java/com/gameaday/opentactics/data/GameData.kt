@@ -120,7 +120,7 @@ object AchievementRepository {
         ) {
             earned.add("hard_mode")
         }
-        if ("pacifist_turn" !in already && profile.totalBattlesWon >= 5) earned.add("pacifist_turn")
+        if ("seasoned_warrior" !in already && profile.totalBattlesWon >= 5) earned.add("seasoned_warrior")
         if ("chapter_5" !in already && profile.totalBattlesWon >= 5) earned.add("chapter_5")
         if ("chapter_10" !in already && profile.totalBattlesWon >= 10) earned.add("chapter_10")
         if ("chapter_15" !in already && profile.totalBattlesWon >= 15) earned.add("chapter_15")
@@ -184,9 +184,9 @@ object AchievementRepository {
                     name = "Dawn of Victory",
                     description = "Complete the Finale",
                 ),
-            "pacifist_turn" to
+            "seasoned_warrior" to
                 Achievement(
-                    id = "pacifist_turn",
+                    id = "seasoned_warrior",
                     name = "Seasoned Warrior",
                     description = "Win 5 battles",
                 ),
