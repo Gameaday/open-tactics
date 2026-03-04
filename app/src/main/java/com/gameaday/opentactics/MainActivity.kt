@@ -79,7 +79,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSettings.setOnClickListener {
-            showSettingsDialog()
+            startActivity(Intent(this, SettingsActivity::class.java))
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
 
         binding.btnAbout.setOnClickListener {
@@ -467,6 +469,8 @@ class MainActivity : AppCompatActivity() {
                     putExtra(ChapterSelectActivity.EXTRA_UNLOCKED_CHAPTER, 1) // Start with chapter 1
                 }
             startActivity(intent)
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         } else {
             // For loading saved games, go directly to game
             val intent =
@@ -476,6 +480,8 @@ class MainActivity : AppCompatActivity() {
                     saveId?.let { putExtra(GameActivity.EXTRA_LOAD_SAVE_ID, it) }
                 }
             startActivity(intent)
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
         }
     }
 

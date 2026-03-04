@@ -60,6 +60,7 @@ data class PlayerProfile(
 data class GamePreferences(
     val musicEnabled: Boolean = true,
     val soundEffectsEnabled: Boolean = true,
+    val hapticEnabled: Boolean = true,
     val animationSpeed: Float = 1.0f,
     val showDamageNumbers: Boolean = true,
     val autoSaveEnabled: Boolean = true,

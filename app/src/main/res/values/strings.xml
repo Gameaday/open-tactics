@@ -90,4 +90,30 @@
     <string name="cd_skip_enemy_turn">Skip enemy turn animations</string>
     <string name="cd_back">Go back</string>
     <string name="cd_app_logo">Open Tactics game logo</string>
+
+    <!-- Settings Activity -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_player_name">Player Name</string>
+    <string name="settings_difficulty">Difficulty</string>
+    <string name="settings_section_audio">Audio &amp; Feedback</string>
+    <string name="settings_music">Music</string>
+    <string name="settings_sound_effects">Sound Effects</string>
+    <string name="settings_haptic">Haptic Feedback</string>
+    <string name="settings_section_gameplay">Gameplay</string>
+    <string name="settings_animation_speed">Animation Speed</string>
+    <string name="settings_damage_numbers">Show Damage Numbers</string>
+    <string name="settings_autosave">Auto-save</string>
+    <string name="settings_autosave_freq">Auto-save Frequency</string>
+
+    <!-- Settings content descriptions -->
+    <string name="cd_settings_player_name">Edit player name</string>
+    <string name="cd_settings_difficulty">Change difficulty level</string>
+    <string name="cd_settings_music">Toggle music</string>
+    <string name="cd_settings_sfx">Toggle sound effects</string>
+    <string name="cd_settings_haptic">Toggle haptic feedback</string>
+    <string name="cd_settings_anim_speed">Change animation speed</string>
+    <string name="cd_settings_damage">Toggle damage numbers</string>
+    <string name="cd_settings_autosave">Toggle auto-save</string>
+    <string name="cd_settings_autosave_freq">Change auto-save frequency</string>
+    <string name="cd_settings_back">Return to main menu</string>
 </resources>

@@ -12,6 +12,7 @@ import com.gameaday.opentactics.data.AchievementRepository
 import com.gameaday.opentactics.data.CampaignProgress
 import com.gameaday.opentactics.data.GamePreferences
 import com.gameaday.opentactics.data.GameSave
+import com.gameaday.opentactics.data.HapticManager
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.data.SavedGameState
@@ -36,6 +37,7 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameBoardView: GameBoardView
     private lateinit var saveGameManager: SaveGameManager
     private lateinit var soundManager: SoundManager
+    private lateinit var hapticManager: HapticManager
 
     private var playerProfile: PlayerProfile? = null
     private var currentGameSave: GameSave? = null
@@ -79,6 +81,7 @@ class GameActivity : AppCompatActivity() {
 
         saveGameManager = SaveGameManager(this)
         soundManager = SoundManager(this)
+        hapticManager = HapticManager(this)
         loadPlayerProfile()
         applySoundPreferences()
 
@@ -121,6 +124,7 @@ class GameActivity : AppCompatActivity() {
             musicEnabled = prefs?.musicEnabled ?: true,
             sfxEnabled = prefs?.soundEffectsEnabled ?: true,
         )
+        hapticManager.setEnabled(prefs?.hapticEnabled ?: true)
     }
 
     private fun savePlayerProfile() {
@@ -1651,6 +1655,13 @@ class GameActivity : AppCompatActivity() {
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
+        // Haptic feedback for combat
+        if (result.wasCritical) {
+            hapticManager.vibrateCritical()
+        } else {
+            hapticManager.vibrateAttack()
+        }
+
         // Track chapter statistics
         if (result.attacker.team == Team.PLAYER) {
             chapterDamageDealt += result.damage
@@ -1776,6 +1787,9 @@ class GameActivity : AppCompatActivity() {
         newLevel: Int,
         statGains: Stats,
     ) {
+        // Haptic feedback for level-up
+        hapticManager.vibrateLevelUp()
+
         // Show level up dialog with stat increases
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             val oldStats = character.currentStats - statGains
@@ -1899,6 +1913,9 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showVictoryScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        // Haptic feedback for victory
+        hapticManager.vibrateVictory()
+
         // Update profile statistics
         playerProfile =
             playerProfile?.copy(

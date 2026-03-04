@@ -54,6 +54,9 @@ class GameBoardView
         private var animatingCharacter: Character? = null
         private var animatingTarget: Character? = null
 
+        // Drawable cache to avoid repeated resource lookups per frame
+        private val drawableCache = mutableMapOf<Int, android.graphics.drawable.Drawable?>()
+
         // Paints
         private val tilePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val gridPaint =
@@ -138,6 +141,10 @@ class GameBoardView
             )
 
         var onTileClicked: ((Position) -> Unit)? = null
+
+        /** Get a drawable from cache or load it once. */
+        private fun getCachedDrawable(resId: Int): android.graphics.drawable.Drawable? =
+            drawableCache.getOrPut(resId) { ContextCompat.getDrawable(context, resId) }
 
         fun setGameState(gameState: GameState) {
             this.gameState = gameState
@@ -329,7 +336,7 @@ class GameBoardView
             if (tile.terrain != TerrainType.PLAIN) {
                 val iconResId = terrainIconMap[tile.terrain]
                 if (iconResId != null) {
-                    val drawable = ContextCompat.getDrawable(context, iconResId)
+                    val drawable = getCachedDrawable(iconResId)
                     if (drawable != null) {
                         val iconPadding = (tileSize * 0.15f).toInt()
                         drawable.setBounds(
@@ -441,7 +448,7 @@ class GameBoardView
             // Draw character class icon
             val iconResId = iconMap[character.characterClass]
             if (iconResId != null) {
-                val drawable = ContextCompat.getDrawable(context, iconResId) as? VectorDrawable
+                val drawable = getCachedDrawable(iconResId) as? VectorDrawable
                 drawable?.let { icon ->
                     icon.setTint(primaryColor)
                     icon.alpha = alphaValue
