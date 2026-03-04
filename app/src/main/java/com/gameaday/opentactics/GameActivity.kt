@@ -1475,14 +1475,28 @@ class GameActivity : AppCompatActivity() {
     private fun showCharacterInfo(character: Character) {
         binding.characterInfoPanel.visibility = android.view.View.VISIBLE
         binding.characterName.text = "${character.name} (${character.characterClass.displayName})"
+        binding.characterLevel.text = "Lv ${character.level}  EXP: ${character.experience}/100"
         val statsText =
             buildString {
                 append("HP: ${character.currentHp}/${character.maxHp}")
                 append(" | ATK: ${character.currentStats.attack}")
                 append(" | DEF: ${character.currentStats.defense}")
-                append(" | SPD: ${character.currentStats.speed}")
             }
         binding.characterStats.text = statsText
+        val extraStatsText =
+            buildString {
+                append("SPD: ${character.currentStats.speed}")
+                append(" | SKL: ${character.currentStats.skill}")
+                append(" | LCK: ${character.currentStats.luck}")
+            }
+        binding.characterStatsExtra.text = extraStatsText
+        val weapon = character.equippedWeapon
+        binding.characterWeapon.text =
+            if (weapon != null) {
+                "⚔ ${weapon.name} (${weapon.currentUses}/${weapon.maxUses})"
+            } else {
+                "⚔ No weapon"
+            }
     }
 
     private fun hideCharacterInfo() {
@@ -1979,6 +1993,24 @@ class GameActivity : AppCompatActivity() {
         // Update turn counter
         binding.turnCounter.text = "Turn: ${gameState.turnCount}"
 
+        // Update turn phase indicator
+        if (isPlayerTurn) {
+            binding.turnPhaseIndicator.text = "▶ Player Phase"
+            binding.turnPhaseIndicator.setTextColor(
+                resources.getColor(R.color.player_blue, theme),
+            )
+        } else {
+            binding.turnPhaseIndicator.text = "▶ Enemy Phase"
+            binding.turnPhaseIndicator.setTextColor(
+                resources.getColor(R.color.enemy_red, theme),
+            )
+        }
+
+        // Update unit counts
+        val allyCount = gameState.getAlivePlayerCharacters().size
+        val foeCount = gameState.getAliveEnemyCharacters().size
+        binding.unitCountDisplay.text = "Allies: $allyCount  Foes: $foeCount"
+
         gameBoardView.invalidate()
     }
 
@@ -1989,12 +2021,15 @@ class GameActivity : AppCompatActivity() {
         // Show terrain info in the character info panel for non-blocking UX
         binding.characterInfoPanel.visibility = android.view.View.VISIBLE
         binding.characterName.text = "${terrain.displayName} Terrain"
+        binding.characterLevel.text = ""
         val statsText =
             buildString {
                 append("Move: ${terrain.movementCost} | Def: +${terrain.defensiveBonus}")
                 append(" | Avoid: +${terrain.avoidanceBonus}%")
             }
         binding.characterStats.text = statsText
+        binding.characterStatsExtra.text = ""
+        binding.characterWeapon.text = ""
     }
 
     private fun showHelpDialog() {

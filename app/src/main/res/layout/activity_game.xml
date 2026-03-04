@@ -112,6 +112,16 @@
             android:text="Defeat all enemies" />
 
         <TextView
+            android:id="@+id/turnPhaseIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/player_blue"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:text="Player Phase" />
+
+        <TextView
             android:id="@+id/turnCounter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -119,6 +129,15 @@
             android:textColor="@color/white"
             android:textSize="11sp"
             android:text="Turn: 1" />
+
+        <TextView
+            android:id="@+id/unitCountDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:text="Allies: 0  Foes: 0" />
 
     </LinearLayout>
     
@@ -190,12 +209,36 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/characterLevel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/teal_200"
+            android:textSize="11sp" />
+
+        <TextView
             android:id="@+id/characterStats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textColor="@color/white"
             android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/characterStatsExtra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/characterWeapon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/teal_200"
+            android:textSize="11sp" />
 
     </LinearLayout>
 

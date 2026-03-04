@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Manakete and Dragon class icons** — vector drawable icons for the remaining 2 character classes (all 9 now have icons)
+- **Enhanced character info panel** — shows Level/EXP, all 7 stats (HP/ATK/DEF/SPD/SKL/LCK), and equipped weapon with durability
+- **Turn phase indicator** — HUD now shows "▶ Player Phase" or "▶ Enemy Phase" with color coding (blue/red)
+- **Unit count display** — HUD shows surviving ally and enemy unit counts
 - **20-Chapter Campaign** across 4 acts (Defense, Counterattack, Invasion, Finale)
 - **17 unique map layouts** including river crossings, fortress interiors, and dragon lairs
 - **Difficulty modes** (Easy/Normal/Hard) with enemy stat and EXP scaling

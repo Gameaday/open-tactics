@@ -109,6 +109,8 @@ class GameBoardView
                 CharacterClass.THIEF to R.drawable.ic_thief,
                 CharacterClass.PEGASUS_KNIGHT to R.drawable.ic_pegasus_knight,
                 CharacterClass.WYVERN_RIDER to R.drawable.ic_wyvern_rider,
+                CharacterClass.MANAKETE to R.drawable.ic_manakete,
+                CharacterClass.DRAGON to R.drawable.ic_dragon,
             )
 
         // Gesture handling
