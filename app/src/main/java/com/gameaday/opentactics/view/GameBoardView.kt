@@ -270,12 +270,10 @@ class GameBoardView
             // Draw enemy range highlights (red semi-transparent)
             drawHighlights(canvas, highlightedEnemyRanges, Color.argb(80, 255, 0, 0))
 
-            // Draw selected character highlight
-            selectedPosition?.let { pos ->
+            // Draw selected character highlight (use selectedPosition, or fall back to character position)
+            val highlightPos = selectedPosition ?: gameState.selectedCharacter?.position
+            highlightPos?.let { pos ->
                 drawHighlight(canvas, pos, selectedHighlightColor)
-            }
-            gameState.selectedCharacter?.let { character ->
-                drawHighlight(canvas, character.position, selectedHighlightColor)
             }
 
             // Draw characters with proper icons

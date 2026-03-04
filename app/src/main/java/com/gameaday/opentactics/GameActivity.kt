@@ -1170,7 +1170,6 @@ class GameActivity : AppCompatActivity() {
                 updatePreferences(newPrefs)
                 Toast.makeText(this, "Auto-save every $newFrequency turns", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-                showSettingsDialog()
             }.setNegativeButton("Cancel", null)
             .show()
     }
@@ -1355,7 +1354,7 @@ class GameActivity : AppCompatActivity() {
         if (gameState.currentTurn == Team.ENEMY) {
             // Start animated enemy turn
             executeEnemyTurn()
-        } else if (gameState.currentTurn == Team.PLAYER) {
+        } else {
             Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
             checkGameEnd()
 
