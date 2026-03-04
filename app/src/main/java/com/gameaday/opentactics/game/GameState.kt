@@ -1,5 +1,6 @@
 package com.gameaday.opentactics.game
 
+import com.gameaday.opentactics.factory.WeaponFactory
 import com.gameaday.opentactics.model.AIBehavior
 import com.gameaday.opentactics.model.Chapter
 import com.gameaday.opentactics.model.Character
@@ -245,7 +246,6 @@ class GameState(
                 gamePhase = GamePhase.ENEMY_TURN
                 turnCount++
                 spawnReinforcements() // Spawn reinforcements at start of enemy turn
-                executeEnemyTurn()
             }
             Team.ENEMY -> {
                 // Reset all enemy units
@@ -268,15 +268,14 @@ class GameState(
         executeAIBehavior(enemy, behavior)
     }
 
-    private fun executeEnemyTurn() {
-        // Execute AI for each enemy unit based on their behavior
+    /**
+     * Execute all enemy AI actions at once (for non-animated/test use)
+     */
+    fun executeAllEnemyActions() {
         for (enemy in enemyCharacters.filter { it.isAlive && it.canAct }) {
             val behavior = getEnemyBehavior(enemy)
             executeAIBehavior(enemy, behavior)
         }
-
-        // End enemy turn
-        endTurn()
     }
 
     /**
@@ -723,6 +722,7 @@ class GameState(
     }
 
     private fun removeDefeatedCharacter(character: Character) {
+        board.removeCharacter(character)
         when (character.team) {
             Team.PLAYER -> playerCharacters.remove(character)
             Team.ENEMY -> enemyCharacters.remove(character)
@@ -825,9 +825,15 @@ class GameState(
                         position = spawn.position,
                         level = spawn.level,
                     )
-                // Add weapons from equipment list
+                // Equip weapons from equipment list using WeaponFactory
                 spawn.equipment.forEach { weaponId ->
-                    // Weapon factory would go here
+                    WeaponFactory.createWeapon(weaponId)?.let { weapon ->
+                        reinforcement.addWeapon(weapon)
+                    }
+                }
+                // Fallback: ensure reinforcement has at least a default weapon
+                if (reinforcement.inventory.isEmpty()) {
+                    reinforcement.addWeapon(WeaponFactory.getDefaultWeapon(spawn.characterClass))
                 }
                 addEnemyCharacter(reinforcement)
                 board.placeCharacter(reinforcement, spawn.position)

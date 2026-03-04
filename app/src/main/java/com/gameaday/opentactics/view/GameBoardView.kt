@@ -42,6 +42,7 @@ class GameBoardView
         private var highlightedMoves: List<Position> = emptyList()
         private var highlightedAttacks: List<Position> = emptyList()
         private var highlightedEnemyRanges: List<Position> = emptyList()
+        private var selectedPosition: Position? = null
 
         // DPI density for consistent sizing across devices
         private val density = context.resources.displayMetrics.density
@@ -150,6 +151,12 @@ class GameBoardView
             highlightedMoves = emptyList()
             highlightedAttacks = emptyList()
             highlightedEnemyRanges = emptyList()
+            selectedPosition = null
+            invalidate()
+        }
+
+        fun setSelectedPosition(position: Position?) {
+            selectedPosition = position
             invalidate()
         }
 
@@ -264,6 +271,9 @@ class GameBoardView
             drawHighlights(canvas, highlightedEnemyRanges, Color.argb(80, 255, 0, 0))
 
             // Draw selected character highlight
+            selectedPosition?.let { pos ->
+                drawHighlight(canvas, pos, selectedHighlightColor)
+            }
             gameState.selectedCharacter?.let { character ->
                 drawHighlight(canvas, character.position, selectedHighlightColor)
             }
@@ -306,22 +316,24 @@ class GameBoardView
 
             // Add terrain indicators
             if (tile.terrain != TerrainType.PLAIN) {
-                textPaint.textSize = tileSize * 0.2f
+                textPaint.textSize = tileSize * 0.3f
+                textPaint.color = Color.argb(180, 255, 255, 255)
                 val terrainSymbol =
                     when (tile.terrain) {
-                        TerrainType.FOREST -> "♠"
+                        TerrainType.FOREST -> "♣"
                         TerrainType.MOUNTAIN -> "▲"
-                        TerrainType.FORT -> "⌂"
-                        TerrainType.VILLAGE -> "⌂"
-                        TerrainType.WATER -> "~"
+                        TerrainType.FORT -> "⚑"
+                        TerrainType.VILLAGE -> "♦"
+                        TerrainType.WATER -> "≈"
                         else -> ""
                     }
                 canvas.drawText(
                     terrainSymbol,
-                    left + tileSize * 0.85f,
-                    top + tileSize * 0.25f,
+                    left + tileSize * 0.5f,
+                    top + tileSize * 0.35f,
                     textPaint,
                 )
+                textPaint.color = Color.WHITE
             }
         }
 

@@ -455,7 +455,12 @@ class GameActivity : AppCompatActivity() {
             skipEnemyAnimations = true
         }
 
-        // Add save/load buttons to the overflow menu
+        // Menu button
+        binding.btnMenu.setOnClickListener {
+            showGameMenu()
+        }
+
+        // Long-press on game board also opens menu
         binding.root.setOnLongClickListener {
             showGameMenu()
             true
@@ -1081,7 +1086,6 @@ class GameActivity : AppCompatActivity() {
                 "Music ${if (newPrefs.musicEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog() // Refresh dialog
     }
 
     private fun toggleSoundEffectsSetting() {
@@ -1094,7 +1098,6 @@ class GameActivity : AppCompatActivity() {
                 "Sound effects ${if (newPrefs.soundEffectsEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog()
     }
 
     private fun changeAnimationSpeed() {
@@ -1125,8 +1128,7 @@ class GameActivity : AppCompatActivity() {
                 updatePreferences(newPrefs)
                 Toast.makeText(this, "Animation speed set to ${newSpeed}x", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-                showSettingsDialog()
-            }.setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -1140,7 +1142,6 @@ class GameActivity : AppCompatActivity() {
                 "Auto-save ${if (newPrefs.autoSaveEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog()
     }
 
     private fun changeAutoSaveFrequency() {
@@ -1170,7 +1171,7 @@ class GameActivity : AppCompatActivity() {
                 Toast.makeText(this, "Auto-save every $newFrequency turns", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 showSettingsDialog()
-            }.setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -1195,82 +1196,101 @@ class GameActivity : AppCompatActivity() {
 
     private fun handleTileClick(position: Position) {
         when (gameState.gamePhase) {
-            GameState.GamePhase.UNIT_SELECT -> {
-                val character = gameState.board.getCharacterAt(position)
-                if (character != null && gameState.canSelectCharacter(character)) {
-                    gameState.selectCharacter(character)
-                    showCharacterInfo(character)
-                    updateUI()
-                } else {
-                    // Show terrain info when clicking empty tile
-                    showTerrainTooltip(position)
-                }
-            }
-            GameState.GamePhase.MOVEMENT -> {
-                val selectedCharacter = gameState.selectedCharacter
-                if (selectedCharacter != null) {
-                    val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
-                    if (position in possibleMoves) {
-                        // Store previous position for undo
-                        previousPosition = selectedCharacter.position
-                        canUndoMove = true
-                        binding.btnUndo.visibility = android.view.View.VISIBLE
-
-                        gameState.board.moveCharacter(selectedCharacter, position)
-                        selectedCharacter.hasMovedThisTurn = true
-                        gameState.gamePhase =
-                            if (selectedCharacter.canAct) {
-                                GameState.GamePhase.ACTION
-                            } else {
-                                GameState.GamePhase.UNIT_SELECT
-                            }
-                        gameBoardView.clearHighlights()
-                        updateUI()
-                    }
-                }
-            }
-            GameState.GamePhase.ACTION -> {
-                val selectedCharacter = gameState.selectedCharacter
-                if (selectedCharacter != null) {
-                    val targetCharacter = gameState.board.getCharacterAt(position)
-                    if (targetCharacter != null) {
-                        // Check if clicking on an adjacent ally for trading
-                        if (targetCharacter.team == selectedCharacter.team &&
-                            selectedCharacter.position.distanceTo(targetCharacter.position) == 1
-                        ) {
-                            // Offer trade option
-                            AlertDialog
-                                .Builder(this)
-                                .setTitle("${targetCharacter.name}")
-                                .setItems(arrayOf("Trade Items", "Cancel")) { _, which ->
-                                    if (which == 0) {
-                                        showTradeDialog(selectedCharacter, targetCharacter)
-                                    }
-                                }.show()
-                            return
-                        }
-
-                        // Check if using a healing staff
-                        val weapon = selectedCharacter.equippedWeapon
-                        if (weapon != null && weapon.canHeal) {
-                            // Handle healing action
-                            val healTargets = gameState.calculateHealTargets(selectedCharacter)
-                            if (targetCharacter in healTargets) {
-                                showHealConfirmation(selectedCharacter, targetCharacter)
-                            }
-                        } else {
-                            // Handle attack action
-                            val attackTargets = gameState.calculateAttackTargets(selectedCharacter)
-                            if (targetCharacter in attackTargets) {
-                                // Show battle forecast before attacking
-                                showBattleForecast(selectedCharacter, targetCharacter)
-                            }
-                        }
-                    }
-                }
-            }
+            GameState.GamePhase.UNIT_SELECT -> handleUnitSelectClick(position)
+            GameState.GamePhase.MOVEMENT -> handleMovementClick(position)
+            GameState.GamePhase.ACTION -> handleActionClick(position)
             else -> {}
         }
+    }
+
+    private fun handleUnitSelectClick(position: Position) {
+        val character = gameState.board.getCharacterAt(position)
+        if (character != null && gameState.canSelectCharacter(character)) {
+            gameState.selectCharacter(character)
+            showCharacterInfo(character)
+            gameBoardView.setSelectedPosition(position)
+            updateUI()
+        } else if (character != null && character.team == Team.ENEMY) {
+            // Show enemy info when tapping enemy units
+            showCharacterInfo(character)
+        } else {
+            // Deselect current unit and show terrain info on empty tile
+            gameState.selectCharacter(null)
+            gameBoardView.setSelectedPosition(null)
+            gameBoardView.clearHighlights()
+            hideCharacterInfo()
+            showTerrainTooltip(position)
+            updateUI()
+        }
+    }
+
+    private fun handleMovementClick(position: Position) {
+        val selectedCharacter = gameState.selectedCharacter ?: return
+        val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
+        if (position in possibleMoves) {
+            // Store previous position for undo
+            previousPosition = selectedCharacter.position
+            canUndoMove = true
+            binding.btnUndo.visibility = android.view.View.VISIBLE
+
+            gameState.board.moveCharacter(selectedCharacter, position)
+            selectedCharacter.hasMovedThisTurn = true
+            gameState.gamePhase =
+                if (selectedCharacter.canAct) {
+                    GameState.GamePhase.ACTION
+                } else {
+                    GameState.GamePhase.UNIT_SELECT
+                }
+            gameBoardView.clearHighlights()
+            gameBoardView.setSelectedPosition(position)
+            updateUI()
+        } else {
+            // Tapping outside valid moves cancels movement mode
+            gameBoardView.clearHighlights()
+            gameState.gamePhase = GameState.GamePhase.UNIT_SELECT
+            updateUI()
+        }
+    }
+
+    private fun handleActionClick(position: Position) {
+        val selectedCharacter = gameState.selectedCharacter ?: return
+        val targetCharacter = gameState.board.getCharacterAt(position) ?: return
+
+        // Check if clicking on an adjacent ally for trading
+        if (targetCharacter.team == selectedCharacter.team &&
+            selectedCharacter.position.distanceTo(targetCharacter.position) == 1
+        ) {
+            showTradePrompt(selectedCharacter, targetCharacter)
+            return
+        }
+
+        // Check if using a healing staff
+        val weapon = selectedCharacter.equippedWeapon
+        if (weapon != null && weapon.canHeal) {
+            val healTargets = gameState.calculateHealTargets(selectedCharacter)
+            if (targetCharacter in healTargets) {
+                showHealConfirmation(selectedCharacter, targetCharacter)
+            }
+        } else {
+            val attackTargets = gameState.calculateAttackTargets(selectedCharacter)
+            if (targetCharacter in attackTargets) {
+                showBattleForecast(selectedCharacter, targetCharacter)
+            }
+        }
+    }
+
+    private fun showTradePrompt(
+        source: Character,
+        target: Character,
+    ) {
+        AlertDialog
+            .Builder(this)
+            .setTitle(target.name)
+            .setItems(arrayOf("Trade Items", "Cancel")) { _, which ->
+                if (which == 0) {
+                    showTradeDialog(source, target)
+                }
+            }.show()
     }
 
     private fun handleMoveAction() {
@@ -1332,20 +1352,18 @@ class GameActivity : AppCompatActivity() {
         turnsSinceLastSave++
         updateUI()
 
-        if (gameState.currentTurn == Team.PLAYER) {
-            Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
-
-            // Check game end conditions at start of player turn
-            checkGameEnd()
-        } else if (gameState.currentTurn == Team.ENEMY) {
-            // Start enemy turn automation
+        if (gameState.currentTurn == Team.ENEMY) {
+            // Start animated enemy turn
             executeEnemyTurn()
-        }
+        } else if (gameState.currentTurn == Team.PLAYER) {
+            Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+            checkGameEnd()
 
-        // Check for auto-save
-        val preferences = playerProfile?.preferences
-        if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
-            performAutoSave()
+            // Check for auto-save
+            val preferences = playerProfile?.preferences
+            if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
+                performAutoSave()
+            }
         }
     }
 

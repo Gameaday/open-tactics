@@ -195,15 +195,15 @@ class GameStateTest {
         assertEquals(Team.PLAYER, gameState.currentTeam)
         assertEquals(0, gameState.turnCounter)
 
-        // endTurn() from PLAYER switches to ENEMY, executes enemy turn (which is instant if no enemies),
-        // then automatically switches back to PLAYER with incremented turn counter
+        // endTurn() from PLAYER switches to ENEMY with incremented turn counter
         gameState.endTurn()
-        assertEquals(Team.PLAYER, gameState.currentTeam) // Back to PLAYER after empty enemy turn
-        assertEquals(1, gameState.turnCounter) // Turn counter incremented
+        assertEquals(Team.ENEMY, gameState.currentTeam)
+        assertEquals(1, gameState.turnCounter)
 
+        // endTurn() from ENEMY switches back to PLAYER
         gameState.endTurn()
         assertEquals(Team.PLAYER, gameState.currentTeam)
-        assertEquals(2, gameState.turnCounter)
+        assertEquals(1, gameState.turnCounter) // Only increments on player->enemy transition
     }
 
     @Test
@@ -225,9 +225,8 @@ class GameStateTest {
         assertFalse(character.canAct)
 
         // End turn should reset actions
-        gameState.endTurn() // Switch to enemy
-        gameState.endTurn() // Back to player, should reset actions
+        gameState.endTurn() // Switch to enemy (resets player units)
 
-        assertTrue(character.canAct)
+        assertTrue(character.canAct) // Player actions reset on player->enemy transition
     }
 }
