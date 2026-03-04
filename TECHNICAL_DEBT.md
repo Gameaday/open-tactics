@@ -40,6 +40,20 @@ This document tracks technical debt items. Most critical items from the original
 - Game Logic: ~38% per-class
 - 22+ unit test files, 4 instrumented test files
 
+### 6. UI/UX Polish (Phase 1)
+- **Status:** ✅ Implemented
+- Main menu branding: crossed swords logo, tagline, version label
+- Launcher icon: dark blue theme with gold accent shield
+- Accessibility: contentDescription on all 14 interactive buttons
+- String resources: extracted hardcoded text, proper ellipsis
+- Chapter select: subtitle with act information
+- SoundManager: SoundPool-based audio infrastructure with 9 effect types
+- SoundManager integration: connected in both MainActivity and GameActivity
+- Vector graphics: enhanced all 9 character class icons with detailed multi-path designs
+- Terrain icons: created 6 terrain type drawables integrated into board rendering
+- Rounded HUD panels: bg_panel_rounded.xml with gold border accent
+- Button effects: gold ripple feedback on all game buttons
+
 ---
 
 ## 🔄 Deferred / Low Priority
@@ -67,6 +81,56 @@ Current warnings from `--warning-mode all`:
 **Location:** `GameActivity.kt` — `emptyList(), // TODO: Track throne units`  
 **Impact:** LOW — Not used in current campaign maps  
 **Decision:** Deferred to post-launch. The SEIZE_THRONE chapter objective type exists but throne unit tracking on the game board is not implemented.
+
+---
+
+## Remaining Enhancements & Polish
+
+The following items are not technical debt but represent potential improvements for future releases. They are organized by category and priority.
+
+### 🎨 Visual Enhancements
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Animated unit sprites (walk/attack/idle) | HIGH | 40h + art | Replace static icons with animated sprite sheets |
+| Terrain tilesets (pixel art) | HIGH | 20h + art | Replace flat-color tiles with detailed tile graphics |
+| Character portraits for named units | MEDIUM | 15h + art | Show portraits in dialogue and info panel |
+| Attack/damage visual effects | MEDIUM | 10h | Screen flash, shake, particle effects |
+| Level-up celebration animation | LOW | 5h | Animated stat increases with sparkle effects |
+| Map transition animations | LOW | 5h | Fade/slide between chapter select and game |
+
+### 🔊 Audio Enhancements
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Add sound effect audio files to res/raw | HIGH | 5h + assets | Button click, attack, heal, victory, defeat, etc. |
+| Background music tracks (menu, battle) | MEDIUM | 10h + assets | MediaPlayer integration for looping BGM |
+| Music crossfade between screens | LOW | 3h | Smooth transitions between menu and battle music |
+| Dynamic battle music (intensity scaling) | LOW | 8h | Music layers based on enemy count or HP |
+
+### 🎮 Gameplay Polish
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Tutorial chapter with guided instructions | HIGH | 15h | Teach movement, combat, terrain basics |
+| Pre-battle story scenes | MEDIUM | 10h | Dialogue between chapters with character art |
+| Post-battle stats summary screen | MEDIUM | 8h | XP gained, units lost, turns taken |
+| Weapon triangle visual indicator | LOW | 3h | Show advantage/disadvantage in battle forecast |
+| Mini-map for larger boards | LOW | 8h | Thumbnail overview of full map |
+
+### 📱 UI/UX Polish
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Settings as dedicated Activity (not dialog) | MEDIUM | 5h | Better layout, sliders, toggle switches |
+| Loading screen with progress indicator | MEDIUM | 3h | Show while chapter initializes |
+| Haptic feedback on unit actions | LOW | 2h | Vibration on attack, level-up |
+| Dark/light theme toggle | LOW | 5h | Alternative color scheme option |
+| Landscape orientation support | LOW | 8h | Responsive layout for wider screens |
+
+### ⚡ Performance & Architecture
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Bitmap caching for terrain tiles | MEDIUM | 5h | Reduce per-frame draw calls |
+| ViewModel migration for GameActivity | LOW | 15h | Survive configuration changes |
+| Room database for save files | LOW | 10h | Replace encrypted SharedPreferences |
+| Standalone module full feature parity | LOW | 10h | Add support, serialization, named units |
 
 ---
 
