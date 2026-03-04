@@ -9,6 +9,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gameaday.opentactics.data.DifficultyMode
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.databinding.ActivityMainBinding
@@ -242,6 +243,7 @@ class MainActivity : AppCompatActivity() {
         val items =
             arrayOf(
                 "Player Name: ${profile.playerName}",
+                "Difficulty: ${preferences.difficulty.displayName}",
                 "Music: ${if (preferences.musicEnabled) "On" else "Off"}",
                 "Sound Effects: ${if (preferences.soundEffectsEnabled) "On" else "Off"}",
                 "Auto-save: ${if (preferences.autoSaveEnabled) "On" else "Off"}",
@@ -256,12 +258,13 @@ class MainActivity : AppCompatActivity() {
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> editPlayerName(profile)
-                    1 -> toggleSetting(profile, "music")
-                    2 -> toggleSetting(profile, "soundEffects")
-                    3 -> toggleSetting(profile, "autoSave")
-                    4 -> editAutoSaveFrequency(profile)
-                    5 -> editAnimationSpeed(profile)
-                    6 -> toggleSetting(profile, "damageNumbers")
+                    1 -> editDifficulty(profile)
+                    2 -> toggleSetting(profile, "music")
+                    3 -> toggleSetting(profile, "soundEffects")
+                    4 -> toggleSetting(profile, "autoSave")
+                    5 -> editAutoSaveFrequency(profile)
+                    6 -> editAnimationSpeed(profile)
+                    7 -> toggleSetting(profile, "damageNumbers")
                 }
             }.setNegativeButton("Close", null)
             .show()
@@ -288,6 +291,33 @@ class MainActivity : AppCompatActivity() {
                 saveGameManager.saveProfile(updatedProfile)
                 playerProfile = updatedProfile
                 loadPlayerProfile() // Refresh UI
+            }.setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun editDifficulty(profile: PlayerProfile) {
+        val modes = DifficultyMode.values()
+        val modeNames =
+            modes
+                .map {
+                    when (it) {
+                        DifficultyMode.EASY -> "Easy — Enemy stats -20%, EXP gain +20%"
+                        DifficultyMode.NORMAL -> "Normal — Standard experience"
+                        DifficultyMode.HARD -> "Hard — Enemy stats +20%, EXP gain -20%"
+                    }
+                }.toTypedArray()
+        val currentIndex = modes.indexOf(profile.preferences.difficulty).takeIf { it >= 0 } ?: 1
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("Difficulty")
+            .setSingleChoiceItems(modeNames, currentIndex) { dialog, which ->
+                val preferences = profile.preferences.copy(difficulty = modes[which])
+                val updatedProfile = profile.copy(preferences = preferences)
+                saveGameManager.saveProfile(updatedProfile)
+                playerProfile = updatedProfile
+                dialog.dismiss()
+                showSettingsDialog()
             }.setNegativeButton("Cancel", null)
             .show()
     }
@@ -375,11 +405,13 @@ class MainActivity : AppCompatActivity() {
             A tactical RPG inspired by classic Fire Emblem games.
             
             Features:
-            • Grid-based tactical combat
-            • 5 character classes with unique abilities
-            • Turn-based strategy gameplay  
+            • 20-chapter campaign across 4 story acts
+            • 9 character classes with unique abilities
+            • 6 named player characters with support conversations
+            • Turn-based tactical combat with weapon triangle
+            • Terrain effects, healing, and AI support behaviors
             • Save/Load system with auto-save
-            • Campaign progression
+            • Easy/Normal/Hard difficulty modes
             • Character leveling and growth
             
             Developed with modern Android architecture

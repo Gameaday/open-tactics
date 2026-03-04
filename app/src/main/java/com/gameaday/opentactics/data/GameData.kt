@@ -64,4 +64,20 @@ data class GamePreferences(
     val showDamageNumbers: Boolean = true,
     val autoSaveEnabled: Boolean = true,
     val autoSaveFrequency: Int = 5, // turns
+    val difficulty: DifficultyMode = DifficultyMode.NORMAL,
 ) : Parcelable
+
+/**
+ * Difficulty modes that scale enemy stats.
+ * Easy: enemies have -20% stats, Normal: default, Hard: enemies have +20% stats
+ */
+@Serializable
+enum class DifficultyMode(
+    val displayName: String,
+    val enemyStatMultiplier: Float,
+    val expMultiplier: Float,
+) {
+    EASY("Easy", 0.8f, 1.2f),
+    NORMAL("Normal", 1.0f, 1.0f),
+    HARD("Hard", 1.2f, 0.8f),
+}
