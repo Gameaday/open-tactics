@@ -68,8 +68,10 @@ data class GamePreferences(
 ) : Parcelable
 
 /**
- * Difficulty modes that scale enemy stats.
- * Easy: enemies have -20% stats, Normal: default, Hard: enemies have +20% stats
+ * Difficulty modes that scale enemy stats and experience gain.
+ * - Easy: enemies have -20% stats, EXP gain +20%
+ * - Normal: default stats and EXP
+ * - Hard: enemies have +20% stats, EXP gain -20%
  */
 @Serializable
 enum class DifficultyMode(

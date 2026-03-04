@@ -106,7 +106,9 @@ data class SupportRelationship(
 
 /**
  * Support conversation content for character pairs.
- * Conversations unlock as support rank increases.
+ * Each conversation is tied to a [SupportRank] and becomes available when
+ * the pair's [SupportRelationship.rank] reaches or exceeds that rank.
+ * Conversations are viewed through [SupportConversationRepository.getConversation].
  */
 @Serializable
 data class SupportConversation(
