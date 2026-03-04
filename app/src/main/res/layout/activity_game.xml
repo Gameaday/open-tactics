@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/dark_gray"
     tools:context=".GameActivity">
 
     <!-- Game Board Container -->
@@ -19,9 +19,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/purple_700"
+        android:background="@color/control_bar_background"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="6dp">
 
         <Button
             android:id="@+id/btnMove"
@@ -29,7 +29,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="@string/move" />
 
         <Button
@@ -38,7 +38,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="Undo"
             android:visibility="gone" />
 
@@ -48,7 +48,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="@string/attack" />
 
         <Button
@@ -57,7 +57,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="@string/wait" />
 
         <Button
@@ -66,7 +66,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="@string/inventory" />
 
         <Button
@@ -75,7 +75,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
             android:text="@string/end_turn" />
 
     </LinearLayout>
@@ -88,7 +88,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_margin="8dp"
-        android:background="@color/purple_500"
+        android:background="@color/panel_background"
         android:orientation="vertical"
         android:padding="8dp"
         android:visibility="visible">
@@ -97,7 +97,7 @@
             android:id="@+id/chapterTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
+            android:textColor="@color/accent_gold"
             android:textSize="14sp"
             android:textStyle="bold"
             android:text="Chapter 1" />
@@ -106,18 +106,18 @@
             android:id="@+id/chapterObjective"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:textColor="@color/teal_200"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:text="Defeat all enemies" />
 
         <TextView
             android:id="@+id/turnCounter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:text="Turn: 1" />
 
     </LinearLayout>
@@ -130,49 +130,51 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="@string/skip_animations"
-        android:textSize="16sp"
+        android:textSize="14sp"
         android:visibility="gone"
-        android:paddingStart="32dp"
-        android:paddingEnd="32dp" />
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp" />
 
     <!-- Range Display Toggle Button -->
     <Button
         android:id="@+id/btnToggleRanges"
         style="@style/GameButtonStyle"
-        android:layout_width="80dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
         android:text="@string/show_ranges"
-        android:textSize="12sp" />
+        android:textSize="11sp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
 
     <!-- Character Info Panel -->
     <LinearLayout
         android:id="@+id/characterInfoPanel"
-        android:layout_width="200dp"
-        android:layout_height="150dp"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
         android:layout_below="@id/btnToggleRanges"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
-        android:background="@color/purple_500"
+        android:background="@color/panel_background"
         android:orientation="vertical"
-        android:padding="8dp"
+        android:padding="10dp"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/characterName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textColor="@color/accent_gold"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/characterStats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:textColor="@color/white"
             android:textSize="12sp" />
 
