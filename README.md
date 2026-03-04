@@ -6,6 +6,16 @@ A Fire Emblem-style tactical RPG for Android, built with modern Kotlin architect
 [![CD](https://github.com/Gameaday/open-tactics/actions/workflows/cd.yml/badge.svg)](https://github.com/Gameaday/open-tactics/actions/workflows/cd.yml)
 [![QA](https://github.com/Gameaday/open-tactics/actions/workflows/qa.yml/badge.svg)](https://github.com/Gameaday/open-tactics/actions/workflows/qa.yml)
 
+## 📋 Project Status & Strategic Plans
+
+**Status:** Pre-Alpha / Functional Prototype  
+**Target Launch:** February 2027 (12 months)
+
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Quick overview, key decisions, next steps
+- **[PROJECT_ANALYSIS.md](PROJECT_ANALYSIS.md)** - Comprehensive analysis of current state
+- **[STRATEGIC_PLAN.md](STRATEGIC_PLAN.md)** - 12-month roadmap to launch
+- **[TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)** - Immediate technical tasks
+
 ## Features
 
 ### Core Gameplay
