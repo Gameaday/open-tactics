@@ -119,7 +119,7 @@
             android:textColor="@color/player_blue"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:text="Player Phase" />
+            android:text="▶ Player Phase" />
 
         <TextView
             android:id="@+id/turnCounter"

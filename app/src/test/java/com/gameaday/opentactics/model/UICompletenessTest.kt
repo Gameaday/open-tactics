@@ -119,6 +119,8 @@ class UICompletenessTest {
     fun characterStatsDisplayString() {
         val stats = Stats(hp = 25, mp = 5, attack = 12, defense = 14, speed = 8, skill = 10, luck = 8)
         val displayStr = stats.toDisplayString()
+        assertNotNull("Display string should not be null", displayStr)
+        assert(displayStr.isNotEmpty()) { "Display string should not be empty" }
         // Verify display string contains all stat abbreviations
         assert(displayStr.contains("HP")) { "Display string should contain HP" }
         assert(displayStr.contains("ATK")) { "Display string should contain ATK" }
