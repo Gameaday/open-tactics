@@ -515,11 +515,11 @@ class GameBoardView
             val healthRatio = character.currentHp.toFloat() / character.maxHp
 
             // Background (damaged portion)
-            tilePaint.color = Color.RED
+            tilePaint.color = Color.DKGRAY
             canvas.drawRect(x - barWidth / 2, y, x + barWidth / 2, y + barHeight, tilePaint)
 
-            // Health (current portion)
-            tilePaint.color = Color.GREEN
+            // Health (current portion) - color gradient: green → yellow → red
+            tilePaint.color = getHealthBarColor(healthRatio)
             canvas.drawRect(
                 x - barWidth / 2,
                 y,
@@ -532,6 +532,20 @@ class GameBoardView
             gridPaint.color = Color.BLACK
             canvas.drawRect(x - barWidth / 2, y, x + barWidth / 2, y + barHeight, gridPaint)
         }
+
+        private fun getHealthBarColor(ratio: Float): Int =
+            when {
+                ratio > 0.5f -> {
+                    // Green to Yellow (100% → 50%)
+                    val t = (ratio - 0.5f) / 0.5f
+                    Color.rgb(((1f - t) * 255).toInt(), 255, 0)
+                }
+                else -> {
+                    // Yellow to Red (50% → 0%)
+                    val t = ratio / 0.5f
+                    Color.rgb(255, (t * 255).toInt(), 0)
+                }
+            }
 
         private fun drawBattleEffect(canvas: Canvas) {
             // Simple explosion-like effect

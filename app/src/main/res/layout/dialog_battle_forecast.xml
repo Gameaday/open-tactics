@@ -143,6 +143,17 @@
 
     </LinearLayout>
 
+    <!-- Weapon Triangle Indicator -->
+    <TextView
+        android:id="@+id/weaponTriangleIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:visibility="gone" />
+
     <!-- Result Prediction -->
     <LinearLayout
         android:layout_width="match_parent"

@@ -53,6 +53,9 @@
     <!-- Enemy Turn -->
     <string name="skip_animations">Skip</string>
 
+    <!-- Battle Log -->
+    <string name="battle_log">Battle Log</string>
+
     <!-- Trade System -->
     <string name="trade_items">Trade Items</string>
     <string name="unit_1">Unit 1</string>

@@ -251,4 +251,56 @@
 
     </LinearLayout>
 
+    <!-- Battle Log Panel -->
+    <LinearLayout
+        android:id="@+id/battleLogPanel"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/gameControls"
+        android:layout_alignParentStart="true"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_panel_rounded"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/battleLogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/battle_log"
+            android:textColor="@color/accent_gold"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/battleLogEntry1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/battleLogEntry2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCFFFFFF"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/battleLogEntry3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#99FFFFFF"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+    </LinearLayout>
+
 </RelativeLayout>

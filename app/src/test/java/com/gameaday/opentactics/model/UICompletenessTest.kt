@@ -198,4 +198,85 @@ class UICompletenessTest {
             )
         }
     }
+
+    @Test
+    fun weaponTriangleAdvantageCalculation() {
+        val sword = Weapon.ironSword()
+        val lance = Weapon.ironLance()
+        val axe = Weapon.ironAxe()
+
+        // Sword beats Axe
+        assertTrue(
+            "Sword should have advantage over Axe",
+            sword.getTriangleBonus(axe.type) > 1.0,
+        )
+        // Axe beats Lance
+        assertTrue(
+            "Axe should have advantage over Lance",
+            axe.getTriangleBonus(lance.type) > 1.0,
+        )
+        // Lance beats Sword
+        assertTrue(
+            "Lance should have advantage over Sword",
+            lance.getTriangleBonus(sword.type) > 1.0,
+        )
+
+        // Reverse disadvantages
+        assertTrue(
+            "Axe should have disadvantage vs Sword",
+            axe.getTriangleBonus(sword.type) < 1.0,
+        )
+        assertTrue(
+            "Lance should have disadvantage vs Axe",
+            lance.getTriangleBonus(axe.type) < 1.0,
+        )
+        assertTrue(
+            "Sword should have disadvantage vs Lance",
+            sword.getTriangleBonus(lance.type) < 1.0,
+        )
+    }
+
+    @Test
+    fun weaponTriangleNeutralForNonTriangleWeapons() {
+        val sword = Weapon.ironSword()
+        val bow = Weapon.ironBow()
+
+        // Bow vs Sword should be neutral
+        assertEquals(
+            "Bow vs Sword should be neutral",
+            1.0,
+            bow.getTriangleBonus(sword.type),
+            0.001,
+        )
+        assertEquals(
+            "Sword vs Bow should be neutral",
+            1.0,
+            sword.getTriangleBonus(bow.type),
+            0.001,
+        )
+    }
+
+    @Test
+    fun battleForecastFieldsExist() {
+        // Verify BattleForecast data class has all expected fields
+        val forecast =
+            com.gameaday.opentactics.game.BattleForecast(
+                attackerDamage = 10,
+                targetDamage = 5,
+                attackerHitRate = 85,
+                targetHitRate = 70,
+                attackerDoubles = true,
+                targetDoubles = false,
+                canCounter = true,
+                predictedAttackerHp = 20,
+                predictedTargetHp = 8,
+                targetWillBeDefeated = false,
+                attackerWillBeDefeated = false,
+            )
+
+        assertEquals(10, forecast.attackerDamage)
+        assertEquals(85, forecast.attackerHitRate)
+        assertTrue(forecast.attackerDoubles)
+        assertTrue(forecast.canCounter)
+    }
 }

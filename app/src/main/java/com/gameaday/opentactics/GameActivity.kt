@@ -48,6 +48,15 @@ class GameActivity : AppCompatActivity() {
     // Skip enemy turn state
     private var skipEnemyAnimations: Boolean = false
 
+    // Battle log entries (most recent first)
+    private val battleLogEntries = mutableListOf<String>()
+
+    // Chapter battle statistics
+    private var chapterDamageDealt = 0
+    private var chapterDamageReceived = 0
+    private var chapterEnemiesDefeated = 0
+    private var chapterHealsPerformed = 0
+
     companion object {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
         const val EXTRA_PLAYER_NAME = "player_name"
@@ -59,6 +68,7 @@ class GameActivity : AppCompatActivity() {
         private const val THIEF_JOIN_CHAPTER = 7
         private const val PEGASUS_JOIN_CHAPTER = 9
 
+        private const val MAX_BATTLE_LOG_ENTRIES = 3
         private val DEFAULT_SPAWN_POSITION = Position(0, 7)
     }
 
@@ -140,6 +150,9 @@ class GameActivity : AppCompatActivity() {
 
     @Suppress("LongMethod", "ComplexMethod") // Game initialization requires many character setups
     private fun initializeNewGame(playerName: String, chapterNumber: Int = 1) {
+        // Reset chapter battle stats
+        resetChapterStats()
+
         // Load chapter data
         val chapter =
             com.gameaday.opentactics.model.ChapterRepository
@@ -1369,9 +1382,11 @@ class GameActivity : AppCompatActivity() {
         updateUI()
 
         if (gameState.currentTurn == Team.ENEMY) {
+            addBattleLogEntry("— Enemy Phase (Turn ${gameState.turnCount}) —")
             // Start animated enemy turn
             executeEnemyTurn()
         } else {
+            addBattleLogEntry("— Player Phase (Turn ${gameState.turnCount}) —")
             Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
             checkGameEnd()
 
@@ -1555,6 +1570,9 @@ class GameActivity : AppCompatActivity() {
         val resultText = "After: ${forecast.predictedAttackerHp} ← → ${forecast.predictedTargetHp} HP"
         dialogView.findViewById<android.widget.TextView>(R.id.forecastResult).text = resultText
 
+        // Show weapon triangle indicator
+        showWeaponTriangleIndicator(dialogView, attacker, target)
+
         // Create and show dialog
         val dialog =
             AlertDialog
@@ -1592,6 +1610,37 @@ class GameActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showWeaponTriangleIndicator(
+        dialogView: android.view.View,
+        attacker: Character,
+        target: Character,
+    ) {
+        val indicator = dialogView.findViewById<android.widget.TextView>(R.id.weaponTriangleIndicator)
+        val attackerWeapon = attacker.equippedWeapon
+        val targetWeapon = target.equippedWeapon
+
+        if (attackerWeapon != null && targetWeapon != null) {
+            val bonus = attackerWeapon.getTriangleBonus(targetWeapon.type)
+            when {
+                bonus > 1.0 -> {
+                    indicator.text = "⚔ ${attackerWeapon.type.name} ▶ ${targetWeapon.type.name} (Advantage!)"
+                    indicator.setTextColor(resources.getColor(R.color.teal_200, theme))
+                    indicator.visibility = android.view.View.VISIBLE
+                }
+                bonus < 1.0 -> {
+                    indicator.text = "⚔ ${attackerWeapon.type.name} ◀ ${targetWeapon.type.name} (Disadvantage)"
+                    indicator.setTextColor(resources.getColor(R.color.enemy_red, theme))
+                    indicator.visibility = android.view.View.VISIBLE
+                }
+                else -> {
+                    indicator.visibility = android.view.View.GONE
+                }
+            }
+        } else {
+            indicator.visibility = android.view.View.GONE
+        }
+    }
+
     private fun showBattleResult(result: com.gameaday.opentactics.game.BattleResult) {
         val criticalText = if (result.wasCritical) " CRITICAL HIT! ⚡" else ""
         val message =
@@ -1601,6 +1650,23 @@ class GameActivity : AppCompatActivity() {
                 "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!$criticalText"
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+        // Track chapter statistics
+        if (result.attacker.team == Team.PLAYER) {
+            chapterDamageDealt += result.damage
+            if (result.targetDefeated) chapterEnemiesDefeated++
+        } else {
+            chapterDamageReceived += result.damage
+        }
+
+        // Add to battle log
+        val logEntry =
+            if (result.targetDefeated) {
+                "${result.attacker.name} ⚔ ${result.target.name} — ${result.damage} dmg, KO!"
+            } else {
+                "${result.attacker.name} ⚔ ${result.target.name} — ${result.damage} dmg"
+            }
+        addBattleLogEntry(logEntry)
 
         // Show EXP gain if attacker is a player unit
         // Note: EXP is already awarded in GameState.performAttack()
@@ -1665,6 +1731,14 @@ class GameActivity : AppCompatActivity() {
     private fun showSupportResult(result: com.gameaday.opentactics.game.SupportResult) {
         val message = "${result.user.name} healed ${result.target.name} for ${result.healAmount} HP!"
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+        // Track chapter statistics
+        if (result.user.team == Team.PLAYER) {
+            chapterHealsPerformed++
+        }
+
+        // Add to battle log
+        addBattleLogEntry("${result.user.name} ✚ ${result.target.name} — +${result.healAmount} HP")
 
         // Show EXP gain if user is a player unit
         if (result.user.team == Team.PLAYER && result.expGained > 0) {
@@ -1854,11 +1928,20 @@ class GameActivity : AppCompatActivity() {
                 append("Turns: ${gameState.turnCount}\n")
                 val aliveCount = gameState.getAlivePlayerCharacters().size
                 val totalCount = gameState.getPlayerCharacters().size
-                append("Units: $aliveCount/$totalCount survived")
+                append("Units: $aliveCount/$totalCount survived\n")
+
+                // Chapter battle statistics
+                append("\n📊 Battle Stats:\n")
+                append("• Damage dealt: $chapterDamageDealt\n")
+                append("• Damage received: $chapterDamageReceived\n")
+                append("• Enemies defeated: $chapterEnemiesDefeated\n")
+                if (chapterHealsPerformed > 0) {
+                    append("• Heals performed: $chapterHealsPerformed\n")
+                }
 
                 // Show newly unlocked achievements
                 if (newAchievements.isNotEmpty()) {
-                    append("\n\n🏆 Achievements Unlocked:\n")
+                    append("\n🏆 Achievements Unlocked:\n")
                     newAchievements.forEach { achievementId ->
                         AchievementRepository.getAchievement(achievementId)?.let {
                             append("• ${it.name}: ${it.description}\n")
@@ -1990,6 +2073,14 @@ class GameActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun resetChapterStats() {
+        chapterDamageDealt = 0
+        chapterDamageReceived = 0
+        chapterEnemiesDefeated = 0
+        chapterHealsPerformed = 0
+        battleLogEntries.clear()
+    }
+
     private fun updateUI() {
         val selectedCharacter = gameState.selectedCharacter
         val isPlayerTurn = gameState.currentTurn == Team.PLAYER
@@ -2047,6 +2138,25 @@ class GameActivity : AppCompatActivity() {
         binding.characterStats.text = statsText
         binding.characterStatsExtra.text = ""
         binding.characterWeapon.text = ""
+    }
+
+    private fun addBattleLogEntry(entry: String) {
+        battleLogEntries.add(0, entry)
+        while (battleLogEntries.size > MAX_BATTLE_LOG_ENTRIES) {
+            battleLogEntries.removeAt(battleLogEntries.lastIndex)
+        }
+        updateBattleLog()
+    }
+
+    private fun updateBattleLog() {
+        if (battleLogEntries.isEmpty()) {
+            binding.battleLogPanel.visibility = android.view.View.GONE
+            return
+        }
+        binding.battleLogPanel.visibility = android.view.View.VISIBLE
+        binding.battleLogEntry1.text = battleLogEntries.getOrNull(0) ?: ""
+        binding.battleLogEntry2.text = battleLogEntries.getOrNull(1) ?: ""
+        binding.battleLogEntry3.text = battleLogEntries.getOrNull(2) ?: ""
     }
 
     private fun showHelpDialog() {
