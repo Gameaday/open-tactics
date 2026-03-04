@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Weapon triangle visual indicator** — battle forecast dialog now shows weapon advantage/disadvantage with color coding (teal for advantage, red for disadvantage)
+- **Health bar color gradient** — HP bars now transition green → yellow → red based on current HP percentage
+- **Battle log panel** — in-game HUD shows 3 most recent combat actions with fading opacity (attacks, heals, phase changes)
+- **Post-battle stats summary** — victory screen now shows detailed chapter statistics: damage dealt/received, enemies defeated, heals performed
+- **Chapter battle tracking** — tracks damage dealt, damage received, enemies defeated, and heals performed per chapter
 - **Manakete and Dragon class icons** — vector drawable icons for the remaining 2 character classes (all 9 now have icons)
 - **Enhanced character info panel** — shows Level/EXP, all 7 stats (HP/ATK/DEF/SPD/SKL/LCK), and equipped weapon with durability
 - **Turn phase indicator** — HUD now shows "▶ Player Phase" or "▶ Enemy Phase" with color coding (blue/red)

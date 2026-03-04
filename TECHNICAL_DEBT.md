@@ -97,6 +97,7 @@ The following items are not technical debt but represent potential improvements 
 | Attack/damage visual effects | MEDIUM | 10h | Screen flash, shake, particle effects |
 | Level-up celebration animation | LOW | 5h | Animated stat increases with sparkle effects |
 | Map transition animations | LOW | 5h | Fade/slide between chapter select and game |
+| ~~Health bar color gradient~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Green→yellow→red gradient based on HP% |
 
 ### 🔊 Audio Enhancements
 | Item | Priority | Effort | Notes |
@@ -111,8 +112,9 @@ The following items are not technical debt but represent potential improvements 
 |------|----------|--------|-------|
 | Tutorial chapter with guided instructions | HIGH | 15h | Teach movement, combat, terrain basics |
 | Pre-battle story scenes | MEDIUM | 10h | Dialogue between chapters with character art |
-| Post-battle stats summary screen | MEDIUM | 8h | XP gained, units lost, turns taken |
-| Weapon triangle visual indicator | LOW | 3h | Show advantage/disadvantage in battle forecast |
+| ~~Post-battle stats summary screen~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: Damage dealt/received, enemies defeated, heals |
+| ~~Weapon triangle visual indicator~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Shows advantage/disadvantage in battle forecast |
+| ~~Battle log / combat feed~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: 3-entry log with fading opacity |
 | Mini-map for larger boards | LOW | 8h | Thumbnail overview of full map |
 
 ### 📱 UI/UX Polish
@@ -167,4 +169,4 @@ The following items are not technical debt but represent potential improvements 
 
 ---
 
-*Last Updated: March 4, 2026*
+*Last Updated: March 5, 2026*
