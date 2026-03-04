@@ -9,9 +9,9 @@ import org.junit.Test
 
 class ChapterTest {
     @Test
-    fun `test chapter repository has 5 chapters`() {
+    fun `test chapter repository has 10 chapters`() {
         val totalChapters = ChapterRepository.getTotalChapters()
-        assertEquals("Should have 5 chapters", 5, totalChapters)
+        assertEquals("Should have 10 chapters", 10, totalChapters)
     }
 
     @Test
@@ -69,9 +69,50 @@ class ChapterTest {
     }
 
     @Test
+    fun `test chapter 6 is river crossing`() {
+        val chapter6 = ChapterRepository.getChapter(6)
+        assertNotNull("Chapter 6 should exist", chapter6)
+        assertEquals("ch6_river_crossing", chapter6?.id)
+        assertEquals("The River Crossing", chapter6?.title)
+        assertEquals(ChapterObjective.DEFEAT_ALL_ENEMIES, chapter6?.objective)
+        // Chapter 6 should have an enemy healer for AI healing
+        val hasHealer = chapter6?.enemyUnits?.any { it.characterClass == CharacterClass.HEALER }
+        assertTrue("Chapter 6 should have an enemy healer", hasHealer == true)
+    }
+
+    @Test
+    fun `test chapter 7 is village liberation with boss`() {
+        val chapter7 = ChapterRepository.getChapter(7)
+        assertNotNull("Chapter 7 should exist", chapter7)
+        assertEquals("ch7_village_liberation", chapter7?.id)
+        assertEquals(ChapterObjective.DEFEAT_BOSS, chapter7?.objective)
+        assertNotNull("Chapter 7 should have a boss unit", chapter7?.bossUnit)
+    }
+
+    @Test
+    fun `test chapter 9 is border fort siege`() {
+        val chapter9 = ChapterRepository.getChapter(9)
+        assertNotNull("Chapter 9 should exist", chapter9)
+        assertEquals("ch9_border_fort", chapter9?.id)
+        assertEquals(ChapterObjective.SEIZE_THRONE, chapter9?.objective)
+        assertNotNull("Chapter 9 should have throne position", chapter9?.thronePosition)
+        assertFalse("Chapter 9 should have reinforcements", chapter9?.reinforcements.isNullOrEmpty())
+    }
+
+    @Test
+    fun `test chapter 10 is boss fight with sorceress`() {
+        val chapter10 = ChapterRepository.getChapter(10)
+        assertNotNull("Chapter 10 should exist", chapter10)
+        assertEquals("ch10_sorceress", chapter10?.id)
+        assertEquals(ChapterObjective.DEFEAT_BOSS, chapter10?.objective)
+        assertNotNull("Chapter 10 should have a boss", chapter10?.bossUnit)
+        assertTrue("Boss should be marked as boss", chapter10?.bossUnit?.isBoss == true)
+    }
+
+    @Test
     fun `test invalid chapter number returns null`() {
         assertNull("Chapter 0 should not exist", ChapterRepository.getChapter(0))
-        assertNull("Chapter 6 should not exist", ChapterRepository.getChapter(6))
+        assertNull("Chapter 11 should not exist", ChapterRepository.getChapter(11))
         assertNull("Chapter 100 should not exist", ChapterRepository.getChapter(100))
     }
 
@@ -90,22 +131,22 @@ class ChapterTest {
     @Test
     fun `test chapters have escalating difficulty`() {
         val chapter1 = ChapterRepository.getChapter(1)
-        val chapter5 = ChapterRepository.getChapter(5)
+        val chapter10 = ChapterRepository.getChapter(10)
 
         assertNotNull(chapter1)
-        assertNotNull(chapter5)
+        assertNotNull(chapter10)
 
-        // Chapter 5 should have more or equal enemy units than chapter 1
+        // Chapter 10 should have more or equal enemy units than chapter 1
         val ch1EnemyCount = chapter1!!.enemyUnits.size + (chapter1.bossUnit?.let { 1 } ?: 0)
-        val ch5EnemyCount = chapter5!!.enemyUnits.size + (chapter5.bossUnit?.let { 1 } ?: 0)
+        val ch10EnemyCount = chapter10!!.enemyUnits.size + (chapter10.bossUnit?.let { 1 } ?: 0)
 
-        assertTrue("Later chapters should have at least as many enemies", ch5EnemyCount >= ch1EnemyCount)
+        assertTrue("Later chapters should have at least as many enemies", ch10EnemyCount >= ch1EnemyCount)
 
-        // Chapter 5 enemies should have higher levels
+        // Chapter 10 enemies should have higher levels
         val ch1MaxLevel = chapter1.enemyUnits.maxOfOrNull { it.level } ?: 1
-        val ch5MaxLevel = chapter5.enemyUnits.maxOfOrNull { it.level } ?: 1
+        val ch10MaxLevel = chapter10.enemyUnits.maxOfOrNull { it.level } ?: 1
 
-        assertTrue("Later chapters should have higher level enemies", ch5MaxLevel >= ch1MaxLevel)
+        assertTrue("Later chapters should have higher level enemies", ch10MaxLevel >= ch1MaxLevel)
     }
 
     @Test

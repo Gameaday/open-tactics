@@ -50,6 +50,11 @@ class GameActivity : AppCompatActivity() {
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_IS_NEW_GAME = "is_new_game"
         const val EXTRA_CHAPTER_NUMBER = "chapter_number"
+
+        // Chapter numbers where new characters join the party
+        private const val HEALER_JOIN_CHAPTER = 6
+        private const val THIEF_JOIN_CHAPTER = 7
+        private const val PEGASUS_JOIN_CHAPTER = 9
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,8 +111,10 @@ class GameActivity : AppCompatActivity() {
             "steel_axe" -> Weapon.steelAxe()
             "iron_bow" -> Weapon.ironBow()
             "steel_bow" -> Weapon.steelBow()
-            "fire_tome" -> Weapon.fire()
-            "thunder_tome" -> Weapon.thunder()
+            "fire_tome", "fire" -> Weapon.fire()
+            "thunder_tome", "thunder" -> Weapon.thunder()
+            "heal" -> Weapon.heal()
+            "mend" -> Weapon.mend()
             else -> null
         }
 
@@ -141,48 +148,108 @@ class GameActivity : AppCompatActivity() {
         // Create player characters at starting positions from named unit repository
         val playerPositions = chapter.playerStartPositions
         val playerCharacters =
-            listOf(
+            buildList {
+                // Core party (always available)
                 NamedUnitRepository.getProtagonist("player_knight")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(0) { Position(1, 6) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.ironSword())
-                            addWeapon(Weapon.steelSword())
-                            addItem(Item.vulnerary())
-                            addItem(Item.vulnerary())
-                        }
-                },
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(0) { Position(1, 6) },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.ironSword())
+                                addWeapon(Weapon.steelSword())
+                                addItem(Item.vulnerary())
+                                addItem(Item.vulnerary())
+                            },
+                    )
+                }
                 NamedUnitRepository.getProtagonist("player_archer")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(1) { Position(2, 7) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.ironBow())
-                            addWeapon(Weapon.steelBow())
-                            addItem(Item.vulnerary())
-                        }
-                },
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(1) { Position(2, 7) },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.ironBow())
+                                addWeapon(Weapon.steelBow())
+                                addItem(Item.vulnerary())
+                            },
+                    )
+                }
                 NamedUnitRepository.getProtagonist("player_mage")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(2) { Position(0, 7) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.fire())
-                            addWeapon(Weapon.thunder())
-                            addItem(Item.tonic())
-                        }
-                },
-            ).filterNotNull()
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(2) { Position(0, 7) },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.fire())
+                                addWeapon(Weapon.thunder())
+                                addItem(Item.tonic())
+                            },
+                    )
+                }
+                // Healer joins in Chapter 6
+                if (chapterNumber >= HEALER_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("healer_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.heal())
+                                    addWeapon(Weapon.mend())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+                // Thief joins in Chapter 7
+                if (chapterNumber >= THIEF_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("thief_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.ironSword())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+                // Pegasus Knight joins in Chapter 9
+                if (chapterNumber >= PEGASUS_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("pegasus_knight_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { Position(0, 7) },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.ironLance())
+                                    addWeapon(Weapon.steelLance())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+            }
 
         // Add player characters
         playerCharacters.forEach { char ->

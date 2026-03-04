@@ -25,6 +25,11 @@ object MapFactory {
             MapLayout.CASTLE_SIEGE -> createCastleSiege()
             MapLayout.VILLAGE_DEFENSE -> createVillageDefense()
             MapLayout.RIVER_CROSSING -> createRiverCrossing()
+            MapLayout.BORDER_FORT -> createBorderFort()
+            MapLayout.COASTAL_RUINS -> createCoastalRuins()
+            MapLayout.DARK_FOREST -> createDarkForest()
+            MapLayout.FORTRESS_INTERIOR -> createFortressInterior()
+            MapLayout.THRONE_ROOM -> createThroneRoom()
         }
 
     /**
@@ -206,6 +211,197 @@ object MapFactory {
         board.getTile(3, 2)?.terrain = TerrainType.FOREST
         board.getTile(10, 8)?.terrain = TerrainType.FOREST
         board.getTile(11, 8)?.terrain = TerrainType.FOREST
+
+        return board
+    }
+
+    /**
+     * Create a fortified border outpost - defensive positions along a frontier
+     */
+    fun createBorderFort(): GameBoard {
+        val board = GameBoard(14, 10)
+
+        // Central fortifications
+        board.getTile(6, 4)?.terrain = TerrainType.FORT
+        board.getTile(7, 4)?.terrain = TerrainType.FORT
+        board.getTile(6, 5)?.terrain = TerrainType.FORT
+        board.getTile(7, 5)?.terrain = TerrainType.FORT
+
+        // Walls around fort (mountains)
+        for (x in 5..8) {
+            board.getTile(x, 3)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(x, 6)?.terrain = TerrainType.MOUNTAIN
+        }
+
+        // Entry points (gaps)
+        board.getTile(6, 3)?.terrain = TerrainType.PLAIN
+        board.getTile(7, 6)?.terrain = TerrainType.PLAIN
+
+        // Forest cover on flanks
+        board.getTile(2, 2)?.terrain = TerrainType.FOREST
+        board.getTile(3, 2)?.terrain = TerrainType.FOREST
+        board.getTile(2, 7)?.terrain = TerrainType.FOREST
+        board.getTile(3, 7)?.terrain = TerrainType.FOREST
+        board.getTile(10, 2)?.terrain = TerrainType.FOREST
+        board.getTile(11, 7)?.terrain = TerrainType.FOREST
+
+        return board
+    }
+
+    /**
+     * Create coastal ruins - scattered ruins along a coastline with water on one side
+     */
+    fun createCoastalRuins(): GameBoard {
+        val board = GameBoard(14, 10)
+
+        // Water along the bottom
+        for (x in 0..13) {
+            board.getTile(x, 9)?.terrain = TerrainType.WATER
+            board.getTile(x, 8)?.terrain = TerrainType.WATER
+        }
+
+        // Ruined structures (forts)
+        board.getTile(3, 3)?.terrain = TerrainType.FORT
+        board.getTile(4, 3)?.terrain = TerrainType.FORT
+        board.getTile(9, 4)?.terrain = TerrainType.FORT
+        board.getTile(10, 4)?.terrain = TerrainType.FORT
+
+        // Scattered mountains (rubble)
+        board.getTile(5, 5)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(7, 2)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(11, 6)?.terrain = TerrainType.MOUNTAIN
+
+        // Forest patches
+        board.getTile(1, 1)?.terrain = TerrainType.FOREST
+        board.getTile(2, 1)?.terrain = TerrainType.FOREST
+        board.getTile(6, 6)?.terrain = TerrainType.FOREST
+        board.getTile(7, 6)?.terrain = TerrainType.FOREST
+
+        // Narrow beach paths
+        board.getTile(4, 7)?.terrain = TerrainType.VILLAGE
+        board.getTile(9, 7)?.terrain = TerrainType.VILLAGE
+
+        return board
+    }
+
+    /**
+     * Create a dense dark forest with hidden paths
+     */
+    fun createDarkForest(): GameBoard {
+        val board = GameBoard(12, 10)
+
+        // Dense forest coverage
+        for (x in 1..10) {
+            for (y in 1..8) {
+                board.getTile(x, y)?.terrain = TerrainType.FOREST
+            }
+        }
+
+        // Clear paths through the forest
+        for (y in 0..9) {
+            board.getTile(3, y)?.terrain = TerrainType.PLAIN
+            board.getTile(8, y)?.terrain = TerrainType.PLAIN
+        }
+        for (x in 3..8) {
+            board.getTile(x, 5)?.terrain = TerrainType.PLAIN
+        }
+
+        // Hidden fort in center
+        board.getTile(5, 4)?.terrain = TerrainType.FORT
+        board.getTile(6, 4)?.terrain = TerrainType.FORT
+
+        // Mountain blocking direct path
+        board.getTile(5, 2)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(6, 7)?.terrain = TerrainType.MOUNTAIN
+
+        return board
+    }
+
+    /**
+     * Create a fortress interior - tight corridors and rooms
+     */
+    fun createFortressInterior(): GameBoard {
+        val board = GameBoard(14, 12)
+
+        // Outer walls (mountains)
+        for (x in 0..13) {
+            board.getTile(x, 0)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(x, 11)?.terrain = TerrainType.MOUNTAIN
+        }
+        for (y in 0..11) {
+            board.getTile(0, y)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(13, y)?.terrain = TerrainType.MOUNTAIN
+        }
+
+        // Inner walls creating rooms and corridors
+        for (y in 2..5) {
+            board.getTile(4, y)?.terrain = TerrainType.MOUNTAIN
+        }
+        for (y in 6..9) {
+            board.getTile(9, y)?.terrain = TerrainType.MOUNTAIN
+        }
+        for (x in 6..8) {
+            board.getTile(x, 4)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(x, 7)?.terrain = TerrainType.MOUNTAIN
+        }
+
+        // Door gaps in walls
+        board.getTile(4, 3)?.terrain = TerrainType.PLAIN
+        board.getTile(9, 8)?.terrain = TerrainType.PLAIN
+        board.getTile(7, 4)?.terrain = TerrainType.PLAIN
+        board.getTile(7, 7)?.terrain = TerrainType.PLAIN
+
+        // Fort tiles in strategic positions
+        board.getTile(2, 2)?.terrain = TerrainType.FORT
+        board.getTile(11, 2)?.terrain = TerrainType.FORT
+        board.getTile(2, 9)?.terrain = TerrainType.FORT
+        board.getTile(11, 9)?.terrain = TerrainType.FORT
+
+        // Throne at the back
+        board.getTile(11, 5)?.terrain = TerrainType.FORT
+        board.getTile(12, 5)?.terrain = TerrainType.FORT
+
+        return board
+    }
+
+    /**
+     * Create a throne room - final battle arena
+     */
+    fun createThroneRoom(): GameBoard {
+        val board = GameBoard(16, 12)
+
+        // Walls surrounding the throne room
+        for (x in 0..15) {
+            board.getTile(x, 0)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(x, 11)?.terrain = TerrainType.MOUNTAIN
+        }
+        for (y in 0..11) {
+            board.getTile(0, y)?.terrain = TerrainType.MOUNTAIN
+            board.getTile(15, y)?.terrain = TerrainType.MOUNTAIN
+        }
+
+        // Pillars (mountains) creating a grand hall
+        board.getTile(3, 3)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(3, 8)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(6, 3)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(6, 8)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(9, 3)?.terrain = TerrainType.MOUNTAIN
+        board.getTile(9, 8)?.terrain = TerrainType.MOUNTAIN
+
+        // Throne platform (forts)
+        board.getTile(12, 4)?.terrain = TerrainType.FORT
+        board.getTile(13, 4)?.terrain = TerrainType.FORT
+        board.getTile(14, 4)?.terrain = TerrainType.FORT
+        board.getTile(12, 5)?.terrain = TerrainType.FORT
+        board.getTile(13, 5)?.terrain = TerrainType.FORT
+        board.getTile(14, 5)?.terrain = TerrainType.FORT
+        board.getTile(12, 6)?.terrain = TerrainType.FORT
+        board.getTile(13, 6)?.terrain = TerrainType.FORT
+        board.getTile(14, 6)?.terrain = TerrainType.FORT
+
+        // Entrance hall (main entrance at left)
+        board.getTile(0, 5)?.terrain = TerrainType.PLAIN
+        board.getTile(0, 6)?.terrain = TerrainType.PLAIN
 
         return board
     }

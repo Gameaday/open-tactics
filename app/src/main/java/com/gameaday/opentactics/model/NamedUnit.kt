@@ -250,5 +250,96 @@ object EnemyRepository {
                         ),
                     description = "A legendary general",
                 ),
+            // Additional enemy types for expanded campaign
+            "generic_healer" to
+                NamedUnit(
+                    id = "generic_healer",
+                    name = "Enemy Cleric",
+                    characterClass = CharacterClass.HEALER,
+                    description = "An enemy healer supporting their allies",
+                ),
+            "generic_pegasus" to
+                NamedUnit(
+                    id = "generic_pegasus",
+                    name = "Sky Rider",
+                    characterClass = CharacterClass.PEGASUS_KNIGHT,
+                    description = "An airborne enemy soldier",
+                ),
+            "generic_wyvern" to
+                NamedUnit(
+                    id = "generic_wyvern",
+                    name = "Wyvern Soldier",
+                    characterClass = CharacterClass.WYVERN_RIDER,
+                    description = "A heavily armored aerial unit",
+                ),
+            // Act 2+ boss units
+            "boss_captain_voss" to
+                NamedUnit(
+                    id = "boss_captain_voss",
+                    name = "Captain Voss",
+                    characterClass = CharacterClass.KNIGHT,
+                    customGrowthRates =
+                        GrowthRates(
+                            hp = 90,
+                            mp = 25,
+                            attack = 75,
+                            defense = 85,
+                            speed = 55,
+                            skill = 65,
+                            luck = 50,
+                        ),
+                    description = "A ruthless border garrison commander",
+                ),
+            "boss_sorceress_mira" to
+                NamedUnit(
+                    id = "boss_sorceress_mira",
+                    name = "Sorceress Mira",
+                    characterClass = CharacterClass.MAGE,
+                    customGrowthRates =
+                        GrowthRates(
+                            hp = 65,
+                            mp = 90,
+                            attack = 85,
+                            defense = 40,
+                            speed = 70,
+                            skill = 80,
+                            luck = 65,
+                        ),
+                    description = "A powerful mage in the service of the Crimson Empire",
+                ),
+            "boss_warlord_kael" to
+                NamedUnit(
+                    id = "boss_warlord_kael",
+                    name = "Warlord Kael",
+                    characterClass = CharacterClass.WYVERN_RIDER,
+                    customGrowthRates =
+                        GrowthRates(
+                            hp = 95,
+                            mp = 20,
+                            attack = 85,
+                            defense = 80,
+                            speed = 65,
+                            skill = 70,
+                            luck = 50,
+                        ),
+                    description = "Commander of the Crimson Empire's aerial forces",
+                ),
+            "boss_emperor_darius" to
+                NamedUnit(
+                    id = "boss_emperor_darius",
+                    name = "Emperor Darius",
+                    characterClass = CharacterClass.KNIGHT,
+                    customGrowthRates =
+                        GrowthRates(
+                            hp = 100,
+                            mp = 40,
+                            attack = 90,
+                            defense = 95,
+                            speed = 65,
+                            skill = 80,
+                            luck = 70,
+                        ),
+                    description = "The corrupted ruler of the Crimson Empire",
+                ),
         )
 }

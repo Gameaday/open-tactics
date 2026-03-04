@@ -205,6 +205,11 @@ enum class MapLayout {
     CASTLE_SIEGE, // Castle with throne
     VILLAGE_DEFENSE, // Defend village tiles
     RIVER_CROSSING, // Map split by river
+    BORDER_FORT, // Fortified border outpost
+    COASTAL_RUINS, // Ruins along the coast
+    DARK_FOREST, // Dense dark forest with hidden paths
+    FORTRESS_INTERIOR, // Interior of enemy fortress
+    THRONE_ROOM, // Final boss throne room
 }
 
 /**
@@ -253,8 +258,20 @@ object ChapterRepository {
                             namedUnitId = "generic_brigand",
                         ),
                     ),
-                preBattleDialogue = "Commander: Welcome to the battlefield! Show me what you've learned.",
-                postVictoryDialogue = "Commander: Well done! You're ready for real combat.",
+                preBattleDialogue =
+                    "Commander: Welcome to the battlefield, recruits! " +
+                        "Today you'll learn the basics of tactical combat.\n\n" +
+                        "TAP a unit to select it, then use MOVE to see where they can go. " +
+                        "ATTACK lets you strike enemies in range. " +
+                        "Use WAIT when a unit is done.\n\n" +
+                        "TIP: Use forests and forts for defensive bonuses. " +
+                        "Keep your units together and watch enemy ranges!\n\n" +
+                        "Commander: Now show me what you've got!",
+                postVictoryDialogue =
+                    "Commander: Well done! You've mastered the basics.\n" +
+                        "Sir Garrett: The kingdom of Valdris needs warriors like you. " +
+                        "Word has reached us that the Crimson Empire is mobilizing at our borders.\n" +
+                        "Commander: Rest up. Tomorrow, we march.",
             ),
             // Chapter 2: First Challenge
             Chapter(
@@ -541,6 +558,471 @@ object ChapterRepository {
                 postVictoryDialogue =
                     "Commander: We made it! The villagers are safe, and we live to fight another day.",
                 postDefeatDialogue = "The escape route was blocked...",
+            ),
+            // Act 2: Counterattack
+            // Chapter 6: The Crossing
+            Chapter(
+                id = "ch6_river_crossing",
+                number = 6,
+                title = "The River Crossing",
+                description = "Cross the Silverflow River to begin the counterattack against the Crimson Empire",
+                objective = ChapterObjective.DEFEAT_ALL_ENEMIES,
+                objectiveDetails = "Clear the enemy garrison at the river crossing",
+                mapLayout = MapLayout.RIVER_CROSSING,
+                playerStartPositions =
+                    listOf(
+                        Position(1, 3),
+                        Position(1, 4),
+                        Position(2, 3),
+                        Position(2, 4),
+                    ),
+                enemyUnits =
+                    listOf(
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_6",
+                            name = "River Guard",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 5,
+                            position = Position(8, 3),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_7",
+                            name = "Bridge Sentinel",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 5,
+                            position = Position(8, 7),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_archer_6",
+                            name = "Lookout",
+                            characterClass = CharacterClass.ARCHER,
+                            level = 5,
+                            position = Position(10, 5),
+                            equipment = listOf("steel_bow"),
+                            aiType = AIBehavior.STATIONARY,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_healer_1",
+                            name = "Field Medic",
+                            characterClass = CharacterClass.HEALER,
+                            level = 4,
+                            position = Position(11, 5),
+                            equipment = listOf("heal"),
+                            aiType = AIBehavior.SUPPORT,
+                            namedUnitId = "generic_healer",
+                        ),
+                    ),
+                preBattleDialogue =
+                    "Commander: The Silverflow River lies ahead. " +
+                        "We must seize the bridges to advance into enemy territory. " +
+                        "Elara, your healing will be vital. Stay close to the front lines.",
+                postVictoryDialogue =
+                    "Commander: The crossing is ours! The counterattack begins. " +
+                        "The Crimson Empire will learn that Valdris will not fall quietly.",
+            ),
+            // Chapter 7: Village Liberation
+            Chapter(
+                id = "ch7_village_liberation",
+                number = 7,
+                title = "Liberation of Millhaven",
+                description = "Free the occupied village of Millhaven from Crimson Empire forces",
+                objective = ChapterObjective.DEFEAT_BOSS,
+                objectiveDetails = "Defeat Captain Voss",
+                mapLayout = MapLayout.VILLAGE_DEFENSE,
+                playerStartPositions =
+                    listOf(
+                        Position(0, 4),
+                        Position(0, 5),
+                        Position(1, 4),
+                        Position(1, 5),
+                    ),
+                enemyUnits =
+                    listOf(
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_8",
+                            name = "Occupation Soldier",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 6,
+                            position = Position(7, 3),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_archer_7",
+                            name = "Crimson Bowman",
+                            characterClass = CharacterClass.ARCHER,
+                            level = 6,
+                            position = Position(9, 7),
+                            equipment = listOf("steel_bow"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_mage_3",
+                            name = "Crimson Mage",
+                            characterClass = CharacterClass.MAGE,
+                            level = 6,
+                            position = Position(11, 5),
+                            equipment = listOf("thunder_tome"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                            namedUnitId = "generic_dark_mage",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_healer_2",
+                            name = "War Priest",
+                            characterClass = CharacterClass.HEALER,
+                            level = 5,
+                            position = Position(12, 3),
+                            equipment = listOf("heal"),
+                            aiType = AIBehavior.SUPPORT,
+                            namedUnitId = "generic_healer",
+                        ),
+                    ),
+                bossUnit =
+                    EnemyUnitSpawn(
+                        id = "boss_voss",
+                        name = "Captain Voss",
+                        characterClass = CharacterClass.KNIGHT,
+                        level = 7,
+                        position = Position(13, 5),
+                        equipment = listOf("silver_sword"),
+                        isBoss = true,
+                        aiType = AIBehavior.DEFENSIVE,
+                        namedUnitId = "boss_captain_voss",
+                    ),
+                preBattleDialogue =
+                    "Scout: Millhaven is occupied by Captain Voss and his garrison. " +
+                        "The villagers are trapped.\n" +
+                        "Commander: We free them today. Raven, use your speed to flank. " +
+                        "Everyone else, push forward together!",
+                postVictoryDialogue =
+                    "Villager: Thank you! Captain Voss terrorized us for weeks.\n" +
+                        "Commander: Millhaven is free. Rest well — more battles lie ahead.",
+            ),
+            // Chapter 8: Forest Ambush (player sets the ambush this time)
+            Chapter(
+                id = "ch8_dark_forest",
+                number = 8,
+                title = "The Dark Forest",
+                description = "Ambush an enemy supply convoy passing through the Thornwood",
+                objective = ChapterObjective.DEFEAT_ALL_ENEMIES,
+                objectiveDetails = "Eliminate the enemy convoy escort",
+                mapLayout = MapLayout.DARK_FOREST,
+                playerStartPositions =
+                    listOf(
+                        Position(2, 3),
+                        Position(2, 4),
+                        Position(2, 5),
+                        Position(2, 6),
+                    ),
+                enemyUnits =
+                    listOf(
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_9",
+                            name = "Convoy Guard",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 7,
+                            position = Position(8, 4),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_10",
+                            name = "Convoy Guard",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 7,
+                            position = Position(8, 6),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_archer_8",
+                            name = "Escort Archer",
+                            characterClass = CharacterClass.ARCHER,
+                            level = 7,
+                            position = Position(9, 5),
+                            equipment = listOf("steel_bow"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_thief_3",
+                            name = "Scout",
+                            characterClass = CharacterClass.THIEF,
+                            level = 7,
+                            position = Position(10, 3),
+                            equipment = listOf("iron_sword"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                            namedUnitId = "generic_rogue",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_healer_3",
+                            name = "Convoy Healer",
+                            characterClass = CharacterClass.HEALER,
+                            level = 6,
+                            position = Position(9, 4),
+                            equipment = listOf("mend"),
+                            aiType = AIBehavior.SUPPORT,
+                            namedUnitId = "generic_healer",
+                        ),
+                    ),
+                reinforcements =
+                    listOf(
+                        Reinforcement(
+                            spawnTurn = 4,
+                            unit =
+                                EnemyUnitSpawn(
+                                    id = "reinforce_pegasus_1",
+                                    name = "Sky Scout",
+                                    characterClass = CharacterClass.PEGASUS_KNIGHT,
+                                    level = 7,
+                                    position = Position(11, 1),
+                                    equipment = listOf("iron_lance"),
+                                    aiType = AIBehavior.AGGRESSIVE,
+                                    namedUnitId = "generic_pegasus",
+                                ),
+                        ),
+                    ),
+                preBattleDialogue =
+                    "Raven: The convoy will pass through here at dusk. " +
+                        "We have the element of surprise.\n" +
+                        "Commander: Use the trees as cover. Strike fast and cut off their escape.",
+                postVictoryDialogue =
+                    "Raven: The supplies are ours. This will weaken their front lines.\n" +
+                        "Commander: Good work. The Crimson Empire grows weaker with every victory.",
+            ),
+            // Chapter 9: Border Fortress
+            Chapter(
+                id = "ch9_border_fort",
+                number = 9,
+                title = "Assault on Fort Duskwall",
+                description = "Storm the Crimson Empire's border fortress",
+                objective = ChapterObjective.SEIZE_THRONE,
+                objectiveDetails = "Seize the command post inside the fort",
+                mapLayout = MapLayout.BORDER_FORT,
+                thronePosition = Position(7, 5),
+                playerStartPositions =
+                    listOf(
+                        Position(0, 3),
+                        Position(0, 4),
+                        Position(0, 5),
+                        Position(0, 6),
+                        Position(1, 4),
+                    ),
+                enemyUnits =
+                    listOf(
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_11",
+                            name = "Fort Defender",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 8,
+                            position = Position(6, 4),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_12",
+                            name = "Fort Defender",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 8,
+                            position = Position(7, 6),
+                            equipment = listOf("steel_lance"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_archer_9",
+                            name = "Wall Archer",
+                            characterClass = CharacterClass.ARCHER,
+                            level = 8,
+                            position = Position(5, 3),
+                            equipment = listOf("steel_bow"),
+                            aiType = AIBehavior.STATIONARY,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_mage_4",
+                            name = "Fort Mage",
+                            characterClass = CharacterClass.MAGE,
+                            level = 8,
+                            position = Position(8, 4),
+                            equipment = listOf("thunder_tome"),
+                            aiType = AIBehavior.DEFENSIVE,
+                            namedUnitId = "generic_dark_mage",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_healer_4",
+                            name = "Fort Healer",
+                            characterClass = CharacterClass.HEALER,
+                            level = 7,
+                            position = Position(7, 4),
+                            equipment = listOf("mend"),
+                            aiType = AIBehavior.SUPPORT,
+                            namedUnitId = "generic_healer",
+                        ),
+                    ),
+                reinforcements =
+                    listOf(
+                        Reinforcement(
+                            spawnTurn = 3,
+                            unit =
+                                EnemyUnitSpawn(
+                                    id = "reinforce_knight_3",
+                                    name = "Garrison Reinforcement",
+                                    characterClass = CharacterClass.KNIGHT,
+                                    level = 7,
+                                    position = Position(13, 5),
+                                    equipment = listOf("steel_sword"),
+                                    aiType = AIBehavior.AGGRESSIVE,
+                                ),
+                        ),
+                        Reinforcement(
+                            spawnTurn = 5,
+                            unit =
+                                EnemyUnitSpawn(
+                                    id = "reinforce_wyvern_1",
+                                    name = "Wyvern Patrol",
+                                    characterClass = CharacterClass.WYVERN_RIDER,
+                                    level = 8,
+                                    position = Position(13, 0),
+                                    equipment = listOf("steel_axe"),
+                                    aiType = AIBehavior.AGGRESSIVE,
+                                    namedUnitId = "generic_wyvern",
+                                ),
+                        ),
+                    ),
+                preBattleDialogue =
+                    "Celeste: Fort Duskwall blocks the only road into Crimson territory. " +
+                        "We must take it.\n" +
+                        "Commander: Watch for archers on the walls. " +
+                        "Celeste, use your wings to bypass the defenses. " +
+                        "Everyone else, breach the front gate!",
+                postVictoryDialogue =
+                    "Commander: Fort Duskwall is ours! The road into the Crimson Empire lies open.\n" +
+                        "Aldric: I sense dark magic ahead. The real battles are just beginning.",
+            ),
+            // Chapter 10: The Sorceress
+            Chapter(
+                id = "ch10_sorceress",
+                number = 10,
+                title = "The Crimson Sorceress",
+                description = "Confront Sorceress Mira in the Coastal Ruins",
+                objective = ChapterObjective.DEFEAT_BOSS,
+                objectiveDetails = "Defeat Sorceress Mira",
+                mapLayout = MapLayout.COASTAL_RUINS,
+                playerStartPositions =
+                    listOf(
+                        Position(0, 3),
+                        Position(0, 4),
+                        Position(1, 3),
+                        Position(1, 4),
+                        Position(1, 5),
+                    ),
+                enemyUnits =
+                    listOf(
+                        EnemyUnitSpawn(
+                            id = "enemy_mage_5",
+                            name = "Crimson Acolyte",
+                            characterClass = CharacterClass.MAGE,
+                            level = 9,
+                            position = Position(5, 3),
+                            equipment = listOf("fire_tome"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                            namedUnitId = "generic_dark_mage",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_mage_6",
+                            name = "Crimson Acolyte",
+                            characterClass = CharacterClass.MAGE,
+                            level = 9,
+                            position = Position(7, 5),
+                            equipment = listOf("thunder_tome"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                            namedUnitId = "generic_dark_mage",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_knight_13",
+                            name = "Crimson Guard",
+                            characterClass = CharacterClass.KNIGHT,
+                            level = 9,
+                            position = Position(8, 3),
+                            equipment = listOf("steel_sword"),
+                            aiType = AIBehavior.DEFENSIVE,
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_pegasus_1",
+                            name = "Sky Lancer",
+                            characterClass = CharacterClass.PEGASUS_KNIGHT,
+                            level = 8,
+                            position = Position(11, 1),
+                            equipment = listOf("steel_lance"),
+                            aiType = AIBehavior.AGGRESSIVE,
+                            namedUnitId = "generic_pegasus",
+                        ),
+                        EnemyUnitSpawn(
+                            id = "enemy_healer_5",
+                            name = "Dark Priest",
+                            characterClass = CharacterClass.HEALER,
+                            level = 8,
+                            position = Position(10, 5),
+                            equipment = listOf("mend"),
+                            aiType = AIBehavior.SUPPORT,
+                            namedUnitId = "generic_healer",
+                        ),
+                    ),
+                bossUnit =
+                    EnemyUnitSpawn(
+                        id = "boss_mira",
+                        name = "Sorceress Mira",
+                        characterClass = CharacterClass.MAGE,
+                        level = 10,
+                        position = Position(12, 4),
+                        equipment = listOf("thunder_tome"),
+                        isBoss = true,
+                        aiType = AIBehavior.DEFENSIVE,
+                        namedUnitId = "boss_sorceress_mira",
+                    ),
+                reinforcements =
+                    listOf(
+                        Reinforcement(
+                            spawnTurn = 3,
+                            unit =
+                                EnemyUnitSpawn(
+                                    id = "reinforce_mage_2",
+                                    name = "Summoned Acolyte",
+                                    characterClass = CharacterClass.MAGE,
+                                    level = 8,
+                                    position = Position(13, 7),
+                                    equipment = listOf("fire_tome"),
+                                    aiType = AIBehavior.AGGRESSIVE,
+                                    namedUnitId = "generic_dark_mage",
+                                ),
+                        ),
+                        Reinforcement(
+                            spawnTurn = 6,
+                            unit =
+                                EnemyUnitSpawn(
+                                    id = "reinforce_mage_3",
+                                    name = "Summoned Acolyte",
+                                    characterClass = CharacterClass.MAGE,
+                                    level = 9,
+                                    position = Position(13, 1),
+                                    equipment = listOf("thunder_tome"),
+                                    aiType = AIBehavior.AGGRESSIVE,
+                                    namedUnitId = "generic_dark_mage",
+                                ),
+                        ),
+                    ),
+                preBattleDialogue =
+                    "Aldric: I can feel her magic from here. Sorceress Mira is powerful.\n" +
+                        "Commander: She's the one enchanting the Crimson Empire's weapons. " +
+                        "Without her, their army loses its magical advantage.\n" +
+                        "Lyanna: Then let's make sure she falls today.",
+                postVictoryDialogue =
+                    "Mira: You... are stronger than I expected. " +
+                        "But the Emperor's power is far beyond mine...\n" +
+                        "Commander: The Crimson Empire's magic has been broken. " +
+                        "Now we march on the heart of the empire itself.",
             ),
         )
 }
