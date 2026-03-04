@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Haptic feedback system** — HapticManager provides tactile vibration for attacks, critical hits, level-ups, and victories; configurable per user preferences
+- **Dedicated Settings Activity** — replaces dialog-based settings with proper screen layout featuring toggle switches, section cards, and organized categories (Audio & Feedback, Gameplay)
+- **Activity transition animations** — smooth fade and slide transitions between all screens (main menu, settings, chapter select, game)
+- **Drawable caching in GameBoardView** — terrain and character icon drawables are now cached to eliminate per-frame resource lookups, improving rendering performance
+- **Haptic feedback preference** — new `hapticEnabled` field in GamePreferences with serialization support
 - **Weapon triangle visual indicator** — battle forecast dialog now shows weapon advantage/disadvantage with color coding (teal for advantage, red for disadvantage)
 - **Health bar color gradient** — HP bars now transition green → yellow → red based on current HP percentage
 - **Battle log panel** — in-game HUD shows 3 most recent combat actions with fading opacity (attacks, heals, phase changes)

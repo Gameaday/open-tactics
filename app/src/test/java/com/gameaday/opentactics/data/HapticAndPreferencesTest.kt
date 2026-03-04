@@ -46,8 +46,12 @@ class HapticAndPreferencesTest {
     @Test
     fun gamePreferencesSerializationRoundTrip() {
         val prefs = GamePreferences(hapticEnabled = false, musicEnabled = false)
-        val json = kotlinx.serialization.json.Json.encodeToString(GamePreferences.serializer(), prefs)
-        val decoded = kotlinx.serialization.json.Json.decodeFromString(GamePreferences.serializer(), json)
+        val json =
+            kotlinx.serialization.json.Json
+                .encodeToString(GamePreferences.serializer(), prefs)
+        val decoded =
+            kotlinx.serialization.json.Json
+                .decodeFromString(GamePreferences.serializer(), json)
         assertEquals(prefs, decoded)
         assertFalse(decoded.hapticEnabled)
         assertFalse(decoded.musicEnabled)

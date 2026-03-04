@@ -120,16 +120,17 @@ The following items are not technical debt but represent potential improvements 
 ### 📱 UI/UX Polish
 | Item | Priority | Effort | Notes |
 |------|----------|--------|-------|
-| Settings as dedicated Activity (not dialog) | MEDIUM | 5h | Better layout, sliders, toggle switches |
+| ~~Settings as dedicated Activity (not dialog)~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: SettingsActivity with toggle switches and section panels |
 | Loading screen with progress indicator | MEDIUM | 3h | Show while chapter initializes |
-| Haptic feedback on unit actions | LOW | 2h | Vibration on attack, level-up |
+| ~~Haptic feedback on unit actions~~ | ~~LOW~~ | ~~—~~ | ✅ Done: HapticManager with attack/crit/level-up/victory vibrations |
 | Dark/light theme toggle | LOW | 5h | Alternative color scheme option |
 | Landscape orientation support | LOW | 8h | Responsive layout for wider screens |
+| ~~Activity transition animations~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Fade and slide transitions between all screens |
 
 ### ⚡ Performance & Architecture
 | Item | Priority | Effort | Notes |
 |------|----------|--------|-------|
-| Bitmap caching for terrain tiles | MEDIUM | 5h | Reduce per-frame draw calls |
+| ~~Bitmap caching for terrain tiles~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: Drawable cache in GameBoardView reduces per-frame lookups |
 | ViewModel migration for GameActivity | LOW | 15h | Survive configuration changes |
 | Room database for save files | LOW | 10h | Replace encrypted SharedPreferences |
 | Standalone module full feature parity | LOW | 10h | Add support, serialization, named units |
@@ -169,4 +170,4 @@ The following items are not technical debt but represent potential improvements 
 
 ---
 
-*Last Updated: March 5, 2026*
+*Last Updated: March 5, 2026 (Session 2)*
