@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **20-Chapter Campaign** across 4 acts (Defense, Counterattack, Invasion, Finale)
+- **17 unique map layouts** including river crossings, fortress interiors, and dragon lairs
+- **Difficulty modes** (Easy/Normal/Hard) with enemy stat and EXP scaling
+- **Achievement system** with 10 milestones tracked in player profile
+- **Battle quotes** for all named protagonists and boss characters
+- **Support conversations** between 7 character pairs at ranks C, B, A
+- **AI healing** — enemy healers now use healing staves on wounded allies
+- **Critical hit system** with skill/luck-based critical rates
+- **Healing system** with Heal and Mend staves, EXP for healing
+- **Chapter replay** — completed chapters show replay option in chapter select
+- **New character classes**: Pegasus Knight, Wyvern Rider
+- **Named characters**: Sir Garrett, Lyanna, Aldric, Elara, Raven, Celeste
+- **Boss characters**: Captain Voss, Sorceress Mira, Warlord Kael, Emperor Darius
 - CI/CD pipeline with GitHub Actions
 - Automated ktlint code formatting and linting
 - Automatic version numbering based on git commits
@@ -15,7 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ProGuard configuration for release builds
 - Play Store deployment automation
 
+### Fixed
+- Suppressed EncryptedSharedPreferences deprecation warnings with migration plan
+- Fixed serialization annotations in Weapon.kt (`@OptIn(ExperimentalSerializationApi::class)`)
+- Added `@IgnoredOnParcel` annotation to Character.kt computed properties
+- AI behavior fallback now correctly uses `aiType` field
+
 ### Changed
+- Standalone module synced with app (healing, critical hits, 20 chapters, EXP scaling)
 - Enhanced build configuration with signing support
 - Improved testing infrastructure
 - Better error handling and logging

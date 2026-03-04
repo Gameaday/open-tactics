@@ -110,5 +110,11 @@ data class Weapon(
         fun fire() = Weapon("fire", "Fire", WeaponType.TOME, WeaponRank.E, 5, 90, 0, 4, 1..2, 40)
 
         fun thunder() = Weapon("thunder", "Thunder", WeaponType.TOME, WeaponRank.D, 9, 75, 5, 6, 1..2, 35)
+
+        fun heal() = Weapon("heal", "Heal", WeaponType.STAFF, WeaponRank.E, 0, 100, 0, 2, 1..1, 30, canHeal = true)
+
+        fun mend() = Weapon("mend", "Mend", WeaponType.STAFF, WeaponRank.D, 0, 100, 0, 4, 1..1, 20, canHeal = true)
+
+        fun silverSword() = Weapon("silver_sword", "Silver Sword", WeaponType.SWORD, WeaponRank.B, 13, 80, 0, 8, 1..1, 20)
     }
 }
