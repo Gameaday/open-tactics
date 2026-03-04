@@ -7,9 +7,7 @@
     <!-- Archer: bow with drawn arrow -->
     <!-- Bow arc -->
     <path android:fillColor="@android:color/white"
-        android:pathData="M4,2C4,2 2,12 4,22C4,22 8,18 10,12C8,6 4,2 4,2Z"
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="0"/>
+        android:pathData="M4,2C4,2 2,12 4,22C4,22 8,18 10,12C8,6 4,2 4,2Z"/>
     <!-- Bowstring -->
     <path android:fillColor="@android:color/white"
         android:pathData="M4,2L10,12L4,22L5,22L11,12L5,2Z"/>

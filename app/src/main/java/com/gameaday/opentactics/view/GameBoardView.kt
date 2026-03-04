@@ -330,7 +330,7 @@ class GameBoardView
                 val iconResId = terrainIconMap[tile.terrain]
                 if (iconResId != null) {
                     val drawable = ContextCompat.getDrawable(context, iconResId)
-                    if (drawable is VectorDrawable) {
+                    if (drawable != null) {
                         val iconPadding = (tileSize * 0.15f).toInt()
                         drawable.setBounds(
                             (left + iconPadding).toInt(),
