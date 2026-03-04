@@ -115,6 +115,18 @@ data class Weapon(
 
         fun mend() = Weapon("mend", "Mend", WeaponType.STAFF, WeaponRank.D, 0, 100, 0, 4, 1..1, 20, canHeal = true)
 
-        fun silverSword() = Weapon("silver_sword", "Silver Sword", WeaponType.SWORD, WeaponRank.B, 13, 80, 0, 8, 1..1, 20)
+        fun silverSword() =
+            Weapon(
+                "silver_sword",
+                "Silver Sword",
+                WeaponType.SWORD,
+                WeaponRank.B,
+                13,
+                80,
+                0,
+                8,
+                1..1,
+                20,
+            )
     }
 }

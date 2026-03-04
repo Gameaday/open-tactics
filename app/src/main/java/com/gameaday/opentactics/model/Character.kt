@@ -503,6 +503,7 @@ data class Character(
          * @param aiType The AI behavior for this character (default AGGRESSIVE)
          * @return A character instance with stats appropriate for the target level
          */
+        @Suppress("LongParameterList") // Character creation inherently requires many parameters
         fun fromNamedUnit(
             namedUnit: NamedUnit,
             team: Team,

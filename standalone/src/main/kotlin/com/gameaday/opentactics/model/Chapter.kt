@@ -166,6 +166,7 @@ enum class MapLayout {
 /**
  * Chapter repository for campaign data
  */
+@Suppress("LargeClass") // Chapter data is intentionally stored in a single repository for campaign coherence
 object ChapterRepository {
     fun getChapter(chapterNumber: Int): Chapter? = chapters.getOrNull(chapterNumber - 1)
 

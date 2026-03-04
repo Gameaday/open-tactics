@@ -74,6 +74,7 @@ data class GamePreferences(
  * - Hard: enemies have +20% stats, EXP gain -20%
  */
 @Serializable
+@Suppress("MagicNumber") // Difficulty tuning constants are self-explanatory in enum context
 enum class DifficultyMode(
     val displayName: String,
     val enemyStatMultiplier: Float,
@@ -99,6 +100,15 @@ data class Achievement(
  * Repository of all available achievements
  */
 object AchievementRepository {
+    // Achievement threshold constants
+    private const val VETERAN_BATTLES = 10
+    private const val MAX_LEVEL_THRESHOLD = 20
+    private const val SEASONED_WARRIOR_BATTLES = 5
+    private const val CHAPTER_5_BATTLES = 5
+    private const val CHAPTER_10_BATTLES = 10
+    private const val CHAPTER_15_BATTLES = 15
+    private const val CHAPTER_20_BATTLES = 20
+
     fun getAchievement(id: String): Achievement? = achievements[id]
 
     fun getAllAchievements(): List<Achievement> = achievements.values.toList()
@@ -111,20 +121,22 @@ object AchievementRepository {
         val already = profile.achievementsUnlocked.toSet()
         val earned = mutableListOf<String>()
         if ("first_victory" !in already && profile.totalBattlesWon >= 1) earned.add("first_victory")
-        if ("veteran" !in already && profile.totalBattlesWon >= 10) earned.add("veteran")
+        if ("veteran" !in already && profile.totalBattlesWon >= VETERAN_BATTLES) earned.add("veteran")
         if ("campaign_complete" !in already && profile.campaignsCompleted >= 1) earned.add("campaign_complete")
-        if ("max_level" !in already && profile.highestLevel >= 20) earned.add("max_level")
+        if ("max_level" !in already && profile.highestLevel >= MAX_LEVEL_THRESHOLD) earned.add("max_level")
         if ("hard_mode" !in already &&
             profile.campaignsCompleted >= 1 &&
             profile.preferences.difficulty == DifficultyMode.HARD
         ) {
             earned.add("hard_mode")
         }
-        if ("seasoned_warrior" !in already && profile.totalBattlesWon >= 5) earned.add("seasoned_warrior")
-        if ("chapter_5" !in already && profile.totalBattlesWon >= 5) earned.add("chapter_5")
-        if ("chapter_10" !in already && profile.totalBattlesWon >= 10) earned.add("chapter_10")
-        if ("chapter_15" !in already && profile.totalBattlesWon >= 15) earned.add("chapter_15")
-        if ("chapter_20" !in already && profile.totalBattlesWon >= 20) earned.add("chapter_20")
+        if ("seasoned_warrior" !in already && profile.totalBattlesWon >= SEASONED_WARRIOR_BATTLES) {
+            earned.add("seasoned_warrior")
+        }
+        if ("chapter_5" !in already && profile.totalBattlesWon >= CHAPTER_5_BATTLES) earned.add("chapter_5")
+        if ("chapter_10" !in already && profile.totalBattlesWon >= CHAPTER_10_BATTLES) earned.add("chapter_10")
+        if ("chapter_15" !in already && profile.totalBattlesWon >= CHAPTER_15_BATTLES) earned.add("chapter_15")
+        if ("chapter_20" !in already && profile.totalBattlesWon >= CHAPTER_20_BATTLES) earned.add("chapter_20")
         return earned
     }
 

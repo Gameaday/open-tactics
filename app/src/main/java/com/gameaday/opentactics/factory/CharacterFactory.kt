@@ -1,3 +1,5 @@
+@file:Suppress("LongParameterList") // Character creation inherently requires many parameters
+
 package com.gameaday.opentactics.factory
 
 import com.gameaday.opentactics.model.AIBehavior
