@@ -10,21 +10,38 @@
     android:padding="32dp"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:id="@+id/appLogo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_app_logo"
+        app:srcCompat="@drawable/ic_crossed_swords" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="4dp"
         android:text="@string/app_name"
         android:textColor="@color/accent_gold"
         android:textSize="48sp"
         android:textStyle="bold" />
 
     <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="@string/app_tagline"
+        android:textColor="@color/white"
+        android:textSize="13sp"
+        android:textStyle="italic" />
+
+    <TextView
         android:id="@+id/playerWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
-        android:text="Welcome, Tactician!"
+        android:text="@string/welcome_default"
         android:textColor="@color/teal_200"
         android:textSize="16sp"
         android:textStyle="italic" />
@@ -35,6 +52,7 @@
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_new_game"
         android:text="@string/new_game" />
 
     <Button
@@ -43,6 +61,7 @@
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_continue_game"
         android:text="@string/continue_game" />
 
     <Button
@@ -51,6 +70,7 @@
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_settings"
         android:text="@string/settings" />
 
     <Button
@@ -59,6 +79,7 @@
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_about"
         android:text="@string/about" />
 
     <Button
@@ -66,6 +87,15 @@
         style="@style/GameButtonStyle"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/cd_exit"
         android:text="@string/exit" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/version_label"
+        android:textColor="@color/neutral_gray"
+        android:textSize="11sp" />
 
 </LinearLayout>

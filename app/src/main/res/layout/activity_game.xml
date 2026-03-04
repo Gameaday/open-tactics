@@ -30,6 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
+            android:contentDescription="@string/cd_move_unit"
             android:text="@string/move" />
 
         <Button
@@ -39,7 +40,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
-            android:text="Undo"
+            android:contentDescription="@string/cd_undo_move"
+            android:text="@string/undo"
             android:visibility="gone" />
 
         <Button
@@ -49,6 +51,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
+            android:contentDescription="@string/cd_attack_target"
             android:text="@string/attack" />
 
         <Button
@@ -58,6 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
+            android:contentDescription="@string/cd_wait_unit"
             android:text="@string/wait" />
 
         <Button
@@ -67,6 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
+            android:contentDescription="@string/cd_open_inventory"
             android:text="@string/inventory" />
 
         <Button
@@ -76,6 +81,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="2dp"
+            android:contentDescription="@string/cd_end_turn"
             android:text="@string/end_turn" />
 
     </LinearLayout>
@@ -148,6 +154,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:contentDescription="@string/cd_skip_enemy_turn"
         android:text="@string/skip_animations"
         android:textSize="14sp"
         android:visibility="gone"
@@ -169,6 +176,7 @@
             style="@style/GameButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
+            android:contentDescription="@string/cd_toggle_ranges"
             android:text="@string/show_ranges"
             android:textSize="11sp"
             android:paddingStart="12dp"
@@ -180,6 +188,7 @@
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginStart="4dp"
+            android:contentDescription="@string/cd_open_menu"
             android:text="☰"
             android:textSize="16sp"
             android:paddingStart="12dp"

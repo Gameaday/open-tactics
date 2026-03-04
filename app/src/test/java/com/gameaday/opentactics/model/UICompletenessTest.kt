@@ -1,7 +1,10 @@
 package com.gameaday.opentactics.model
 
+import com.gameaday.opentactics.data.SoundManager
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -128,5 +131,37 @@ class UICompletenessTest {
         assert(displayStr.contains("SPD")) { "Display string should contain SPD" }
         assert(displayStr.contains("SKL")) { "Display string should contain SKL" }
         assert(displayStr.contains("LCK")) { "Display string should contain LCK" }
+    }
+
+    @Test
+    fun soundManagerEffectsAreDefined() {
+        // Verify all expected sound effect types exist
+        val effects = SoundManager.SoundEffect.values()
+        val effectNames = effects.map { it.name }.toSet()
+
+        assertTrue("Should have BUTTON_CLICK effect", "BUTTON_CLICK" in effectNames)
+        assertTrue("Should have MOVE_UNIT effect", "MOVE_UNIT" in effectNames)
+        assertTrue("Should have ATTACK_HIT effect", "ATTACK_HIT" in effectNames)
+        assertTrue("Should have CRITICAL_HIT effect", "CRITICAL_HIT" in effectNames)
+        assertTrue("Should have HEAL effect", "HEAL" in effectNames)
+        assertTrue("Should have LEVEL_UP effect", "LEVEL_UP" in effectNames)
+        assertTrue("Should have VICTORY effect", "VICTORY" in effectNames)
+        assertTrue("Should have DEFEAT effect", "DEFEAT" in effectNames)
+        assertTrue("Should have TURN_START effect", "TURN_START" in effectNames)
+    }
+
+    @Test
+    fun difficultyModesHaveDisplayNames() {
+        // Verify all difficulty modes have display names
+        com.gameaday.opentactics.data.DifficultyMode.values().forEach { mode ->
+            assertNotNull(
+                "DifficultyMode ${mode.name} should have a display name",
+                mode.displayName,
+            )
+            assertFalse(
+                "DifficultyMode ${mode.name} displayName should not be empty",
+                mode.displayName.isEmpty(),
+            )
+        }
     }
 }

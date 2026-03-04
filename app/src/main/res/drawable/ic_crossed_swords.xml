@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Left sword blade -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M14,4L18,4L34,44L30,44Z"/>
+    <!-- Left sword guard -->
+    <path android:fillColor="#FFE0E0E0"
+        android:pathData="M10,42L22,42L22,46L10,46Z"/>
+    <!-- Left sword handle -->
+    <path android:fillColor="#FF8B4513"
+        android:pathData="M14,46L18,46L18,56L14,56Z"/>
+    <!-- Left sword pommel -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M12,56L20,56L20,60L12,60Z"/>
+    <!-- Right sword blade -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M50,4L46,4L30,44L34,44Z"/>
+    <!-- Right sword guard -->
+    <path android:fillColor="#FFE0E0E0"
+        android:pathData="M42,42L54,42L54,46L42,46Z"/>
+    <!-- Right sword handle -->
+    <path android:fillColor="#FF8B4513"
+        android:pathData="M46,46L50,46L50,56L46,56Z"/>
+    <!-- Right sword pommel -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M44,56L52,56L52,60L44,60Z"/>
+</vector>
