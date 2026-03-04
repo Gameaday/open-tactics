@@ -4,7 +4,17 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Healer cross icon -->
+    <!-- Healer: staff with cross/heart symbol -->
+    <!-- Staff shaft -->
     <path android:fillColor="@android:color/white"
-        android:pathData="M10,2H14V8H20V12H14V22H10V12H4V8H10V2Z"/>
+        android:pathData="M11,10H13V22H11Z"/>
+    <!-- Cross at top of staff -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M9,1H15V3H13V5H15V7H9V5H11V3H9ZM7,3H9V5H7ZM15,3H17V5H15Z"/>
+    <!-- Healing glow lines -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M5,6L7,5M17,5L19,6M4,4L6,4M18,4L20,4"/>
+    <!-- Staff base -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M9,21H15V23H9Z"/>
 </vector>

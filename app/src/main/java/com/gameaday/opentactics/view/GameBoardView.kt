@@ -113,6 +113,17 @@ class GameBoardView
                 CharacterClass.DRAGON to R.drawable.ic_dragon,
             )
 
+        // Terrain type icons mapping
+        private val terrainIconMap =
+            mapOf(
+                TerrainType.PLAIN to R.drawable.ic_terrain_plain,
+                TerrainType.FOREST to R.drawable.ic_terrain_forest,
+                TerrainType.MOUNTAIN to R.drawable.ic_terrain_mountain,
+                TerrainType.FORT to R.drawable.ic_terrain_fort,
+                TerrainType.VILLAGE to R.drawable.ic_terrain_village,
+                TerrainType.WATER to R.drawable.ic_terrain_water,
+            )
+
         // Gesture handling
         private val gestureDetector =
             GestureDetector(
@@ -314,26 +325,24 @@ class GameBoardView
 
             canvas.drawRect(left, top, right, bottom, tilePaint)
 
-            // Add terrain indicators
+            // Draw terrain icon overlay for non-plain tiles
             if (tile.terrain != TerrainType.PLAIN) {
-                textPaint.textSize = tileSize * 0.3f
-                textPaint.color = Color.argb(180, 255, 255, 255)
-                val terrainSymbol =
-                    when (tile.terrain) {
-                        TerrainType.FOREST -> "♣"
-                        TerrainType.MOUNTAIN -> "▲"
-                        TerrainType.FORT -> "⚑"
-                        TerrainType.VILLAGE -> "♦"
-                        TerrainType.WATER -> "≈"
-                        else -> ""
+                val iconResId = terrainIconMap[tile.terrain]
+                if (iconResId != null) {
+                    val drawable = ContextCompat.getDrawable(context, iconResId)
+                    if (drawable is VectorDrawable) {
+                        val iconPadding = (tileSize * 0.15f).toInt()
+                        drawable.setBounds(
+                            (left + iconPadding).toInt(),
+                            (top + iconPadding).toInt(),
+                            (right - iconPadding).toInt(),
+                            (bottom - iconPadding).toInt(),
+                        )
+                        drawable.alpha = 140
+                        drawable.draw(canvas)
+                        drawable.alpha = 255
                     }
-                canvas.drawText(
-                    terrainSymbol,
-                    left + tileSize * 0.5f,
-                    top + tileSize * 0.35f,
-                    textPaint,
-                )
-                textPaint.color = Color.WHITE
+                }
             }
         }
 

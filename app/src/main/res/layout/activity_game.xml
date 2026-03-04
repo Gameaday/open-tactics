@@ -94,7 +94,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_margin="8dp"
-        android:background="@color/panel_background"
+        android:background="@drawable/bg_panel_rounded"
         android:orientation="vertical"
         android:padding="8dp"
         android:visibility="visible">
@@ -204,7 +204,7 @@
         android:layout_below="@id/topButtonGroup"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
-        android:background="@color/panel_background"
+        android:background="@drawable/bg_panel_rounded"
         android:orientation="vertical"
         android:padding="10dp"
         android:visibility="gone">

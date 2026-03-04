@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.gameaday.opentactics.data.DifficultyMode
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
+import com.gameaday.opentactics.data.SoundManager
 import com.gameaday.opentactics.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -21,6 +22,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var saveGameManager: SaveGameManager
+    private lateinit var soundManager: SoundManager
     private var playerProfile: PlayerProfile? = null
 
     private val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
@@ -31,7 +33,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         saveGameManager = SaveGameManager(this)
+        soundManager = SoundManager(this)
         loadPlayerProfile()
+        applySoundPreferences()
         setupClickListeners()
         updateContinueButton()
     }
@@ -39,7 +43,21 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadPlayerProfile()
+        applySoundPreferences()
         updateContinueButton()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
+    }
+
+    private fun applySoundPreferences() {
+        val prefs = playerProfile?.preferences
+        soundManager.setPreferences(
+            musicEnabled = prefs?.musicEnabled ?: true,
+            sfxEnabled = prefs?.soundEffectsEnabled ?: true,
+        )
     }
 
     private fun loadPlayerProfile() {

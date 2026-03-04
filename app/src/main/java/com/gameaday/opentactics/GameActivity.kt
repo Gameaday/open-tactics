@@ -15,6 +15,7 @@ import com.gameaday.opentactics.data.GameSave
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.data.SavedGameState
+import com.gameaday.opentactics.data.SoundManager
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.factory.MapFactory
 import com.gameaday.opentactics.game.GameState
@@ -34,6 +35,7 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameState: GameState
     private lateinit var gameBoardView: GameBoardView
     private lateinit var saveGameManager: SaveGameManager
+    private lateinit var soundManager: SoundManager
 
     private var playerProfile: PlayerProfile? = null
     private var currentGameSave: GameSave? = null
@@ -66,7 +68,9 @@ class GameActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         saveGameManager = SaveGameManager(this)
+        soundManager = SoundManager(this)
         loadPlayerProfile()
+        applySoundPreferences()
 
         val loadSaveId = intent.getStringExtra(EXTRA_LOAD_SAVE_ID)
         val playerName = intent.getStringExtra(EXTRA_PLAYER_NAME) ?: "Player"
@@ -89,10 +93,23 @@ class GameActivity : AppCompatActivity() {
         performAutoSave()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
+    }
+
     private fun loadPlayerProfile() {
         playerProfile = saveGameManager.loadProfile() ?: PlayerProfile(
             playerName = "Player",
             totalPlayTime = 0,
+        )
+    }
+
+    private fun applySoundPreferences() {
+        val prefs = playerProfile?.preferences
+        soundManager.setPreferences(
+            musicEnabled = prefs?.musicEnabled ?: true,
+            sfxEnabled = prefs?.soundEffectsEnabled ?: true,
         )
     }
 

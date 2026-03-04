@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Water: waves -->
+    <!-- Water body -->
+    <path android:fillColor="#FF0288D1"
+        android:pathData="M0,10H24V24H0Z"/>
+    <!-- Wave 1 -->
+    <path android:fillColor="#FF039BE5"
+        android:pathData="M0,10C2,8 4,8 6,10C8,12 10,12 12,10C14,8 16,8 18,10C20,12 22,12 24,10V14C22,12 20,12 18,14C16,16 14,16 12,14C10,12 8,12 6,14C4,16 2,16 0,14Z"/>
+    <!-- Wave 2 -->
+    <path android:fillColor="#FF4FC3F7"
+        android:pathData="M0,16C3,14 6,14 9,16C12,18 15,18 18,16C21,14 24,14 24,16V18C21,16 18,16 15,18C12,20 9,20 6,18C3,16 0,16 0,18Z"/>
+</vector>

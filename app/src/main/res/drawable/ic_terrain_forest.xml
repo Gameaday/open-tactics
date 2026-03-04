@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Forest: trees with canopy -->
+    <!-- Ground -->
+    <path android:fillColor="#FF2E7D32"
+        android:pathData="M0,20H24V24H0Z"/>
+    <!-- Left tree canopy -->
+    <path android:fillColor="#FF388E3C"
+        android:pathData="M3,20L7,8L11,20Z"/>
+    <!-- Left tree trunk -->
+    <path android:fillColor="#FF5D4037"
+        android:pathData="M6,20H8V16H6Z"/>
+    <!-- Right tree canopy -->
+    <path android:fillColor="#FF2E7D32"
+        android:pathData="M13,20L17,6L21,20Z"/>
+    <!-- Right tree trunk -->
+    <path android:fillColor="#FF5D4037"
+        android:pathData="M16,20H18V16H16Z"/>
+</vector>

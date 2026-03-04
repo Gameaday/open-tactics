@@ -164,4 +164,38 @@ class UICompletenessTest {
             )
         }
     }
+
+    @Test
+    fun allTerrainTypesExist() {
+        // Verify all 6 terrain types are defined
+        val terrains = TerrainType.values()
+        assertEquals(
+            "There should be 6 terrain types",
+            6,
+            terrains.size,
+        )
+
+        val terrainNames = terrains.map { it.name }.toSet()
+        assertTrue("Should have PLAIN", "PLAIN" in terrainNames)
+        assertTrue("Should have FOREST", "FOREST" in terrainNames)
+        assertTrue("Should have MOUNTAIN", "MOUNTAIN" in terrainNames)
+        assertTrue("Should have FORT", "FORT" in terrainNames)
+        assertTrue("Should have VILLAGE", "VILLAGE" in terrainNames)
+        assertTrue("Should have WATER", "WATER" in terrainNames)
+    }
+
+    @Test
+    fun terrainTypesHaveGameplayProperties() {
+        // Verify terrain types have valid defensive/avoidance bonuses
+        TerrainType.values().forEach { terrain ->
+            assertTrue(
+                "TerrainType ${terrain.name} defensive bonus should be >= 0",
+                terrain.defensiveBonus >= 0,
+            )
+            assertTrue(
+                "TerrainType ${terrain.name} avoidance bonus should be >= 0",
+                terrain.avoidanceBonus >= 0,
+            )
+        }
+    }
 }
