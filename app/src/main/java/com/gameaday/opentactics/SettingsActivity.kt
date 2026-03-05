@@ -73,8 +73,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupListeners() {
         binding.btnSettingsBack.setOnClickListener {
             finish()
-            @Suppress("DEPRECATION")
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+            applyCloseTransition()
         }
 
         binding.settingsPlayerName.setOnClickListener { editPlayerName() }
@@ -195,5 +194,14 @@ class SettingsActivity : AppCompatActivity() {
                 dialog.dismiss()
             }.setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun applyCloseTransition() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.fade_in, R.anim.fade_out)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        }
     }
 }
