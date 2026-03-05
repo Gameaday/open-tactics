@@ -78,6 +78,16 @@ class MainActivity : AppCompatActivity() {
             showContinueGameDialog()
         }
 
+        binding.btnCustomMode.setOnClickListener {
+            val name = playerProfile?.playerName ?: "Player"
+            val intent =
+                Intent(this, CustomModeActivity::class.java).apply {
+                    putExtra(CustomModeActivity.EXTRA_PLAYER_NAME, name)
+                }
+            startActivity(intent)
+            applyTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
+
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
             applyTransition(R.anim.slide_in_right, R.anim.slide_out_left)

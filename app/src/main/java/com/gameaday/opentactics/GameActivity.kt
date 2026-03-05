@@ -64,6 +64,7 @@ class GameActivity : AppCompatActivity() {
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_IS_NEW_GAME = "is_new_game"
         const val EXTRA_CHAPTER_NUMBER = "chapter_number"
+        const val EXTRA_CUSTOM_CONFIG = "custom_config"
 
         // Chapter numbers where new characters join the party
         private const val HEALER_JOIN_CHAPTER = 6
@@ -90,7 +91,12 @@ class GameActivity : AppCompatActivity() {
         val isNewGame = intent.getBooleanExtra(EXTRA_IS_NEW_GAME, true)
         val chapterNumber = intent.getIntExtra(EXTRA_CHAPTER_NUMBER, 1)
 
-        if (isNewGame || loadSaveId == null) {
+        @Suppress("DEPRECATION")
+        val customConfig = intent.getParcelableExtra<com.gameaday.opentactics.data.CustomMapConfig>(EXTRA_CUSTOM_CONFIG)
+
+        if (customConfig != null) {
+            initializeCustomGame(playerName, customConfig)
+        } else if (isNewGame || loadSaveId == null) {
             initializeNewGame(playerName, chapterNumber)
         } else {
             loadGame(loadSaveId)
@@ -331,6 +337,93 @@ class GameActivity : AppCompatActivity() {
 
         // Create initial save data
         currentGameSave = createGameSave(playerName, chapterNumber)
+    }
+
+    /**
+     * Initialize a custom game from a CustomMapConfig.
+     * Creates the board, player units, and enemy units from user-defined configuration.
+     */
+    private fun initializeCustomGame(
+        playerName: String,
+        config: com.gameaday.opentactics.data.CustomMapConfig,
+    ) {
+        resetChapterStats()
+
+        // Create game board from selected map layout
+        val board = MapFactory.createMap(config.mapLayout)
+
+        // Build a Chapter object to represent the custom game for GameState
+        val chapter =
+            com.gameaday.opentactics.model.Chapter(
+                id = "custom_${config.configId}",
+                number = 0, // Custom games don't have a chapter number
+                title = config.name,
+                description = "Custom Battle",
+                objective = config.objective,
+                objectiveDetails = config.objective.name.replace("_", " "),
+                mapLayout = config.mapLayout,
+                playerStartPositions = config.playerUnits.map { it.position },
+                enemyUnits = emptyList(), // We'll add units manually
+                turnLimit = config.turnLimit,
+            )
+
+        gameState = GameState(board, currentChapter = chapter)
+
+        // Create player characters from config
+        config.playerUnits.forEachIndexed { index, unitConfig ->
+            val character =
+                com.gameaday.opentactics.factory.CharacterFactory.createPlayerCharacter(
+                    id = "custom_player_$index",
+                    name = unitConfig.name,
+                    characterClass = unitConfig.characterClass,
+                    position = unitConfig.position,
+                    level = unitConfig.level,
+                )
+            // Add configured weapons
+            unitConfig.weaponIds.forEach { weaponId ->
+                getWeaponById(weaponId)?.let { weapon -> character.addWeapon(weapon) }
+            }
+            // Add configured items
+            unitConfig.itemIds.forEach { itemId ->
+                com.gameaday.opentactics.factory.ItemFactory.createItem(itemId)?.let { item ->
+                    character.addItem(item)
+                }
+            }
+            gameState.addPlayerCharacter(character)
+            board.placeCharacter(character, character.position)
+        }
+
+        // Create enemy characters from config
+        config.enemyUnits.forEachIndexed { index, unitConfig ->
+            val character =
+                com.gameaday.opentactics.factory.CharacterFactory.createEnemyCharacter(
+                    id = "custom_enemy_$index",
+                    name = unitConfig.name,
+                    characterClass = unitConfig.characterClass,
+                    position = unitConfig.position,
+                    level = unitConfig.level,
+                    isBoss = unitConfig.isBoss,
+                    aiType = unitConfig.aiType,
+                )
+            // Add configured weapons
+            unitConfig.weaponIds.forEach { weaponId ->
+                getWeaponById(weaponId)?.let { weapon -> character.addWeapon(weapon) }
+            }
+            gameState.addEnemyCharacter(character)
+            board.placeCharacter(character, character.position)
+        }
+
+        // Apply difficulty scaling
+        val difficultyMultiplier = playerProfile?.preferences?.difficulty?.enemyStatMultiplier ?: 1.0f
+        if (difficultyMultiplier != 1.0f) {
+            gameState.getAliveEnemyCharacters().forEach { enemy ->
+                enemy.applyDifficultyScaling(difficultyMultiplier)
+            }
+        }
+        gameState.expMultiplier = playerProfile?.preferences?.difficulty?.expMultiplier ?: 1.0f
+
+        // Create save data for custom game (chapter 0 = custom)
+        currentGameSave = createGameSave(playerName, 0)
     }
 
     private fun initializeSupportRelationships() {
