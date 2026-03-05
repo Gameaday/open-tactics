@@ -1,126 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dark_gray"
     android:orientation="horizontal"
-    android:padding="16dp"
+    android:padding="12dp"
     tools:context=".CustomModeActivity">
 
     <!-- Left panel: Configuration options -->
-    <LinearLayout
+    <ScrollView
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingEnd="8dp">
+        android:layout_marginEnd="6dp"
+        android:fillViewport="true">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/custom_mode_title"
-            android:textColor="@color/accent_gold"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <!-- Map Selection -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/custom_map_label"
-            android:textColor="@color/white"
-            android:textSize="14sp" />
-
-        <Spinner
-            android:id="@+id/spinnerMapLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="@string/cd_custom_map_select" />
-
-        <!-- Objective Selection -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/custom_objective_label"
-            android:textColor="@color/white"
-            android:textSize="14sp" />
-
-        <Spinner
-            android:id="@+id/spinnerObjective"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:contentDescription="@string/cd_custom_objective_select" />
-
-        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:orientation="vertical">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="4dp"
+                android:text="@string/custom_mode_title"
+                android:textColor="@color/accent_gold"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtConfigName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:text="@string/custom_mode_subtitle"
+                android:textColor="@color/neutral_gray"
+                android:textSize="12sp"
+                android:textStyle="italic" />
+
+            <!-- Map & Objective Panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_panel_rounded"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/custom_section_battle"
+                    android:textColor="@color/teal_200"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <!-- Map Selection Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.35"
+                        android:text="@string/custom_map_label"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spinnerMapLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.65"
+                        android:contentDescription="@string/cd_custom_map_select" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="#22FFFFFF" />
+
+                <!-- Objective Selection Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.35"
+                        android:text="@string/custom_objective_label"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <Spinner
+                        android:id="@+id/spinnerObjective"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.65"
+                        android:contentDescription="@string/cd_custom_objective_select" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Action Buttons Panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                android:background="@drawable/bg_panel_rounded"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
+
+                    <Button
+                        android:id="@+id/btnSaveConfig"
+                        style="@style/GameButtonStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:contentDescription="@string/cd_custom_save"
+                        android:text="@string/custom_save"
+                        android:drawableStart="@android:drawable/ic_menu_save"
+                        android:drawablePadding="4dp" />
+
+                    <Button
+                        android:id="@+id/btnLoadConfig"
+                        style="@style/GameButtonStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/cd_custom_load"
+                        android:text="@string/custom_load"
+                        android:drawableStart="@android:drawable/ic_menu_upload"
+                        android:drawablePadding="4dp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnStartBattle"
+                    style="@style/GameButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/cd_custom_start"
+                    android:text="@string/custom_start_battle"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <Button
-                android:id="@+id/btnSaveConfig"
+                android:id="@+id/btnBack"
                 style="@style/GameButtonStyle"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:contentDescription="@string/cd_custom_save"
-                android:text="@string/custom_save" />
-
-            <Button
-                android:id="@+id/btnLoadConfig"
-                style="@style/GameButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:contentDescription="@string/cd_custom_load"
-                android:text="@string/custom_load" />
+                android:contentDescription="@string/cd_back"
+                android:text="@string/back" />
         </LinearLayout>
-
-        <Button
-            android:id="@+id/btnStartBattle"
-            style="@style/GameButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="@string/cd_custom_start"
-            android:text="@string/custom_start_battle" />
-
-        <Button
-            android:id="@+id/btnBack"
-            style="@style/GameButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/cd_back"
-            android:text="@string/back" />
-    </LinearLayout>
+    </ScrollView>
 
     <!-- Right panel: Unit lists -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingStart="8dp">
+        android:layout_marginStart="6dp"
+        android:orientation="vertical">
 
         <!-- Player Units Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@drawable/bg_panel_rounded"
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
 
                 <TextView
                     android:id="@+id/txtPlayerUnitCount"
@@ -129,39 +212,69 @@
                     android:layout_weight="1"
                     android:text="@string/custom_player_units_default"
                     android:textColor="@color/player_blue"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnClearPlayerUnits"
+                    style="@style/GameButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:contentDescription="@string/cd_custom_clear_units"
+                    android:text="@string/custom_clear"
+                    android:textSize="11sp" />
 
                 <Button
                     android:id="@+id/btnAddPlayerUnit"
                     style="@style/GameButtonStyle"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="32dp"
                     android:contentDescription="@string/cd_custom_add_player"
                     android:text="@string/custom_add_unit"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtPlayerEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/custom_no_units_hint"
+                android:textColor="@color/neutral_gray"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerPlayerUnits"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingBottom="4dp" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="6dp" />
 
         <!-- Enemy Units Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:background="@drawable/bg_panel_rounded"
             android:orientation="vertical"
-            android:layout_marginTop="8dp">
+            android:padding="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
 
                 <TextView
                     android:id="@+id/txtEnemyUnitCount"
@@ -170,24 +283,48 @@
                     android:layout_weight="1"
                     android:text="@string/custom_enemy_units_default"
                     android:textColor="@color/enemy_red"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnClearEnemyUnits"
+                    style="@style/GameButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="4dp"
+                    android:contentDescription="@string/cd_custom_clear_units"
+                    android:text="@string/custom_clear"
+                    android:textSize="11sp" />
 
                 <Button
                     android:id="@+id/btnAddEnemyUnit"
                     style="@style/GameButtonStyle"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="32dp"
                     android:contentDescription="@string/cd_custom_add_enemy"
                     android:text="@string/custom_add_unit"
-                    android:textSize="12sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtEnemyEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/custom_no_units_hint"
+                android:textColor="@color/neutral_gray"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerEnemyUnits"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingBottom="4dp" />
         </LinearLayout>
     </LinearLayout>
 
