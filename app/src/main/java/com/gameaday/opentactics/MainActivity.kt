@@ -9,8 +9,10 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gameaday.opentactics.data.DifficultyMode
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
+import com.gameaday.opentactics.data.SoundManager
 import com.gameaday.opentactics.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -20,6 +22,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var saveGameManager: SaveGameManager
+    private lateinit var soundManager: SoundManager
     private var playerProfile: PlayerProfile? = null
 
     private val dateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
@@ -30,7 +33,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         saveGameManager = SaveGameManager(this)
+        soundManager = SoundManager(this)
         loadPlayerProfile()
+        applySoundPreferences()
         setupClickListeners()
         updateContinueButton()
     }
@@ -38,7 +43,21 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadPlayerProfile()
+        applySoundPreferences()
         updateContinueButton()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
+    }
+
+    private fun applySoundPreferences() {
+        val prefs = playerProfile?.preferences
+        soundManager.setPreferences(
+            musicEnabled = prefs?.musicEnabled ?: true,
+            sfxEnabled = prefs?.soundEffectsEnabled ?: true,
+        )
     }
 
     private fun loadPlayerProfile() {
@@ -60,7 +79,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSettings.setOnClickListener {
-            showSettingsDialog()
+            startActivity(Intent(this, SettingsActivity::class.java))
+            applyTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
 
         binding.btnAbout.setOnClickListener {
@@ -242,6 +262,7 @@ class MainActivity : AppCompatActivity() {
         val items =
             arrayOf(
                 "Player Name: ${profile.playerName}",
+                "Difficulty: ${preferences.difficulty.displayName}",
                 "Music: ${if (preferences.musicEnabled) "On" else "Off"}",
                 "Sound Effects: ${if (preferences.soundEffectsEnabled) "On" else "Off"}",
                 "Auto-save: ${if (preferences.autoSaveEnabled) "On" else "Off"}",
@@ -256,12 +277,13 @@ class MainActivity : AppCompatActivity() {
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> editPlayerName(profile)
-                    1 -> toggleSetting(profile, "music")
-                    2 -> toggleSetting(profile, "soundEffects")
-                    3 -> toggleSetting(profile, "autoSave")
-                    4 -> editAutoSaveFrequency(profile)
-                    5 -> editAnimationSpeed(profile)
-                    6 -> toggleSetting(profile, "damageNumbers")
+                    1 -> editDifficulty(profile)
+                    2 -> toggleSetting(profile, "music")
+                    3 -> toggleSetting(profile, "soundEffects")
+                    4 -> toggleSetting(profile, "autoSave")
+                    5 -> editAutoSaveFrequency(profile)
+                    6 -> editAnimationSpeed(profile)
+                    7 -> toggleSetting(profile, "damageNumbers")
                 }
             }.setNegativeButton("Close", null)
             .show()
@@ -288,6 +310,33 @@ class MainActivity : AppCompatActivity() {
                 saveGameManager.saveProfile(updatedProfile)
                 playerProfile = updatedProfile
                 loadPlayerProfile() // Refresh UI
+            }.setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun editDifficulty(profile: PlayerProfile) {
+        val modes = DifficultyMode.values()
+        val modeNames =
+            modes
+                .map {
+                    when (it) {
+                        DifficultyMode.EASY -> "Easy — Enemy stats -20%, EXP gain +20%"
+                        DifficultyMode.NORMAL -> "Normal — Standard experience"
+                        DifficultyMode.HARD -> "Hard — Enemy stats +20%, EXP gain -20%"
+                    }
+                }.toTypedArray()
+        val currentIndex = modes.indexOf(profile.preferences.difficulty).takeIf { it >= 0 } ?: 1
+
+        AlertDialog
+            .Builder(this)
+            .setTitle("Difficulty")
+            .setSingleChoiceItems(modeNames, currentIndex) { dialog, which ->
+                val preferences = profile.preferences.copy(difficulty = modes[which])
+                val updatedProfile = profile.copy(preferences = preferences)
+                saveGameManager.saveProfile(updatedProfile)
+                playerProfile = updatedProfile
+                dialog.dismiss()
+                showSettingsDialog()
             }.setNegativeButton("Cancel", null)
             .show()
     }
@@ -375,11 +424,13 @@ class MainActivity : AppCompatActivity() {
             A tactical RPG inspired by classic Fire Emblem games.
             
             Features:
-            • Grid-based tactical combat
-            • 5 character classes with unique abilities
-            • Turn-based strategy gameplay  
+            • 20-chapter campaign across 4 story acts
+            • 9 character classes with unique abilities
+            • 6 named player characters with support conversations
+            • Turn-based tactical combat with weapon triangle
+            • Terrain effects, healing, and AI support behaviors
             • Save/Load system with auto-save
-            • Campaign progression
+            • Easy/Normal/Hard difficulty modes
             • Character leveling and growth
             
             Developed with modern Android architecture
@@ -417,6 +468,7 @@ class MainActivity : AppCompatActivity() {
                     putExtra(ChapterSelectActivity.EXTRA_UNLOCKED_CHAPTER, 1) // Start with chapter 1
                 }
             startActivity(intent)
+            applyTransition(R.anim.fade_in, R.anim.fade_out)
         } else {
             // For loading saved games, go directly to game
             val intent =
@@ -426,6 +478,19 @@ class MainActivity : AppCompatActivity() {
                     saveId?.let { putExtra(GameActivity.EXTRA_LOAD_SAVE_ID, it) }
                 }
             startActivity(intent)
+            applyTransition(R.anim.fade_in, R.anim.fade_out)
+        }
+    }
+
+    private fun applyTransition(
+        enterAnim: Int,
+        exitAnim: Int,
+    ) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, enterAnim, exitAnim)
+        } else {
+            @Suppress("DEPRECATION")
+            overridePendingTransition(enterAnim, exitAnim)
         }
     }
 

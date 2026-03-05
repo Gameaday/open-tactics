@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Dragon: fierce dragon head profile -->
+    <!-- Head/jaw -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M4,8L2,6L4,4L6,3L10,3L14,5L16,8L14,10L10,10L8,12L6,14L4,12L2,10L4,8Z"/>
+    <!-- Horns -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M8,3L6,0L7,2ZM12,4L12,1L13,3Z"/>
+    <!-- Eye -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M8,6A1,1 0 1,1 8,8A1,1 0 1,1 8,6Z"/>
+    <!-- Body and tail -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M6,14L8,16L12,18L16,17L20,14L22,16L20,19L16,21L12,22L8,21L4,18L3,15Z"/>
+    <!-- Fire breath -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M16,7L18,5L20,7L22,4L21,8L19,9L17,9Z"/>
+</vector>

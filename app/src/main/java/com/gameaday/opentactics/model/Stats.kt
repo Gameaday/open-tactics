@@ -37,6 +37,21 @@ data class Stats(
             luck - other.luck,
         )
 
+    /**
+     * Scale all stats by a multiplier (used for difficulty scaling).
+     * Ensures minimum of 1 for each stat.
+     */
+    fun scale(multiplier: Float): Stats =
+        Stats(
+            hp = maxOf(1, (hp * multiplier).toInt()),
+            mp = maxOf(1, (mp * multiplier).toInt()),
+            attack = maxOf(1, (attack * multiplier).toInt()),
+            defense = maxOf(1, (defense * multiplier).toInt()),
+            speed = maxOf(1, (speed * multiplier).toInt()),
+            skill = maxOf(1, (skill * multiplier).toInt()),
+            luck = maxOf(1, (luck * multiplier).toInt()),
+        )
+
     fun toDisplayString(): String =
         "HP: $hp  MP: $mp  ATK: $attack\n" +
             "DEF: $defense  SPD: $speed  SKL: $skill\n" +

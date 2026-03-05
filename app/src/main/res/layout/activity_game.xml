@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
+    android:background="@color/dark_gray"
     tools:context=".GameActivity">
 
     <!-- Game Board Container -->
@@ -19,9 +19,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/purple_700"
+        android:background="@color/control_bar_background"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="6dp">
 
         <Button
             android:id="@+id/btnMove"
@@ -29,7 +29,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_move_unit"
             android:text="@string/move" />
 
         <Button
@@ -38,8 +39,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
-            android:text="Undo"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_undo_move"
+            android:text="@string/undo"
             android:visibility="gone" />
 
         <Button
@@ -48,7 +50,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_attack_target"
             android:text="@string/attack" />
 
         <Button
@@ -57,7 +60,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_wait_unit"
             android:text="@string/wait" />
 
         <Button
@@ -66,7 +70,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_open_inventory"
             android:text="@string/inventory" />
 
         <Button
@@ -75,7 +80,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_margin="4dp"
+            android:layout_margin="2dp"
+            android:contentDescription="@string/cd_end_turn"
             android:text="@string/end_turn" />
 
     </LinearLayout>
@@ -88,7 +94,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_margin="8dp"
-        android:background="@color/purple_500"
+        android:background="@drawable/bg_panel_rounded"
         android:orientation="vertical"
         android:padding="8dp"
         android:visibility="visible">
@@ -97,7 +103,7 @@
             android:id="@+id/chapterTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
+            android:textColor="@color/accent_gold"
             android:textSize="14sp"
             android:textStyle="bold"
             android:text="Chapter 1" />
@@ -106,19 +112,38 @@
             android:id="@+id/chapterObjective"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:textColor="@color/teal_200"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:text="Defeat all enemies" />
+
+        <TextView
+            android:id="@+id/turnPhaseIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/player_blue"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:text="▶ Player Phase" />
 
         <TextView
             android:id="@+id/turnCounter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:text="Turn: 1" />
+
+        <TextView
+            android:id="@+id/unitCountDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:text="Allies: 0  Foes: 0" />
 
     </LinearLayout>
     
@@ -129,52 +154,152 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:contentDescription="@string/cd_skip_enemy_turn"
         android:text="@string/skip_animations"
-        android:textSize="16sp"
+        android:textSize="14sp"
         android:visibility="gone"
-        android:paddingStart="32dp"
-        android:paddingEnd="32dp" />
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp" />
 
     <!-- Range Display Toggle Button -->
-    <Button
-        android:id="@+id/btnToggleRanges"
-        style="@style/GameButtonStyle"
-        android:layout_width="80dp"
+    <LinearLayout
+        android:id="@+id/topButtonGroup"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
-        android:text="@string/show_ranges"
-        android:textSize="12sp" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnToggleRanges"
+            style="@style/GameButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:contentDescription="@string/cd_toggle_ranges"
+            android:text="@string/show_ranges"
+            android:textSize="11sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+        <Button
+            android:id="@+id/btnMenu"
+            style="@style/GameButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:contentDescription="@string/cd_open_menu"
+            android:text="☰"
+            android:textSize="16sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+    </LinearLayout>
 
     <!-- Character Info Panel -->
     <LinearLayout
         android:id="@+id/characterInfoPanel"
-        android:layout_width="200dp"
-        android:layout_height="150dp"
-        android:layout_below="@id/btnToggleRanges"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/topButtonGroup"
         android:layout_alignParentEnd="true"
         android:layout_margin="8dp"
-        android:background="@color/purple_500"
+        android:background="@drawable/bg_panel_rounded"
         android:orientation="vertical"
-        android:padding="8dp"
+        android:padding="10dp"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/characterName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textColor="@color/accent_gold"
+            android:textSize="14sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/characterLevel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/teal_200"
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/characterStats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:textColor="@color/white"
             android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/characterStatsExtra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/characterWeapon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/teal_200"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+
+    <!-- Battle Log Panel -->
+    <LinearLayout
+        android:id="@+id/battleLogPanel"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/gameControls"
+        android:layout_alignParentStart="true"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_panel_rounded"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/battleLogTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/battle_log"
+            android:textColor="@color/accent_gold"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/battleLogEntry1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/battleLogEntry2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCFFFFFF"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/battleLogEntry3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#99FFFFFF"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
     </LinearLayout>
 

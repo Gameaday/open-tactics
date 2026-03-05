@@ -11,6 +11,17 @@ import com.gameaday.opentactics.model.Team
 private const val EXPERIENCE_PER_KILL_MULTIPLIER = 25
 private const val EXPERIENCE_PER_HIT = 10
 private const val DAMAGE_VARIANCE = 0.25
+private const val EXPERIENCE_PER_HEAL = 12 // EXP for using healing staff
+private const val CRITICAL_HIT_MULTIPLIER = 3
+
+// Healing constants
+private const val HEAL_STAFF_AMOUNT = 10
+private const val MEND_STAFF_AMOUNT = 20
+private const val DEFAULT_HEAL_AMOUNT = 10
+
+// Critical hit constants
+private const val LUCK_CRIT_DIVISOR = 2
+private const val CRIT_ROLL_MAX = 100
 
 // Battle forecast constants
 private const val BASE_HIT_RATE = 90
@@ -20,7 +31,7 @@ private const val SPEED_HIT_RATE_MODIFIER = 2
 private const val DOUBLE_ATTACK_SPEED_THRESHOLD = 5
 private const val FORECAST_HIT_ASSUMPTION = 75
 
-@Suppress("TooManyFunctions") // GameState requires many functions for game logic
+@Suppress("TooManyFunctions", "LargeClass") // GameState requires many functions for game logic
 class GameState(
     val board: GameBoard,
     private val playerCharacters: MutableList<Character> = mutableListOf(),
@@ -32,6 +43,7 @@ class GameState(
     var gamePhase: GamePhase = GamePhase.UNIT_SELECT
     var turnCount: Int = 0
     var escapedUnitCount: Int = 0
+    var expMultiplier: Float = 1.0f // Difficulty-based EXP scaling
     private val unitsOnThrone: MutableList<Character> = mutableListOf()
     private var moveBeforeAction: Boolean = false // Tracks if unit moved before attacking
 
@@ -359,35 +371,41 @@ class GameState(
      * Support AI: Prioritizes healing allies (future: buffing)
      */
     private fun executeSupportBehavior(enemy: Character) {
-        // If this is a healer, try to heal wounded allies
-        if (enemy.characterClass == com.gameaday.opentactics.model.CharacterClass.HEALER) {
+        // Try to heal wounded allies using equipped staff
+        val healTargetsInRange = calculateHealTargets(enemy).filter { it.team == enemy.team }
+
+        if (healTargetsInRange.isNotEmpty() && enemy.canAct) {
+            // Heal the most wounded ally in range (lowest HP ratio)
+            val target = healTargetsInRange.minByOrNull { it.currentHp.toFloat() / it.maxHp } ?: return
+            performHeal(enemy, target)
+            enemy.commitAction()
+            enemy.commitWait()
+            return
+        }
+
+        if (enemy.canMove) {
+            // Move toward the most wounded ally to get in healing range
             val woundedAllies =
                 enemyCharacters.filter { ally ->
                     ally.isAlive &&
                         ally != enemy &&
-                        ally.currentHp < ally.maxHp &&
-                        enemy.position.distanceTo(ally.position) <= enemy.characterClass.attackRange
+                        ally.currentHp < ally.maxHp
                 }
 
-            if (woundedAllies.isNotEmpty()) {
-                // Heal the most wounded ally
-                val target = woundedAllies.minByOrNull { it.currentStats.hp } ?: return
-                // TODO: Implement healing when staff weapons are added
-                // For now, just move towards them
-                if (enemy.canMove) {
-                    val moveTarget = findBestMovePosition(enemy, target)
-                    moveTarget?.let {
-                        board.moveCharacter(enemy, it)
-                        enemy.commitMove(enemy.position)
-                    }
+            val closestWounded = woundedAllies.minByOrNull { enemy.position.distanceTo(it.position) }
+            if (closestWounded != null) {
+                val moveTarget = findBestMovePosition(enemy, closestWounded)
+                moveTarget?.let {
+                    board.moveCharacter(enemy, it)
+                    enemy.commitMove(enemy.position)
                 }
+                enemy.commitWait()
+                return
             }
-        } else {
-            // Fall back to defensive behavior
-            executeDefensiveBehavior(enemy)
         }
 
-        enemy.commitWait()
+        // No allies to heal and no wounded allies to move toward - fall back to defensive
+        executeDefensiveBehavior(enemy)
     }
 
     /**
@@ -470,15 +488,52 @@ class GameState(
         return targets
     }
 
+    /**
+     * Calculate valid heal targets for a character with a healing staff
+     */
+    fun calculateHealTargets(character: Character): List<Character> {
+        if (!character.canAct) return emptyList()
+
+        val staff = character.equippedWeapon
+        if (staff == null || !staff.canHeal) return emptyList()
+
+        val targets = mutableListOf<Character>()
+        val healRange = staff.range.first // Use weapon range
+
+        for (target in getAllCharacters()) {
+            // Can heal allies (same team) who are wounded
+            if (target.team == character.team && target.isAlive && target.currentHp < target.maxHp) {
+                if (character.position.distanceTo(target.position) <= healRange) {
+                    targets.add(target)
+                }
+            }
+        }
+
+        return targets
+    }
+
     fun performAttack(
         attacker: Character,
         target: Character,
     ): BattleResult {
-        val damage = calculateDamage(attacker, target)
+        // Check for critical hit
+        val isCritical = checkCriticalHit(attacker)
+        val damage = calculateDamage(attacker, target, isCritical)
         target.takeDamage(damage)
 
         // Use weapon durability
         attacker.useEquippedWeapon()
+
+        // Award EXP (scaled by difficulty)
+        val baseExp =
+            if (!target.isAlive) {
+                target.level * EXPERIENCE_PER_KILL_MULTIPLIER
+            } else {
+                EXPERIENCE_PER_HIT
+            }
+        val expGained = maxOf(1, (baseExp * expMultiplier).toInt())
+
+        attacker.gainExperience(expGained)
 
         val result =
             BattleResult(
@@ -486,23 +541,71 @@ class GameState(
                 target = target,
                 damage = damage,
                 targetDefeated = !target.isAlive,
+                wasCritical = isCritical,
+                expGained = expGained,
             )
 
         if (result.targetDefeated) {
-            attacker.gainExperience(target.level * EXPERIENCE_PER_KILL_MULTIPLIER)
             board.removeCharacter(target)
             removeDefeatedCharacter(target)
-        } else {
-            attacker.gainExperience(EXPERIENCE_PER_HIT)
         }
 
         checkGameEnd()
         return result
     }
 
+    /**
+     * Perform a healing action with a staff
+     */
+    fun performHeal(
+        healer: Character,
+        target: Character,
+    ): SupportResult {
+        // Calculate heal amount based on staff
+        val staff = healer.equippedWeapon
+        val healAmount =
+            when {
+                staff == null || !staff.canHeal -> 0
+                staff.name == "Heal" -> HEAL_STAFF_AMOUNT
+                staff.name == "Mend" -> MEND_STAFF_AMOUNT
+                else -> DEFAULT_HEAL_AMOUNT
+            }
+
+        // Apply healing
+        target.heal(healAmount)
+
+        // Use staff durability
+        healer.useEquippedWeapon()
+
+        // Award EXP for healing (only if target was actually wounded)
+        val baseHealExp =
+            if (target.currentHp < target.maxHp) {
+                EXPERIENCE_PER_HEAL
+            } else {
+                0
+            }
+        val expGained = if (baseHealExp > 0) maxOf(1, (baseHealExp * expMultiplier).toInt()) else 0
+
+        healer.gainExperience(expGained)
+
+        return SupportResult(
+            user = healer,
+            target = target,
+            healAmount = healAmount,
+            expGained = expGained,
+        )
+    }
+
+    private fun checkCriticalHit(attacker: Character): Boolean {
+        // Critical rate = (Skill + Luck / 2)
+        val critRate = attacker.currentStats.skill + (attacker.currentStats.luck / LUCK_CRIT_DIVISOR)
+        return (1..CRIT_ROLL_MAX).random() <= critRate
+    }
+
     private fun calculateDamage(
         attacker: Character,
         target: Character,
+        isCritical: Boolean = false,
     ): Int {
         val attackerWeapon = attacker.equippedWeapon
         val targetWeapon = target.equippedWeapon
@@ -538,9 +641,12 @@ class GameState(
         // Calculate base damage
         val baseDamage = maxOf(1, attackPower - defensePower / 2)
 
+        // Apply critical hit multiplier
+        val criticalDamage = if (isCritical) baseDamage * CRITICAL_HIT_MULTIPLIER else baseDamage
+
         // Add some randomness (±25%)
-        val variance = (baseDamage * DAMAGE_VARIANCE).toInt()
-        return maxOf(1, baseDamage + (-variance..variance).random())
+        val variance = (criticalDamage * DAMAGE_VARIANCE).toInt()
+        return maxOf(1, criticalDamage + (-variance..variance).random())
     }
 
     private fun removeDefeatedCharacter(character: Character) {
@@ -776,4 +882,13 @@ data class BattleResult(
     val target: Character,
     val damage: Int,
     val targetDefeated: Boolean,
+    val wasCritical: Boolean = false,
+    val expGained: Int = 0,
+)
+
+data class SupportResult(
+    val user: Character,
+    val target: Character,
+    val healAmount: Int,
+    val expGained: Int = 0,
 )

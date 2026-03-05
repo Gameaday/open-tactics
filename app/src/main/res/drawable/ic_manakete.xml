@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Manakete: dragonstone gem with transformation energy -->
+    <!-- Outer gem shape -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M12,1L5,8L8,20L12,23L16,20L19,8Z"/>
+    <!-- Inner facet -->
+    <path android:fillColor="#00000000"
+        android:pathData="M12,4L7,9L9,18L12,20L15,18L17,9Z"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="0.5"/>
+    <!-- Inner gem highlight -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M12,7L9,10L10,16L12,17L14,16L15,10Z"/>
+    <!-- Dragon energy wisps -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M3,5L5,7M19,5L17,7M2,12L4,11M20,12L22,11"/>
+</vector>

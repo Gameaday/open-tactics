@@ -4,9 +4,20 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Archer bow icon -->
+    <!-- Archer: bow with drawn arrow -->
+    <!-- Bow arc -->
     <path android:fillColor="@android:color/white"
-        android:pathData="M7,24Q7,24 7,24Q7,24 7,24ZM9,12Q9,12 9,12Q9,12 9,12ZM17,4L15.8,5.2L17,6.4L20,3.4L18.6,2L17,4ZM5,16L6.4,17.4L12,11.8L10.6,10.4L5,16ZM15,8.6L12,11.6L13.4,13L16.4,10L15,8.6Z"/>
+        android:pathData="M4,2C4,2 2,12 4,22C4,22 8,18 10,12C8,6 4,2 4,2Z"/>
+    <!-- Bowstring -->
     <path android:fillColor="@android:color/white"
-        android:pathData="M7,2L2,7L7,12L9,10L5.5,6.5L9,3L7,2ZM13,12L18,7L13,2L11,4L14.5,7.5L11,11L13,12Z"/>
+        android:pathData="M4,2L10,12L4,22L5,22L11,12L5,2Z"/>
+    <!-- Arrow shaft -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M10,11H21V13H10Z"/>
+    <!-- Arrowhead -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M20,8L24,12L20,16L21,12Z"/>
+    <!-- Arrow fletching -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M10,9L12,12L10,15L11,12Z"/>
 </vector>

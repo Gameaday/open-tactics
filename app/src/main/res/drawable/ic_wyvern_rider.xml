@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Wyvern Rider: dragon with bat-like wings and rider -->
+    <!-- Left wing membrane -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M1,6L5,2L7,5L9,3L10,8L7,10L4,9Z"/>
+    <!-- Right wing membrane -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M23,6L19,2L17,5L15,3L14,8L17,10L20,9Z"/>
+    <!-- Body -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M9,10C9,10 10,8 12,8C14,8 15,10 15,10L14,15L13,18H11L10,15Z"/>
+    <!-- Tail -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M11,18L10,21L12,22L14,21L13,18Z"/>
+    <!-- Head -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M10,8L9,6L11,5L12,7L13,5L15,6L14,8Z"/>
+</vector>

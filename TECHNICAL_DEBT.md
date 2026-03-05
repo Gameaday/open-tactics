@@ -1,353 +1,173 @@
 # Technical Debt Resolution Plan
-**Priority:** HIGH  
-**Timeline:** 1-2 weeks  
-**Status:** 🔄 In Progress
+**Priority:** MEDIUM  
+**Status:** ✅ Mostly Resolved (March 2026)
 
 ## Overview
 
-This document outlines the immediate technical debt items that need to be resolved before proceeding with major feature development. These items are blockers or will become blockers soon.
+This document tracks technical debt items. Most critical items from the original audit have been resolved.
 
 ---
 
-## 1. Deprecation Warnings
+## ✅ Resolved Items
 
-### Issue: EncryptedSharedPreferences API Deprecated
-**Location:** `app/src/main/java/com/gameaday/opentactics/data/SaveGameManager.kt`  
-**Lines:** 5-6, 27-38
+### 1. Serialization Warnings (Weapon.kt)
+- **Status:** ✅ Fixed
+- Removed redundant `@Serializer` annotation
+- Added `@OptIn(ExperimentalSerializationApi::class)` where needed
 
-**Current Code:**
-```kotlin
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
+### 2. Parcelable Property Warning (Character.kt)
+- **Status:** ✅ Fixed
+- Added `@IgnoredOnParcel` annotations to computed properties
 
-// In createEncryptedPrefs():
-val masterKey = MasterKey.Builder(context)
-    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-    .build()
+### 3. AI Healing
+- **Status:** ✅ Implemented
+- AI healers now use healing staves on wounded allies
+- Support behavior prioritizes healing critically wounded units (lowest HP ratio)
+- Falls back to moving toward wounded allies, then defensive behavior
 
-sharedPreferences = EncryptedSharedPreferences.create(
-    context,
-    PREFS_FILENAME,
-    masterKey,
-    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-) as EncryptedSharedPreferences
-```
+### 4. Detekt Static Analysis (16 issues)
+- **Status:** ✅ Fixed
+- Extracted magic number constants in `AchievementRepository`
+- Added `@Suppress("MagicNumber")` to `DifficultyMode` enum
+- Added `@Suppress("LongParameterList")` to `CharacterFactory` and `Character.fromNamedUnit`
+- Added `@Suppress("LargeClass")` to `ChapterRepository` (both app and standalone)
+- Fixed `MaxLineLength` in standalone `Weapon.kt`
 
-**Warnings:**
-```
-w: 'class EncryptedSharedPreferences : Any, SharedPreferences' is deprecated. Deprecated in Java.
-w: 'class MasterKey : Any' is deprecated. Deprecated in Java.
-w: 'enum class PrefKeyEncryptionScheme : Enum<...>' is deprecated. Deprecated in Java.
-w: 'enum class PrefValueEncryptionScheme : Enum<...>' is deprecated. Deprecated in Java.
-```
+### 5. Test Coverage
+- **Status:** ✅ Adequate
+- Overall: ≥25% bundle minimum
+- Models: ~67% per-class
+- Game Logic: ~38% per-class
+- 22+ unit test files, 4 instrumented test files
 
-**Impact:** LOW - API still works but will be removed in future Android versions
-
-**Resolution:**
-The androidx.security:security-crypto library is being migrated to new APIs. Current approach:
-1. **Short term:** Suppress deprecation warnings with @Suppress annotations
-2. **Long term:** Migrate to new API when it's stable (currently still in development)
-
-**Action Items:**
-- [ ] Add `@Suppress("DEPRECATION")` to affected methods
-- [ ] Add TODO comment to track migration path
-- [ ] Monitor androidx.security updates for new API stability
-- [ ] Plan migration when new API reaches beta/stable
-
-**Estimated Time:** 30 minutes
+### 6. UI/UX Polish (Phase 1)
+- **Status:** ✅ Implemented
+- Main menu branding: crossed swords logo, tagline, version label
+- Launcher icon: dark blue theme with gold accent shield
+- Accessibility: contentDescription on all 14 interactive buttons
+- String resources: extracted hardcoded text, proper ellipsis
+- Chapter select: subtitle with act information
+- SoundManager: SoundPool-based audio infrastructure with 9 effect types
+- SoundManager integration: connected in both MainActivity and GameActivity
+- Vector graphics: enhanced all 9 character class icons with detailed multi-path designs
+- Terrain icons: created 6 terrain type drawables integrated into board rendering
+- Rounded HUD panels: bg_panel_rounded.xml with gold border accent
+- Button effects: gold ripple feedback on all game buttons
 
 ---
 
-### Issue: Serialization Annotation Warnings
-**Location:** `app/src/main/java/com/gameaday/opentactics/model/Weapon.kt`  
-**Line:** 19
+## 🔄 Deferred / Low Priority
 
-**Current Code:**
-```kotlin
-@Serializer(forClass = IntRange::class)
-object IntRangeSerializer : KSerializer<IntRange> {
-    // ... implementation
-}
-```
+### 1. EncryptedSharedPreferences Deprecation
+**Location:** `SaveGameManager.kt`  
+**Impact:** LOW — API still works, suppressed with `@Suppress("DEPRECATION")`
 
-**Warnings:**
-```
-w: @Serializer annotation has no effect on class 'object IntRangeSerializer', 
-   because all members of KSerializer are already overridden
-w: This declaration needs opt-in. Its usage should be marked with 
-   '@kotlinx.serialization.ExperimentalSerializationApi' or 
-   '@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)'
-```
+The `androidx.security:security-crypto` library's `EncryptedSharedPreferences` and `MasterKey` classes are deprecated in Java. A migration TODO is in place. The new API is not yet stable.
 
-**Impact:** LOW - Code works correctly, just needs cleanup
+**Current Status:** Suppressed warnings + migration TODO comment  
+**Action:** Monitor `androidx.security` releases for stable replacement API
 
-**Resolution:**
-1. Remove unnecessary `@Serializer` annotation (has no effect)
-2. Add `@OptIn(ExperimentalSerializationApi::class)` for experimental features
+### 2. Gradle 10 Compatibility
+**Warning:** `Deprecated Gradle features were used in this build`
 
-**Action Items:**
-- [ ] Remove `@Serializer(forClass = IntRange::class)` line
-- [ ] Add `@OptIn(ExperimentalSerializationApi::class)` to class if needed
-- [ ] Verify serialization still works in tests
+Current warnings from `--warning-mode all`:
+- `ReportingExtension.file()` — from Gradle plugins (not our code)
+- Multi-string dependency notation — from Android Gradle Plugin internals
 
-**Estimated Time:** 15 minutes
+**Impact:** LOW — Gradle 10 not released; warnings originate from third-party plugins (AGP, ktlint)  
+**Action:** Wait for plugin updates that address Gradle 10 compatibility
+
+### 3. Throne Unit Tracking
+**Location:** `GameActivity.kt` — `emptyList(), // TODO: Track throne units`  
+**Impact:** LOW — Not used in current campaign maps  
+**Decision:** Deferred to post-launch. The SEIZE_THRONE chapter objective type exists but throne unit tracking on the game board is not implemented.
 
 ---
 
-### Issue: Parcelable Property Warning
-**Location:** `app/src/main/java/com/gameaday/opentactics/model/Character.kt`  
-**Line:** 249
+## Remaining Enhancements & Polish
 
-**Warning:**
-```
-w: Property would not be serialized into a 'Parcel'. 
-   Add '@IgnoredOnParcel' annotation to remove the warning.
-```
+The following items are not technical debt but represent potential improvements for future releases. They are organized by category and priority.
 
-**Impact:** LOW - Property may not serialize correctly across process boundaries
+### 🎨 Visual Enhancements
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Animated unit sprites (walk/attack/idle) | HIGH | 40h + art | Replace static icons with animated sprite sheets |
+| Terrain tilesets (pixel art) | HIGH | 20h + art | Replace flat-color tiles with detailed tile graphics |
+| Character portraits for named units | MEDIUM | 15h + art | Show portraits in dialogue and info panel |
+| Attack/damage visual effects | MEDIUM | 10h | Screen flash, shake, particle effects |
+| Level-up celebration animation | LOW | 5h | Animated stat increases with sparkle effects |
+| Map transition animations | LOW | 5h | Fade/slide between chapter select and game |
+| ~~Health bar color gradient~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Green→yellow→red gradient based on HP% |
 
-**Resolution:**
-Add `@IgnoredOnParcel` annotation to properties that shouldn't be parceled (likely computed properties)
+### 🔊 Audio Enhancements
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Add sound effect audio files to res/raw | HIGH | 5h + assets | Button click, attack, heal, victory, defeat, etc. |
+| Background music tracks (menu, battle) | MEDIUM | 10h + assets | MediaPlayer integration for looping BGM |
+| Music crossfade between screens | LOW | 3h | Smooth transitions between menu and battle music |
+| Dynamic battle music (intensity scaling) | LOW | 8h | Music layers based on enemy count or HP |
 
-**Action Items:**
-- [ ] Identify which property at line 249 is causing the warning
-- [ ] Determine if property should be parceled or ignored
-- [ ] Add appropriate annotation (`@IgnoredOnParcel` or make it parcelable)
-- [ ] Test character serialization works correctly
+### 🎮 Gameplay Polish
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| Tutorial chapter with guided instructions | HIGH | 15h | Teach movement, combat, terrain basics |
+| Pre-battle story scenes | MEDIUM | 10h | Dialogue between chapters with character art |
+| ~~Post-battle stats summary screen~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: Damage dealt/received, enemies defeated, heals |
+| ~~Weapon triangle visual indicator~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Shows advantage/disadvantage in battle forecast |
+| ~~Battle log / combat feed~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: 3-entry log with fading opacity |
+| Mini-map for larger boards | LOW | 8h | Thumbnail overview of full map |
 
-**Estimated Time:** 20 minutes
+### 📱 UI/UX Polish
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| ~~Settings as dedicated Activity (not dialog)~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: SettingsActivity with toggle switches and section panels |
+| Loading screen with progress indicator | MEDIUM | 3h | Show while chapter initializes |
+| ~~Haptic feedback on unit actions~~ | ~~LOW~~ | ~~—~~ | ✅ Done: HapticManager with attack/crit/level-up/victory vibrations |
+| Dark/light theme toggle | LOW | 5h | Alternative color scheme option |
+| Landscape orientation support | LOW | 8h | Responsive layout for wider screens |
+| ~~Activity transition animations~~ | ~~LOW~~ | ~~—~~ | ✅ Done: Fade and slide transitions between all screens |
+
+### ⚡ Performance & Architecture
+| Item | Priority | Effort | Notes |
+|------|----------|--------|-------|
+| ~~Bitmap caching for terrain tiles~~ | ~~MEDIUM~~ | ~~—~~ | ✅ Done: Drawable cache in GameBoardView reduces per-frame lookups |
+| ViewModel migration for GameActivity | LOW | 15h | Survive configuration changes |
+| Room database for save files | LOW | 10h | Replace encrypted SharedPreferences |
+| Standalone module full feature parity | LOW | 10h | Add support, serialization, named units |
 
 ---
 
-## 2. TODOs in Code
+## Current Build Quality
 
-### Issue: AI Healing Not Implemented
-**Location:** `app/src/main/java/com/gameaday/opentactics/game/GameState.kt`  
-**Line:** 383  
-**Also:** `standalone/src/main/kotlin/com/gameaday/opentactics/game/GameState.kt`
+| Check | Status |
+|-------|--------|
+| `./gradlew ktlintCheck` | ✅ Pass |
+| `./gradlew detekt` | ✅ Pass (0 issues) |
+| `./gradlew testDevDebugUnitTest` | ✅ Pass |
+| `./gradlew standalone:test` | ✅ Pass |
+| Compiler warnings | ⚠️ 2 (SaveGameManager deprecation imports — suppressed at usage) |
 
-**Current Code:**
-```kotlin
-// TODO: Implement healing when staff weapons are added
-```
+---
 
-**Context:**
-This TODO is outdated - healing staves ARE implemented (see HEALING_SYSTEM.md). The TODO is for AI enemy healers using healing staves, not player healing.
+## Testing Commands
 
-**Impact:** MEDIUM - Enemy healers currently don't use their staves, making them less threatening
+```bash
+# Quick unit tests
+./gradlew testDevDebugUnitTest
 
-**Resolution:**
-Implement AI logic to:
-1. Detect when enemy unit has healing staff equipped
-2. Find wounded allies within range
-3. Prioritize healing critically wounded units (HP < 50%)
-4. Use heal action instead of moving toward player units
+# Full test suite (all flavors)
+./gradlew test
 
-**Action Items:**
-- [ ] Update TODO comment to be more specific: "Enemy AI doesn't use healing staves yet"
-- [ ] Create `GameState.aiShouldHeal(character)` method
-- [ ] Implement `GameState.aiSelectHealTarget(healer)` method
-- [ ] Add healing action to AI turn logic in `processEnemyTurn()`
-- [ ] Add unit tests for AI healing behavior
-- [ ] Test in-game with enemy healer units
+# Code formatting
+./gradlew ktlintCheck
 
-**Estimated Time:** 2-3 hours
+# Static analysis
+./gradlew detekt
 
-**Design:**
-```kotlin
-private fun aiShouldHeal(character: Character): Boolean {
-    // Check if character has healing staff equipped
-    val weapon = character.equippedWeapon ?: return false
-    if (!weapon.tags.contains("HEAL")) return false
-    
-    // Check if any wounded allies in range
-    return calculateHealTargets(character).isNotEmpty()
-}
-
-private fun aiSelectHealTarget(healer: Character): Character? {
-    val targets = calculateHealTargets(healer)
-    if (targets.isEmpty()) return null
-    
-    // Prioritize most wounded ally
-    return targets.minByOrNull { it.currentHP.toFloat() / it.stats.hp }
-}
+# Full CI verification
+./gradlew ciVerification
 ```
 
 ---
 
-### Issue: Throne Units Not Tracked
-**Location:** `app/src/main/java/com/gameaday/opentactics/GameActivity.kt`  
-**Context:** Comment in chapter creation
-
-**Current Code:**
-```kotlin
-emptyList(), // TODO: Track throne units
-```
-
-**Impact:** LOW - Throne mechanic not used in current maps
-
-**Resolution:**
-This is a placeholder for future feature. Options:
-1. Remove TODO if throne mechanic won't be implemented soon
-2. Keep TODO but mark as low priority / future enhancement
-3. Implement if throne mechanic is planned for campaign
-
-**Action Items:**
-- [ ] Decide if throne mechanic is in scope for v1.0
-- [ ] If yes: Design throne mechanic (healing, defense bonus, victory condition)
-- [ ] If no: Update TODO to say "Future: Throne unit mechanic"
-- [ ] Document decision in STRATEGIC_PLAN.md
-
-**Estimated Time:** 5 minutes (decision) or 4-6 hours (implementation)
-
-**Recommendation:** Mark as future feature, not needed for launch
-
----
-
-## 3. Build System Warnings
-
-### Issue: Gradle 10 Compatibility
-**Warning:**
-```
-Deprecated Gradle features were used in this build, 
-making it incompatible with Gradle 10.
-```
-
-**Impact:** LOW - Gradle 10 not released yet, current build works fine
-
-**Resolution:**
-Run with `--warning-mode all` to identify specific deprecations, then fix them.
-
-**Action Items:**
-- [ ] Run `./gradlew build --warning-mode all` to see detailed warnings
-- [ ] Research each deprecation and find modern alternative
-- [ ] Update build scripts to use new APIs
-- [ ] Verify build still works with changes
-- [ ] Test all build variants (dev/prod debug/release)
-
-**Estimated Time:** 1-2 hours
-
-**Note:** Not urgent - can be deferred to Phase 2 if needed
-
----
-
-## 4. Test Coverage Gaps
-
-### Current Coverage
-- Models: 67% ✅ (exceeds 38% per-class minimum)
-- Game Logic: 38% ✅ (meets minimum)
-- Overall: 26% ✅ (exceeds 25% bundle minimum)
-
-### Gaps (Not Blockers)
-- UI code (Activities) not well tested
-- Factory classes have basic tests but could be more comprehensive
-- Edge cases in combat calculations
-
-**Resolution:**
-Coverage is adequate for current phase. Improve incrementally:
-1. Add tests as bugs are found
-2. Test new features as they're added
-3. Aim for 30% overall coverage by launch
-
-**Action Items:**
-- [ ] Add test for AI healing once implemented
-- [ ] Add test for throne mechanic if implemented
-- [ ] Monitor coverage in CI - fail if drops below 25%
-
-**Estimated Time:** Ongoing (30 min per new feature)
-
----
-
-## 5. Dependency Updates
-
-### Current Status
-All dependencies up-to-date as of Android Gradle 8.13.0, Kotlin 2.1.0
-
-### Weekly Dependency Check
-GitHub Actions workflow runs weekly to check for updates (see `.github/workflows/dependencies.yml`)
-
-**Action Items:**
-- [ ] Review last dependency check run
-- [ ] Update any dependencies flagged as outdated
-- [ ] Test after dependency updates
-- [ ] Monitor OWASP dependency check for vulnerabilities
-
-**Estimated Time:** 30 minutes per week
-
----
-
-## Priority Order
-
-### Week 1 Focus
-1. ✅ Fix serialization warnings (30 min)
-2. ✅ Add deprecation suppressions (30 min)  
-3. ✅ Fix Parcelable warning (20 min)
-4. ✅ Implement AI healing (2-3 hours)
-5. ✅ Test all changes (1 hour)
-
-**Total: ~5 hours of work**
-
-### Week 2 Focus
-1. ✅ Fix Gradle 10 warnings (1-2 hours)
-2. ✅ Review and update dependencies (30 min)
-3. ✅ Decide on throne mechanic (document decision)
-4. ✅ Update documentation (30 min)
-5. ✅ Verify all tests pass (30 min)
-
-**Total: ~3-4 hours of work**
-
----
-
-## Success Criteria
-
-Technical debt is resolved when:
-- ✅ Zero compiler warnings (errors or warnings)
-- ✅ All deprecations either fixed or suppressed with migration plan
-- ✅ AI healing implemented and tested
-- ✅ Build system compatible with future Gradle versions
-- ✅ All tests passing
-- ✅ Code quality checks passing (ktlint, detekt)
-
----
-
-## Testing Plan
-
-After each fix:
-1. Run `./gradlew ktlintCheck` - verify formatting
-2. Run `./gradlew detekt` - verify static analysis
-3. Run `./gradlew test` - verify all unit tests pass
-4. Run `./gradlew assembleDevDebug` - verify builds successfully
-5. Manual test affected features in app
-
-After all fixes:
-1. Run `./gradlew ciVerification` - full CI check
-2. Manual test campaign on device
-3. Verify AI healing works in Chapter 2+
-4. Check no performance regressions
-
----
-
-## Next Steps After Resolution
-
-Once technical debt is cleared:
-1. Begin Phase 2: Visual Transformation planning
-2. Research art asset options (commission vs create)
-3. Design tutorial chapter
-4. Set up Phase 2 project board
-5. Start sprite requirements documentation
-
----
-
-## Notes
-
-- All fixes should maintain backward compatibility
-- No breaking changes to save game format
-- Document any API changes in CHANGELOG.md
-- Update relevant documentation files after changes
-
----
-
-*Created: February 9, 2026*  
-*Last Updated: February 9, 2026*  
-*Status: Ready to begin implementation*
+*Last Updated: March 5, 2026 (Session 2)*

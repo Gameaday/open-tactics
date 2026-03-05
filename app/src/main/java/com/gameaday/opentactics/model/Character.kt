@@ -1,6 +1,7 @@
 package com.gameaday.opentactics.model
 
 import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
@@ -246,6 +247,7 @@ data class Character(
      * Get the stat gains from the last level up
      * This should be called right after gainExperience to get the gains
      */
+    @IgnoredOnParcel
     var lastLevelUpGains: Stats? = null
 
     fun gainExperienceWithTracking(exp: Int): Stats? {
@@ -474,6 +476,19 @@ data class Character(
         return broke
     }
 
+    /**
+     * Apply difficulty scaling to this character's stats.
+     * Only applies to enemy units — scales stat bonuses by the given multiplier.
+     */
+    fun applyDifficultyScaling(multiplier: Float) {
+        if (team != Team.ENEMY) return
+        if (multiplier == 1.0f) return
+        statBonuses = statBonuses.scale(multiplier)
+        // Recalculate HP to match new max
+        currentHp = maxHp
+        currentMp = maxMp
+    }
+
     companion object {
         const val MAX_INVENTORY_SIZE = 5
 
@@ -488,6 +503,7 @@ data class Character(
          * @param aiType The AI behavior for this character (default AGGRESSIVE)
          * @return A character instance with stats appropriate for the target level
          */
+        @Suppress("LongParameterList") // Character creation inherently requires many parameters
         fun fromNamedUnit(
             namedUnit: NamedUnit,
             team: Team,

@@ -16,4 +16,11 @@
     <color name="attack_highlight">#66FF5722</color>
     <color name="selected_highlight">#FF00BCD4</color>
     <color name="dark_gray">#FF212121</color>
+
+    <!-- UI panel colors -->
+    <color name="panel_background">#CC1A1A2E</color>
+    <color name="control_bar_background">#FF16213E</color>
+    <color name="button_enabled">#FF0F3460</color>
+    <color name="button_disabled">#FF2C2C3E</color>
+    <color name="accent_gold">#FFFFD700</color>
 </resources>

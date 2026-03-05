@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Haptic feedback system** — HapticManager provides tactile vibration for attacks, critical hits, level-ups, and victories; configurable per user preferences
+- **Dedicated Settings Activity** — replaces dialog-based settings with proper screen layout featuring toggle switches, section cards, and organized categories (Audio & Feedback, Gameplay)
+- **Activity transition animations** — smooth fade and slide transitions between all screens (main menu, settings, chapter select, game)
+- **Drawable caching in GameBoardView** — terrain and character icon drawables are now cached to eliminate per-frame resource lookups, improving rendering performance
+- **Haptic feedback preference** — new `hapticEnabled` field in GamePreferences with serialization support
+- **Weapon triangle visual indicator** — battle forecast dialog now shows weapon advantage/disadvantage with color coding (teal for advantage, red for disadvantage)
+- **Health bar color gradient** — HP bars now transition green → yellow → red based on current HP percentage
+- **Battle log panel** — in-game HUD shows 3 most recent combat actions with fading opacity (attacks, heals, phase changes)
+- **Post-battle stats summary** — victory screen now shows detailed chapter statistics: damage dealt/received, enemies defeated, heals performed
+- **Chapter battle tracking** — tracks damage dealt, damage received, enemies defeated, and heals performed per chapter
+- **Manakete and Dragon class icons** — vector drawable icons for the remaining 2 character classes (all 9 now have icons)
+- **Enhanced character info panel** — shows Level/EXP, all 7 stats (HP/ATK/DEF/SPD/SKL/LCK), and equipped weapon with durability
+- **Turn phase indicator** — HUD now shows "▶ Player Phase" or "▶ Enemy Phase" with color coding (blue/red)
+- **Unit count display** — HUD shows surviving ally and enemy unit counts
+- **20-Chapter Campaign** across 4 acts (Defense, Counterattack, Invasion, Finale)
+- **17 unique map layouts** including river crossings, fortress interiors, and dragon lairs
+- **Difficulty modes** (Easy/Normal/Hard) with enemy stat and EXP scaling
+- **Achievement system** with 10 milestones tracked in player profile
+- **Battle quotes** for all named protagonists and boss characters
+- **Support conversations** between 7 character pairs at ranks C, B, A
+- **AI healing** — enemy healers now use healing staves on wounded allies
+- **Critical hit system** with skill/luck-based critical rates
+- **Healing system** with Heal and Mend staves, EXP for healing
+- **Chapter replay** — completed chapters show replay option in chapter select
+- **New character classes**: Pegasus Knight, Wyvern Rider
+- **Named characters**: Sir Garrett, Lyanna, Aldric, Elara, Raven, Celeste
+- **Boss characters**: Captain Voss, Sorceress Mira, Warlord Kael, Emperor Darius
 - CI/CD pipeline with GitHub Actions
 - Automated ktlint code formatting and linting
 - Automatic version numbering based on git commits
@@ -15,10 +42,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ProGuard configuration for release builds
 - Play Store deployment automation
 
+### Fixed
+- Resolved all 16 detekt static analysis issues (magic numbers, parameter lists, class size, line length)
+- Extracted achievement threshold constants in AchievementRepository
+- Suppressed EncryptedSharedPreferences deprecation warnings with migration plan
+- Fixed serialization annotations in Weapon.kt (`@OptIn(ExperimentalSerializationApi::class)`)
+- Added `@IgnoredOnParcel` annotation to Character.kt computed properties
+- Fixed heal EXP condition (no longer awards EXP when healing already-full HP units)
+- AI behavior fallback now correctly uses `aiType` field
+
 ### Changed
+- Standalone module synced with app (healing, critical hits, 20 chapters, EXP scaling)
+- Updated TECHNICAL_DEBT.md with current resolution status
+- Updated README.md with accurate feature list and project status
 - Enhanced build configuration with signing support
 - Improved testing infrastructure
-- Better error handling and logging
 
 ## [1.0.0] - 2024-09-26
 

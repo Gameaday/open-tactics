@@ -8,12 +8,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gameaday.opentactics.data.AchievementRepository
 import com.gameaday.opentactics.data.CampaignProgress
 import com.gameaday.opentactics.data.GamePreferences
 import com.gameaday.opentactics.data.GameSave
+import com.gameaday.opentactics.data.HapticManager
 import com.gameaday.opentactics.data.PlayerProfile
 import com.gameaday.opentactics.data.SaveGameManager
 import com.gameaday.opentactics.data.SavedGameState
+import com.gameaday.opentactics.data.SoundManager
 import com.gameaday.opentactics.databinding.ActivityGameBinding
 import com.gameaday.opentactics.factory.MapFactory
 import com.gameaday.opentactics.game.GameState
@@ -33,6 +36,8 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameState: GameState
     private lateinit var gameBoardView: GameBoardView
     private lateinit var saveGameManager: SaveGameManager
+    private lateinit var soundManager: SoundManager
+    private lateinit var hapticManager: HapticManager
 
     private var playerProfile: PlayerProfile? = null
     private var currentGameSave: GameSave? = null
@@ -45,11 +50,28 @@ class GameActivity : AppCompatActivity() {
     // Skip enemy turn state
     private var skipEnemyAnimations: Boolean = false
 
+    // Battle log entries (most recent first)
+    private val battleLogEntries = mutableListOf<String>()
+
+    // Chapter battle statistics
+    private var chapterDamageDealt = 0
+    private var chapterDamageReceived = 0
+    private var chapterEnemiesDefeated = 0
+    private var chapterHealsPerformed = 0
+
     companion object {
         const val EXTRA_LOAD_SAVE_ID = "load_save_id"
         const val EXTRA_PLAYER_NAME = "player_name"
         const val EXTRA_IS_NEW_GAME = "is_new_game"
         const val EXTRA_CHAPTER_NUMBER = "chapter_number"
+
+        // Chapter numbers where new characters join the party
+        private const val HEALER_JOIN_CHAPTER = 6
+        private const val THIEF_JOIN_CHAPTER = 7
+        private const val PEGASUS_JOIN_CHAPTER = 9
+
+        private const val MAX_BATTLE_LOG_ENTRIES = 3
+        private val DEFAULT_SPAWN_POSITION = Position(0, 7)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +80,10 @@ class GameActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         saveGameManager = SaveGameManager(this)
+        soundManager = SoundManager(this)
+        hapticManager = HapticManager(this)
         loadPlayerProfile()
+        applySoundPreferences()
 
         val loadSaveId = intent.getStringExtra(EXTRA_LOAD_SAVE_ID)
         val playerName = intent.getStringExtra(EXTRA_PLAYER_NAME) ?: "Player"
@@ -81,11 +106,25 @@ class GameActivity : AppCompatActivity() {
         performAutoSave()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        soundManager.release()
+    }
+
     private fun loadPlayerProfile() {
         playerProfile = saveGameManager.loadProfile() ?: PlayerProfile(
             playerName = "Player",
             totalPlayTime = 0,
         )
+    }
+
+    private fun applySoundPreferences() {
+        val prefs = playerProfile?.preferences
+        soundManager.setPreferences(
+            musicEnabled = prefs?.musicEnabled ?: true,
+            sfxEnabled = prefs?.soundEffectsEnabled ?: true,
+        )
+        hapticManager.setEnabled(prefs?.hapticEnabled ?: true)
     }
 
     private fun savePlayerProfile() {
@@ -106,13 +145,18 @@ class GameActivity : AppCompatActivity() {
             "steel_axe" -> Weapon.steelAxe()
             "iron_bow" -> Weapon.ironBow()
             "steel_bow" -> Weapon.steelBow()
-            "fire_tome" -> Weapon.fire()
-            "thunder_tome" -> Weapon.thunder()
+            "fire_tome", "fire" -> Weapon.fire()
+            "thunder_tome", "thunder" -> Weapon.thunder()
+            "heal" -> Weapon.heal()
+            "mend" -> Weapon.mend()
             else -> null
         }
 
     @Suppress("LongMethod", "ComplexMethod") // Game initialization requires many character setups
     private fun initializeNewGame(playerName: String, chapterNumber: Int = 1) {
+        // Reset chapter battle stats
+        resetChapterStats()
+
         // Load chapter data
         val chapter =
             com.gameaday.opentactics.model.ChapterRepository
@@ -141,48 +185,108 @@ class GameActivity : AppCompatActivity() {
         // Create player characters at starting positions from named unit repository
         val playerPositions = chapter.playerStartPositions
         val playerCharacters =
-            listOf(
+            buildList {
+                // Core party (always available)
                 NamedUnitRepository.getProtagonist("player_knight")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(0) { Position(1, 6) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.ironSword())
-                            addWeapon(Weapon.steelSword())
-                            addItem(Item.vulnerary())
-                            addItem(Item.vulnerary())
-                        }
-                },
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(0) { DEFAULT_SPAWN_POSITION },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.ironSword())
+                                addWeapon(Weapon.steelSword())
+                                addItem(Item.vulnerary())
+                                addItem(Item.vulnerary())
+                            },
+                    )
+                }
                 NamedUnitRepository.getProtagonist("player_archer")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(1) { Position(2, 7) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.ironBow())
-                            addWeapon(Weapon.steelBow())
-                            addItem(Item.vulnerary())
-                        }
-                },
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(1) { DEFAULT_SPAWN_POSITION },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.ironBow())
+                                addWeapon(Weapon.steelBow())
+                                addItem(Item.vulnerary())
+                            },
+                    )
+                }
                 NamedUnitRepository.getProtagonist("player_mage")?.let { namedUnit ->
-                    Character
-                        .fromNamedUnit(
-                            namedUnit = namedUnit,
-                            team = Team.PLAYER,
-                            position = playerPositions.getOrElse(2) { Position(0, 7) },
-                            targetLevel = 1,
-                        ).apply {
-                            addWeapon(Weapon.fire())
-                            addWeapon(Weapon.thunder())
-                            addItem(Item.tonic())
-                        }
-                },
-            ).filterNotNull()
+                    add(
+                        Character
+                            .fromNamedUnit(
+                                namedUnit = namedUnit,
+                                team = Team.PLAYER,
+                                position = playerPositions.getOrElse(2) { DEFAULT_SPAWN_POSITION },
+                                targetLevel = 1,
+                            ).apply {
+                                addWeapon(Weapon.fire())
+                                addWeapon(Weapon.thunder())
+                                addItem(Item.tonic())
+                            },
+                    )
+                }
+                // Healer joins in Chapter 6
+                if (chapterNumber >= HEALER_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("healer_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.heal())
+                                    addWeapon(Weapon.mend())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+                // Thief joins in Chapter 7
+                if (chapterNumber >= THIEF_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("thief_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.ironSword())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+                // Pegasus Knight joins in Chapter 9
+                if (chapterNumber >= PEGASUS_JOIN_CHAPTER) {
+                    NamedUnitRepository.getProtagonist("pegasus_knight_1")?.let { namedUnit ->
+                        add(
+                            Character
+                                .fromNamedUnit(
+                                    namedUnit = namedUnit,
+                                    team = Team.PLAYER,
+                                    position = playerPositions.getOrElse(size) { DEFAULT_SPAWN_POSITION },
+                                    targetLevel = 1,
+                                ).apply {
+                                    addWeapon(Weapon.ironLance())
+                                    addWeapon(Weapon.steelLance())
+                                    addItem(Item.vulnerary())
+                                },
+                        )
+                    }
+                }
+            }
 
         // Add player characters
         playerCharacters.forEach { char ->
@@ -213,6 +317,17 @@ class GameActivity : AppCompatActivity() {
             gameState.addEnemyCharacter(bossChar)
             board.placeCharacter(bossChar, bossChar.position)
         }
+
+        // Apply difficulty scaling to all enemy units
+        val difficultyMultiplier = playerProfile?.preferences?.difficulty?.enemyStatMultiplier ?: 1.0f
+        if (difficultyMultiplier != 1.0f) {
+            gameState.getAliveEnemyCharacters().forEach { enemy ->
+                enemy.applyDifficultyScaling(difficultyMultiplier)
+            }
+        }
+
+        // Apply EXP multiplier from difficulty
+        gameState.expMultiplier = playerProfile?.preferences?.difficulty?.expMultiplier ?: 1.0f
 
         // Create initial save data
         currentGameSave = createGameSave(playerName, chapterNumber)
@@ -296,22 +411,23 @@ class GameActivity : AppCompatActivity() {
         // If loading a new chapter (no enemies saved), spawn new enemies from chapter data
         if (chapter != null && savedState.enemyCharacters.isEmpty()) {
             chapter.enemyUnits.forEach { enemySpawn ->
-                val weapon = getWeaponById(enemySpawn.equipment.firstOrNull() ?: "iron_sword")
-                val enemy =
-                    Character(
-                        id = enemySpawn.id,
-                        name = enemySpawn.name,
-                        characterClass = enemySpawn.characterClass,
-                        team = Team.ENEMY,
-                        level = enemySpawn.level,
-                        position = enemySpawn.position,
-                        isBoss = enemySpawn.isBoss,
-                        aiType = enemySpawn.aiType,
-                    ).apply {
-                        weapon?.let { addWeapon(it) }
-                    }
+                val enemy = enemySpawn.toCharacter(Team.ENEMY)
+                // Add ALL weapons from equipment list (not just the first)
+                enemySpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> enemy.addWeapon(weapon) }
+                }
                 gameState.addEnemyCharacter(enemy)
                 board.placeCharacter(enemy, enemy.position)
+            }
+
+            // Also load boss unit for new chapters
+            chapter.bossUnit?.let { bossSpawn ->
+                val bossChar = bossSpawn.toCharacter(Team.ENEMY)
+                bossSpawn.equipment.forEach { equipId ->
+                    getWeaponById(equipId)?.let { weapon -> bossChar.addWeapon(weapon) }
+                }
+                gameState.addEnemyCharacter(bossChar)
+                board.placeCharacter(bossChar, bossChar.position)
             }
         } else {
             // Restore existing enemies (from saved game mid-chapter)
@@ -373,7 +489,12 @@ class GameActivity : AppCompatActivity() {
             skipEnemyAnimations = true
         }
 
-        // Add save/load buttons to the overflow menu
+        // Menu button
+        binding.btnMenu.setOnClickListener {
+            showGameMenu()
+        }
+
+        // Long-press on game board also opens menu
         binding.root.setOnLongClickListener {
             showGameMenu()
             true
@@ -999,7 +1120,6 @@ class GameActivity : AppCompatActivity() {
                 "Music ${if (newPrefs.musicEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog() // Refresh dialog
     }
 
     private fun toggleSoundEffectsSetting() {
@@ -1012,7 +1132,6 @@ class GameActivity : AppCompatActivity() {
                 "Sound effects ${if (newPrefs.soundEffectsEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog()
     }
 
     private fun changeAnimationSpeed() {
@@ -1043,8 +1162,7 @@ class GameActivity : AppCompatActivity() {
                 updatePreferences(newPrefs)
                 Toast.makeText(this, "Animation speed set to ${newSpeed}x", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-                showSettingsDialog()
-            }.setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -1058,7 +1176,6 @@ class GameActivity : AppCompatActivity() {
                 "Auto-save ${if (newPrefs.autoSaveEnabled) "enabled" else "disabled"}",
                 Toast.LENGTH_SHORT,
             ).show()
-        showSettingsDialog()
     }
 
     private fun changeAutoSaveFrequency() {
@@ -1087,8 +1204,7 @@ class GameActivity : AppCompatActivity() {
                 updatePreferences(newPrefs)
                 Toast.makeText(this, "Auto-save every $newFrequency turns", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-                showSettingsDialog()
-            }.setNegativeButton("Cancel") { _, _ -> showSettingsDialog() }
+            }.setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -1113,82 +1229,101 @@ class GameActivity : AppCompatActivity() {
 
     private fun handleTileClick(position: Position) {
         when (gameState.gamePhase) {
-            GameState.GamePhase.UNIT_SELECT -> {
-                val character = gameState.board.getCharacterAt(position)
-                if (character != null && gameState.canSelectCharacter(character)) {
-                    gameState.selectCharacter(character)
-                    showCharacterInfo(character)
-                    updateUI()
-                } else {
-                    // Show terrain info when clicking empty tile
-                    showTerrainTooltip(position)
-                }
-            }
-            GameState.GamePhase.MOVEMENT -> {
-                val selectedCharacter = gameState.selectedCharacter
-                if (selectedCharacter != null) {
-                    val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
-                    if (position in possibleMoves) {
-                        // Store previous position for undo
-                        previousPosition = selectedCharacter.position
-                        canUndoMove = true
-                        binding.btnUndo.visibility = android.view.View.VISIBLE
-
-                        gameState.board.moveCharacter(selectedCharacter, position)
-                        selectedCharacter.hasMovedThisTurn = true
-                        gameState.gamePhase =
-                            if (selectedCharacter.canAct) {
-                                GameState.GamePhase.ACTION
-                            } else {
-                                GameState.GamePhase.UNIT_SELECT
-                            }
-                        gameBoardView.clearHighlights()
-                        updateUI()
-                    }
-                }
-            }
-            GameState.GamePhase.ACTION -> {
-                val selectedCharacter = gameState.selectedCharacter
-                if (selectedCharacter != null) {
-                    val targetCharacter = gameState.board.getCharacterAt(position)
-                    if (targetCharacter != null) {
-                        // Check if clicking on an adjacent ally for trading
-                        if (targetCharacter.team == selectedCharacter.team &&
-                            selectedCharacter.position.distanceTo(targetCharacter.position) == 1
-                        ) {
-                            // Offer trade option
-                            AlertDialog
-                                .Builder(this)
-                                .setTitle("${targetCharacter.name}")
-                                .setItems(arrayOf("Trade Items", "Cancel")) { _, which ->
-                                    if (which == 0) {
-                                        showTradeDialog(selectedCharacter, targetCharacter)
-                                    }
-                                }.show()
-                            return
-                        }
-
-                        // Check if using a healing staff
-                        val weapon = selectedCharacter.equippedWeapon
-                        if (weapon != null && weapon.canHeal) {
-                            // Handle healing action
-                            val healTargets = gameState.calculateHealTargets(selectedCharacter)
-                            if (targetCharacter in healTargets) {
-                                showHealConfirmation(selectedCharacter, targetCharacter)
-                            }
-                        } else {
-                            // Handle attack action
-                            val attackTargets = gameState.calculateAttackTargets(selectedCharacter)
-                            if (targetCharacter in attackTargets) {
-                                // Show battle forecast before attacking
-                                showBattleForecast(selectedCharacter, targetCharacter)
-                            }
-                        }
-                    }
-                }
-            }
+            GameState.GamePhase.UNIT_SELECT -> handleUnitSelectClick(position)
+            GameState.GamePhase.MOVEMENT -> handleMovementClick(position)
+            GameState.GamePhase.ACTION -> handleActionClick(position)
             else -> {}
         }
+    }
+
+    private fun handleUnitSelectClick(position: Position) {
+        val character = gameState.board.getCharacterAt(position)
+        if (character != null && gameState.canSelectCharacter(character)) {
+            gameState.selectCharacter(character)
+            showCharacterInfo(character)
+            gameBoardView.setSelectedPosition(position)
+            updateUI()
+        } else if (character != null && character.team == Team.ENEMY) {
+            // Show enemy info when tapping enemy units
+            showCharacterInfo(character)
+        } else {
+            // Deselect current unit and show terrain info on empty tile
+            gameState.selectCharacter(null)
+            gameBoardView.setSelectedPosition(null)
+            gameBoardView.clearHighlights()
+            hideCharacterInfo()
+            showTerrainTooltip(position)
+            updateUI()
+        }
+    }
+
+    private fun handleMovementClick(position: Position) {
+        val selectedCharacter = gameState.selectedCharacter ?: return
+        val possibleMoves = gameState.calculatePossibleMoves(selectedCharacter)
+        if (position in possibleMoves) {
+            // Store previous position for undo
+            previousPosition = selectedCharacter.position
+            canUndoMove = true
+            binding.btnUndo.visibility = android.view.View.VISIBLE
+
+            gameState.board.moveCharacter(selectedCharacter, position)
+            selectedCharacter.hasMovedThisTurn = true
+            gameState.gamePhase =
+                if (selectedCharacter.canAct) {
+                    GameState.GamePhase.ACTION
+                } else {
+                    GameState.GamePhase.UNIT_SELECT
+                }
+            gameBoardView.clearHighlights()
+            gameBoardView.setSelectedPosition(position)
+            updateUI()
+        } else {
+            // Tapping outside valid moves cancels movement mode
+            gameBoardView.clearHighlights()
+            gameState.gamePhase = GameState.GamePhase.UNIT_SELECT
+            updateUI()
+        }
+    }
+
+    private fun handleActionClick(position: Position) {
+        val selectedCharacter = gameState.selectedCharacter ?: return
+        val targetCharacter = gameState.board.getCharacterAt(position) ?: return
+
+        // Check if clicking on an adjacent ally for trading
+        if (targetCharacter.team == selectedCharacter.team &&
+            selectedCharacter.position.distanceTo(targetCharacter.position) == 1
+        ) {
+            showTradePrompt(selectedCharacter, targetCharacter)
+            return
+        }
+
+        // Check if using a healing staff
+        val weapon = selectedCharacter.equippedWeapon
+        if (weapon != null && weapon.canHeal) {
+            val healTargets = gameState.calculateHealTargets(selectedCharacter)
+            if (targetCharacter in healTargets) {
+                showHealConfirmation(selectedCharacter, targetCharacter)
+            }
+        } else {
+            val attackTargets = gameState.calculateAttackTargets(selectedCharacter)
+            if (targetCharacter in attackTargets) {
+                showBattleForecast(selectedCharacter, targetCharacter)
+            }
+        }
+    }
+
+    private fun showTradePrompt(
+        source: Character,
+        target: Character,
+    ) {
+        AlertDialog
+            .Builder(this)
+            .setTitle(target.name)
+            .setItems(arrayOf("Trade Items", "Cancel")) { _, which ->
+                if (which == 0) {
+                    showTradeDialog(source, target)
+                }
+            }.show()
     }
 
     private fun handleMoveAction() {
@@ -1250,20 +1385,20 @@ class GameActivity : AppCompatActivity() {
         turnsSinceLastSave++
         updateUI()
 
-        if (gameState.currentTurn == Team.PLAYER) {
-            Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
-
-            // Check game end conditions at start of player turn
-            checkGameEnd()
-        } else if (gameState.currentTurn == Team.ENEMY) {
-            // Start enemy turn automation
+        if (gameState.currentTurn == Team.ENEMY) {
+            addBattleLogEntry("— Enemy Phase (Turn ${gameState.turnCount}) —")
+            // Start animated enemy turn
             executeEnemyTurn()
-        }
+        } else {
+            addBattleLogEntry("— Player Phase (Turn ${gameState.turnCount}) —")
+            Toast.makeText(this, "Turn ${gameState.turnCount}", Toast.LENGTH_SHORT).show()
+            checkGameEnd()
 
-        // Check for auto-save
-        val preferences = playerProfile?.preferences
-        if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
-            performAutoSave()
+            // Check for auto-save
+            val preferences = playerProfile?.preferences
+            if (preferences?.autoSaveEnabled == true && turnsSinceLastSave >= preferences.autoSaveFrequency) {
+                performAutoSave()
+            }
         }
     }
 
@@ -1278,10 +1413,9 @@ class GameActivity : AppCompatActivity() {
         // Disable UI during enemy turn
         setUIEnabled(false)
 
-        // Process all enemy units with a delay between actions
+        // Process all enemy units sequentially with delays
         val enemies = gameState.getAliveEnemyCharacters()
-        val delayBetweenActions = if (skipEnemyAnimations) 50L else 800L
-        var delayMs = if (skipEnemyAnimations) 100L else 500L
+        var delayMs = 500L
 
         enemies.forEach { enemy ->
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -1294,7 +1428,8 @@ class GameActivity : AppCompatActivity() {
                     updateUI()
                 }
             }, delayMs)
-            delayMs += delayBetweenActions
+            // Recheck skip state dynamically so mid-turn skip is responsive
+            delayMs += if (skipEnemyAnimations) 50L else 800L
         }
 
         // End enemy turn after all actions complete
@@ -1376,7 +1511,28 @@ class GameActivity : AppCompatActivity() {
     private fun showCharacterInfo(character: Character) {
         binding.characterInfoPanel.visibility = android.view.View.VISIBLE
         binding.characterName.text = "${character.name} (${character.characterClass.displayName})"
-        binding.characterStats.text = character.currentStats.toDisplayString()
+        binding.characterLevel.text = "Lv ${character.level}  EXP: ${character.experience}/100"
+        val statsText =
+            buildString {
+                append("HP: ${character.currentHp}/${character.maxHp}")
+                append(" | ATK: ${character.currentStats.attack}")
+                append(" | DEF: ${character.currentStats.defense}")
+            }
+        binding.characterStats.text = statsText
+        val extraStatsText =
+            buildString {
+                append("SPD: ${character.currentStats.speed}")
+                append(" | SKL: ${character.currentStats.skill}")
+                append(" | LCK: ${character.currentStats.luck}")
+            }
+        binding.characterStatsExtra.text = extraStatsText
+        val weapon = character.equippedWeapon
+        binding.characterWeapon.text =
+            if (weapon != null) {
+                "⚔ ${weapon.name} (${weapon.currentUses}/${weapon.maxUses})"
+            } else {
+                "⚔ No weapon"
+            }
     }
 
     private fun hideCharacterInfo() {
@@ -1418,6 +1574,9 @@ class GameActivity : AppCompatActivity() {
         val resultText = "After: ${forecast.predictedAttackerHp} ← → ${forecast.predictedTargetHp} HP"
         dialogView.findViewById<android.widget.TextView>(R.id.forecastResult).text = resultText
 
+        // Show weapon triangle indicator
+        showWeaponTriangleIndicator(dialogView, attacker, target)
+
         // Create and show dialog
         val dialog =
             AlertDialog
@@ -1455,6 +1614,37 @@ class GameActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showWeaponTriangleIndicator(
+        dialogView: android.view.View,
+        attacker: Character,
+        target: Character,
+    ) {
+        val indicator = dialogView.findViewById<android.widget.TextView>(R.id.weaponTriangleIndicator)
+        val attackerWeapon = attacker.equippedWeapon
+        val targetWeapon = target.equippedWeapon
+
+        if (attackerWeapon != null && targetWeapon != null) {
+            val bonus = attackerWeapon.getTriangleBonus(targetWeapon.type)
+            when {
+                bonus > 1.0 -> {
+                    indicator.text = "⚔ ${attackerWeapon.type.name} ▶ ${targetWeapon.type.name} (Advantage!)"
+                    indicator.setTextColor(resources.getColor(R.color.teal_200, theme))
+                    indicator.visibility = android.view.View.VISIBLE
+                }
+                bonus < 1.0 -> {
+                    indicator.text = "⚔ ${attackerWeapon.type.name} ◀ ${targetWeapon.type.name} (Disadvantage)"
+                    indicator.setTextColor(resources.getColor(R.color.enemy_red, theme))
+                    indicator.visibility = android.view.View.VISIBLE
+                }
+                else -> {
+                    indicator.visibility = android.view.View.GONE
+                }
+            }
+        } else {
+            indicator.visibility = android.view.View.GONE
+        }
+    }
+
     private fun showBattleResult(result: com.gameaday.opentactics.game.BattleResult) {
         val criticalText = if (result.wasCritical) " CRITICAL HIT! ⚡" else ""
         val message =
@@ -1464,6 +1654,30 @@ class GameActivity : AppCompatActivity() {
                 "${result.attacker.name} attacks ${result.target.name} for ${result.damage} damage!$criticalText"
             }
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+        // Haptic feedback for combat
+        if (result.wasCritical) {
+            hapticManager.vibrateCritical()
+        } else {
+            hapticManager.vibrateAttack()
+        }
+
+        // Track chapter statistics
+        if (result.attacker.team == Team.PLAYER) {
+            chapterDamageDealt += result.damage
+            if (result.targetDefeated) chapterEnemiesDefeated++
+        } else {
+            chapterDamageReceived += result.damage
+        }
+
+        // Add to battle log
+        val logEntry =
+            if (result.targetDefeated) {
+                "${result.attacker.name} ⚔ ${result.target.name} — ${result.damage} dmg, KO!"
+            } else {
+                "${result.attacker.name} ⚔ ${result.target.name} — ${result.damage} dmg"
+            }
+        addBattleLogEntry(logEntry)
 
         // Show EXP gain if attacker is a player unit
         // Note: EXP is already awarded in GameState.performAttack()
@@ -1529,6 +1743,14 @@ class GameActivity : AppCompatActivity() {
         val message = "${result.user.name} healed ${result.target.name} for ${result.healAmount} HP!"
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
+        // Track chapter statistics
+        if (result.user.team == Team.PLAYER) {
+            chapterHealsPerformed++
+        }
+
+        // Add to battle log
+        addBattleLogEntry("${result.user.name} ✚ ${result.target.name} — +${result.healAmount} HP")
+
         // Show EXP gain if user is a player unit
         if (result.user.team == Team.PLAYER && result.expGained > 0) {
             val previousLevel = result.previousLevel
@@ -1565,6 +1787,9 @@ class GameActivity : AppCompatActivity() {
         newLevel: Int,
         statGains: Stats,
     ) {
+        // Haptic feedback for level-up
+        hapticManager.vibrateLevelUp()
+
         // Show level up dialog with stat increases
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             val oldStats = character.currentStats - statGains
@@ -1688,12 +1913,25 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showVictoryScreen(chapter: com.gameaday.opentactics.model.Chapter) {
+        // Haptic feedback for victory
+        hapticManager.vibrateVictory()
+
         // Update profile statistics
         playerProfile =
             playerProfile?.copy(
                 totalBattlesWon = (playerProfile?.totalBattlesWon ?: 0) + 1,
             )
         savePlayerProfile()
+
+        // Check and unlock achievements
+        val newAchievements = playerProfile?.let { AchievementRepository.checkNewAchievements(it) } ?: emptyList()
+        if (newAchievements.isNotEmpty()) {
+            playerProfile =
+                playerProfile?.copy(
+                    achievementsUnlocked = (playerProfile?.achievementsUnlocked ?: emptyList()) + newAchievements,
+                )
+            savePlayerProfile()
+        }
 
         // Build victory message
         val message =
@@ -1707,7 +1945,26 @@ class GameActivity : AppCompatActivity() {
                 append("Turns: ${gameState.turnCount}\n")
                 val aliveCount = gameState.getAlivePlayerCharacters().size
                 val totalCount = gameState.getPlayerCharacters().size
-                append("Units: $aliveCount/$totalCount survived")
+                append("Units: $aliveCount/$totalCount survived\n")
+
+                // Chapter battle statistics
+                append("\n📊 Battle Stats:\n")
+                append("• Damage dealt: $chapterDamageDealt\n")
+                append("• Damage received: $chapterDamageReceived\n")
+                append("• Enemies defeated: $chapterEnemiesDefeated\n")
+                if (chapterHealsPerformed > 0) {
+                    append("• Heals performed: $chapterHealsPerformed\n")
+                }
+
+                // Show newly unlocked achievements
+                if (newAchievements.isNotEmpty()) {
+                    append("\n🏆 Achievements Unlocked:\n")
+                    newAchievements.forEach { achievementId ->
+                        AchievementRepository.getAchievement(achievementId)?.let {
+                            append("• ${it.name}: ${it.description}\n")
+                        }
+                    }
+                }
             }
 
         val hasNextChapter =
@@ -1801,14 +2058,44 @@ class GameActivity : AppCompatActivity() {
             )
         savePlayerProfile()
 
+        // Check for campaign completion achievements
+        val newAchievements = playerProfile?.let { AchievementRepository.checkNewAchievements(it) } ?: emptyList()
+        if (newAchievements.isNotEmpty()) {
+            playerProfile =
+                playerProfile?.copy(
+                    achievementsUnlocked = (playerProfile?.achievementsUnlocked ?: emptyList()) + newAchievements,
+                )
+            savePlayerProfile()
+        }
+
+        val achievementText =
+            if (newAchievements.isNotEmpty()) {
+                "\n\n🏆 Achievements Unlocked:\n" +
+                    newAchievements
+                        .mapNotNull { AchievementRepository.getAchievement(it) }
+                        .joinToString("\n") { "• ${it.name}: ${it.description}" }
+            } else {
+                ""
+            }
+
         AlertDialog
             .Builder(this)
             .setTitle("🎉 Campaign Complete! 🎉")
-            .setMessage("Congratulations! You have completed all chapters!\n\nThank you for playing Open Tactics!")
-            .setPositiveButton("Return to Menu") { _, _ ->
+            .setMessage(
+                "Congratulations! You have completed all chapters!" +
+                    "\n\nThank you for playing Open Tactics!$achievementText",
+            ).setPositiveButton("Return to Menu") { _, _ ->
                 finish()
             }.setCancelable(false)
             .show()
+    }
+
+    private fun resetChapterStats() {
+        chapterDamageDealt = 0
+        chapterDamageReceived = 0
+        chapterEnemiesDefeated = 0
+        chapterHealsPerformed = 0
+        battleLogEntries.clear()
     }
 
     private fun updateUI() {
@@ -1831,6 +2118,24 @@ class GameActivity : AppCompatActivity() {
         // Update turn counter
         binding.turnCounter.text = "Turn: ${gameState.turnCount}"
 
+        // Update turn phase indicator
+        if (isPlayerTurn) {
+            binding.turnPhaseIndicator.text = "▶ Player Phase"
+            binding.turnPhaseIndicator.setTextColor(
+                resources.getColor(R.color.player_blue, theme),
+            )
+        } else {
+            binding.turnPhaseIndicator.text = "▶ Enemy Phase"
+            binding.turnPhaseIndicator.setTextColor(
+                resources.getColor(R.color.enemy_red, theme),
+            )
+        }
+
+        // Update unit counts
+        val allyCount = gameState.getAlivePlayerCharacters().size
+        val foeCount = gameState.getAliveEnemyCharacters().size
+        binding.unitCountDisplay.text = "Allies: $allyCount  Foes: $foeCount"
+
         gameBoardView.invalidate()
     }
 
@@ -1838,35 +2143,37 @@ class GameActivity : AppCompatActivity() {
         val tile = gameState.board.getTile(position) ?: return
         val terrain = tile.terrain
 
-        val terrainInfo =
+        // Show terrain info in the character info panel for non-blocking UX
+        binding.characterInfoPanel.visibility = android.view.View.VISIBLE
+        binding.characterName.text = "${terrain.displayName} Terrain"
+        binding.characterLevel.text = ""
+        val statsText =
             buildString {
-                append("Terrain: ${terrain.displayName}\n\n")
-                append("Movement Cost: ${terrain.movementCost}\n")
-                append("Defense Bonus: +${terrain.defensiveBonus}\n")
-                append("Avoidance Bonus: +${terrain.avoidanceBonus}%\n\n")
-
-                when (terrain) {
-                    com.gameaday.opentactics.model.TerrainType.FOREST ->
-                        append("Dense forest provides cover and slows movement.")
-                    com.gameaday.opentactics.model.TerrainType.MOUNTAIN ->
-                        append("High ground offers excellent defensive position but is hard to traverse.")
-                    com.gameaday.opentactics.model.TerrainType.FORT ->
-                        append("Fortified position provides strong defensive bonuses.")
-                    com.gameaday.opentactics.model.TerrainType.VILLAGE ->
-                        append("Village tiles offer moderate defensive bonus.")
-                    com.gameaday.opentactics.model.TerrainType.WATER ->
-                        append("Water is impassable for most units. Only flying units can cross.")
-                    else ->
-                        append("Open terrain with no special properties.")
-                }
+                append("Move: ${terrain.movementCost} | Def: +${terrain.defensiveBonus}")
+                append(" | Avoid: +${terrain.avoidanceBonus}%")
             }
+        binding.characterStats.text = statsText
+        binding.characterStatsExtra.text = ""
+        binding.characterWeapon.text = ""
+    }
 
-        AlertDialog
-            .Builder(this)
-            .setTitle("Terrain Info")
-            .setMessage(terrainInfo)
-            .setPositiveButton("OK", null)
-            .show()
+    private fun addBattleLogEntry(entry: String) {
+        battleLogEntries.add(0, entry)
+        while (battleLogEntries.size > MAX_BATTLE_LOG_ENTRIES) {
+            battleLogEntries.removeAt(battleLogEntries.lastIndex)
+        }
+        updateBattleLog()
+    }
+
+    private fun updateBattleLog() {
+        if (battleLogEntries.isEmpty()) {
+            binding.battleLogPanel.visibility = android.view.View.GONE
+            return
+        }
+        binding.battleLogPanel.visibility = android.view.View.VISIBLE
+        binding.battleLogEntry1.text = battleLogEntries.getOrNull(0) ?: ""
+        binding.battleLogEntry2.text = battleLogEntries.getOrNull(1) ?: ""
+        binding.battleLogEntry3.text = battleLogEntries.getOrNull(2) ?: ""
     }
 
     private fun showHelpDialog() {

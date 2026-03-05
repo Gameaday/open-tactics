@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Mountain: rocky peak -->
+    <!-- Base -->
+    <path android:fillColor="#FF757575"
+        android:pathData="M0,22H24V24H0Z"/>
+    <!-- Main mountain -->
+    <path android:fillColor="#FF616161"
+        android:pathData="M2,22L12,4L22,22Z"/>
+    <!-- Snow cap -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M8,14L12,4L16,14Z"/>
+    <!-- Rocky detail -->
+    <path android:fillColor="#FF424242"
+        android:pathData="M6,22L10,14L14,22ZM14,22L16,16L20,22Z"/>
+</vector>

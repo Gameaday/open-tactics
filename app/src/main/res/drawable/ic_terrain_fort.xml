@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Fort: stone fortification -->
+    <!-- Base wall -->
+    <path android:fillColor="#FFFFA000"
+        android:pathData="M3,12H21V22H3Z"/>
+    <!-- Battlements -->
+    <path android:fillColor="#FFFFA000"
+        android:pathData="M3,8H7V12H3ZM9,8H15V12H9ZM17,8H21V12H17Z"/>
+    <!-- Gate -->
+    <path android:fillColor="#FF5D4037"
+        android:pathData="M9,16H15V22H9Z"/>
+    <!-- Gate arch -->
+    <path android:fillColor="#FF5D4037"
+        android:pathData="M9,14A3,3 0 0,1 15,14V16H9Z"/>
+    <!-- Flag -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M11,4H12V8H11ZM12,4H16L14,6L16,8H12Z"/>
+</vector>

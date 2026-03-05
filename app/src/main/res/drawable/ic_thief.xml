@@ -4,7 +4,20 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Thief dagger icon -->
+    <!-- Thief: dagger with mask/cloak -->
+    <!-- Dagger blade -->
     <path android:fillColor="@android:color/white"
-        android:pathData="M21,2L19,4L17,2L19,0L21,2ZM19,6L17,8L15.5,6.5L17,5L19,6ZM14,7.5L12.5,9L11,7.5L12.5,6L14,7.5ZM10.5,9L9,10.5L7.5,9L9,7.5L10.5,9ZM8,10.5L6.5,12L5,10.5L6.5,9L8,10.5ZM5,12L3.5,13.5L2,12L3.5,10.5L5,12Z"/>
+        android:pathData="M18,2L20,4L12,12L10,10Z"/>
+    <!-- Dagger guard -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M9,11L13,11L12,13L10,13Z"/>
+    <!-- Dagger handle -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M8,13L11,13L10,16L7,16Z"/>
+    <!-- Cloak/mask eye -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M3,16C3,16 2,12 5,10C8,8 10,9 10,9L8,14C8,14 6,15 3,16Z"/>
+    <!-- Shadow trail -->
+    <path android:fillColor="@android:color/white"
+        android:pathData="M4,18L8,16L10,20L6,22Z"/>
 </vector>
