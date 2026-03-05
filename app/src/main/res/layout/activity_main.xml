@@ -65,6 +65,15 @@
         android:text="@string/continue_game" />
 
     <Button
+        android:id="@+id/btnCustomMode"
+        style="@style/GameButtonStyle"
+        android:layout_width="240dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="@string/cd_custom_mode"
+        android:text="@string/custom_mode" />
+
+    <Button
         android:id="@+id/btnSettings"
         style="@style/GameButtonStyle"
         android:layout_width="240dp"

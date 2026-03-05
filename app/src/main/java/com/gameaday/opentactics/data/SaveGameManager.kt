@@ -54,6 +54,12 @@ class SaveGameManager(
         }
     }
 
+    private val customMapsDirectory by lazy {
+        File(context.filesDir, "custom_maps").apply {
+            if (!exists()) mkdirs()
+        }
+    }
+
     suspend fun saveGame(
         gameSave: GameSave,
         isAutoSave: Boolean = false,
@@ -196,6 +202,67 @@ class SaveGameManager(
             }
         } catch (e: Exception) {
             null
+        }
+
+    suspend fun saveCustomMap(config: CustomMapConfig): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val updatedConfig = config.copy(lastModified = System.currentTimeMillis())
+                val file = File(customMapsDirectory, "${updatedConfig.configId}.json")
+                val jsonString = json.encodeToString(updatedConfig)
+                file.writeText(jsonString)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    suspend fun loadCustomMap(configId: String): Result<CustomMapConfig> =
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(customMapsDirectory, "$configId.json")
+                if (!file.exists()) {
+                    return@withContext Result.failure(Exception("Custom map not found"))
+                }
+                val jsonString = file.readText()
+                val config = json.decodeFromString<CustomMapConfig>(jsonString)
+                Result.success(config)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    suspend fun listCustomMaps(): List<CustomMapConfig> =
+        withContext(Dispatchers.IO) {
+            try {
+                customMapsDirectory
+                    .listFiles()
+                    ?.filter { it.extension == "json" }
+                    ?.mapNotNull { file ->
+                        try {
+                            json.decodeFromString<CustomMapConfig>(file.readText())
+                        } catch (e: Exception) {
+                            null // Skip corrupted files
+                        }
+                    }?.sortedByDescending { it.lastModified }
+                    ?: emptyList()
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+    suspend fun deleteCustomMap(configId: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(customMapsDirectory, "$configId.json")
+                if (file.exists() && file.delete()) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("Failed to delete custom map"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
 
     private fun cleanupAutoSaves() {

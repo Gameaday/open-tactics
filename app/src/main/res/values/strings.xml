@@ -116,4 +116,44 @@
     <string name="cd_settings_autosave">Toggle auto-save</string>
     <string name="cd_settings_autosave_freq">Change auto-save frequency</string>
     <string name="cd_settings_back">Return to main menu</string>
+
+    <!-- Custom Mode -->
+    <string name="custom_mode">Custom Mode</string>
+    <string name="custom_mode_title">Custom Battle</string>
+    <string name="custom_mode_subtitle">Design your own encounter</string>
+    <string name="custom_section_battle">Battle Settings</string>
+    <string name="custom_map_label">Map</string>
+    <string name="custom_objective_label">Objective</string>
+    <string name="custom_save">💾 Save</string>
+    <string name="custom_load">📂 Load</string>
+    <string name="custom_start_battle">⚔ Start Battle</string>
+    <string name="custom_add_unit">+ Add</string>
+    <string name="custom_clear">Clear</string>
+    <string name="custom_player_units_default">Player Units: 0</string>
+    <string name="custom_enemy_units_default">Enemy Units: 0</string>
+    <string name="custom_no_units_hint">Tap "+ Add" to create a unit</string>
+    <string name="custom_unit_name">Name</string>
+    <string name="custom_unit_name_hint">Enter unit name</string>
+    <string name="custom_unit_class">Class</string>
+    <string name="custom_unit_level">Level</string>
+    <string name="custom_unit_pos_x">Pos X</string>
+    <string name="custom_unit_pos_y">Pos Y</string>
+    <string name="custom_unit_weapon">Weapon</string>
+    <string name="custom_unit_item">Item</string>
+    <string name="custom_unit_ai">AI Type</string>
+    <string name="custom_unit_boss">Boss Unit</string>
+    <string name="custom_item_none">None</string>
+
+    <!-- Custom Mode content descriptions -->
+    <string name="cd_custom_mode">Create a custom battle</string>
+    <string name="cd_custom_map_select">Select map layout</string>
+    <string name="cd_custom_objective_select">Select battle objective</string>
+    <string name="cd_custom_save">Save custom configuration</string>
+    <string name="cd_custom_load">Load custom configuration</string>
+    <string name="cd_custom_start">Start custom battle</string>
+    <string name="cd_custom_add_player">Add player unit</string>
+    <string name="cd_custom_add_enemy">Add enemy unit</string>
+    <string name="cd_custom_remove_unit">Remove unit</string>
+    <string name="cd_custom_clear_units">Clear all units</string>
+    <string name="cd_custom_boss_toggle">Toggle boss unit status</string>
 </resources>
