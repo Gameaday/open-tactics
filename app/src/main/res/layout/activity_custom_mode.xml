@@ -143,9 +143,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="4dp"
                         android:contentDescription="@string/cd_custom_save"
-                        android:text="@string/custom_save"
-                        android:drawableStart="@android:drawable/ic_menu_save"
-                        android:drawablePadding="4dp" />
+                        android:text="@string/custom_save" />
 
                     <Button
                         android:id="@+id/btnLoadConfig"
@@ -155,9 +153,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
                         android:contentDescription="@string/cd_custom_load"
-                        android:text="@string/custom_load"
-                        android:drawableStart="@android:drawable/ic_menu_upload"
-                        android:drawablePadding="4dp" />
+                        android:text="@string/custom_load" />
                 </LinearLayout>
 
                 <Button

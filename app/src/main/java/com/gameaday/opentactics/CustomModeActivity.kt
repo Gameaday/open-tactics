@@ -172,7 +172,7 @@ class CustomModeActivity : AppCompatActivity() {
                     isCurrentlyActive: Boolean,
                 ) {
                     // Fade out on swipe
-                    val alpha = 1f - (Math.abs(dX) / rv.width.toFloat())
+                    val alpha = 1f - (kotlin.math.abs(dX) / rv.width.toFloat())
                     vh.itemView.alpha = alpha
                     super.onChildDraw(c, rv, vh, dX, dY, actionState, isCurrentlyActive)
                 }
