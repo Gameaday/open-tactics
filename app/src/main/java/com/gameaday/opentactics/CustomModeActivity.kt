@@ -135,6 +135,7 @@ class CustomModeActivity : AppCompatActivity() {
             )
     }
 
+    @Suppress("LongMethod") // Dialog setup requires many view bindings and configurations
     private fun showAddUnitDialog(team: CustomUnitTeam) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_unit, null)
         val nameInput = dialogView.findViewById<EditText>(R.id.editUnitName)
@@ -209,7 +210,7 @@ class CustomModeActivity : AppCompatActivity() {
                         team = team,
                         weaponIds = listOf(weaponId),
                         itemIds = if (team == CustomUnitTeam.PLAYER) listOf("vulnerary") else emptyList(),
-                        aiType = if (team == CustomUnitTeam.ENEMY) AIBehavior.AGGRESSIVE else AIBehavior.AGGRESSIVE,
+                        aiType = AIBehavior.AGGRESSIVE,
                     )
 
                 if (team == CustomUnitTeam.PLAYER) {
